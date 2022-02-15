@@ -1,0 +1,117 @@
+image: alpine
+
+# SETUP
+variables:
+  CI_NODE_IMAGE: node:14.17.5-bullseye-slim
+  SERVICE_ROOT: services/api
+
+stages:
+  - TEST
+  - BUILD
+  - DEPLOY
+
+.load-dynamic-varables:
+  script:
+    # load from envs
+    - NODE_IMAGE="$(bin/libs/loadEnvs API_NODE_IMAGE)"
+    - REGISTRY="$(bin/libs/loadEnvs API_IMAGE_REGISTRY)"
+    # parse from commit tag
+    - TAG="${CI_COMMIT_TAG/api-/}"
+    
+.rules-deploy:
+  rules:
+    - if: $CI_COMMIT_TAG
+    - when: never
+
+#############################################################
+# Abstract jobs
+#############################################################
+.test:
+  stage: TEST
+  image: $CI_NODE_IMAGE
+  before_script: 
+    - !reference [ ".load-dynamic-varables", "script" ]
+    - |
+      echo "################################################"
+      echo "# CI_NODE_IMAGE: $CI_NODE_IMAGE"
+      echo "# NODE_IMAGE: $NODE_IMAGE"
+      echo "# SERVICE_ROOT: $SERVICE_ROOT"
+      echo "################################################"
+    - |
+      if [[ "$NODE_IMAGE" == "$CI_NODE_IMAGE" ]]; then
+        echo "👍 Image version is correct"  
+      else
+        echo "✋ Node image versions defined in .env not match with node version in CI."
+        exit 1
+      fi
+
+.image:
+  image: docker:19.03.0
+  services: [ "docker:19.03.0-dind" ]
+  stage: BUILD
+  before_script:
+    - apk add --update --no-cache bash
+    - !reference [ ".load-dynamic-varables", "script" ]
+    - | 
+      echo "################################################"
+      echo "# NODE_IMAGE: $NODE_IMAGE"
+      echo "# REGISTRY: $REGISTRY"
+      echo "# SERVICE_ROOT: $SERVICE_ROOT"
+      echo "# TAG: $TAG"
+      echo "################################################"
+    - echo -n $CI_REGISTRY_PASSWORD | docker login --username $CI_REGISTRY_USER --password-stdin $CI_REGISTRY
+  script: 
+    - | 
+      DOCKER_BUILDKIT=1 docker build \
+        --network host \
+        --file "$SERVICE_ROOT/dev-ops/docker/Dockerfile" \
+        --build-arg NODE_IMAGE="$NODE_IMAGE" \
+        --tag "$REGISTRY:$TAG" \
+        $SERVICE_ROOT
+    - docker push "$REGISTRY:$TAG"
+  after_script:
+    - docker logout $CI_REGISTRY
+
+.deploy:
+  stage: DEPLOY
+  before_script:
+    - apk add --update --no-cache bash
+    - !reference [ ".load-dynamic-varables", "script" ]
+    - | 
+      echo "################################################"
+      echo "# SERVER: $SERVER"
+      echo "# USER:   $USER"
+      echo "# TAG:    $TAG"
+      echo "################################################"
+    - apk add --update --no-cache openssh             # install SSH agent if not installed
+    - eval $(ssh-agent -s)                            # run ssh-agent (inside the build environment)
+    - echo "$SSH_PRIVATE_KEY" | tr -d '\r' | ssh-add -
+    - mkdir -p ~/.ssh && chmod 700 ~/.ssh
+    - ssh-keyscan $SERVER >> ~/.ssh/known_hosts
+    - chmod 644 ~/.ssh/known_hosts
+  script:
+    # - ssh $USER@$SERVER bin/deploy api ${TAG}
+    - ssh $USER@$SERVER ls -la 
+  
+
+#############################
+# JOBS
+#############################
+eslint:
+  extends: [ ".test" ]
+  script: cd $SERVICE_ROOT && yarn app:eslint
+
+mocha:
+  extends: [ ".test" ]
+  script: cd $SERVICE_ROOT && yarn app:test
+
+image & publish:
+  needs: [ "mocha", "eslint" ]
+  extends: [ ".image", ".rules-deploy" ]
+
+contabo/demo:
+  needs: [ "image & publish" ]
+  extends: [ .deploy, .rules-deploy ]
+  variables:
+    SERVER: contabo.server.dasher.cz
+    USER: app-winemakers-demo

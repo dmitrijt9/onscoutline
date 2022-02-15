@@ -1,0 +1,20 @@
+#!/usr/bin/env bash
+set -e
+
+ROOT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )/.." && pwd )"
+
+remove_runnig_services() {
+    SERVICES_LIST="$( "$ROOT_DIR"/bin/compose ps | { grep -e "${SERVICE}_run" || true; } )"
+    SERVICES_COUNT="$( "$ROOT_DIR"/bin/compose ps | { grep -e "${SERVICE}_run" -c || true; } )"
+    SERVICES_IDS="$( echo "$SERVICES_LIST" | awk '{print $1}' )"
+
+    if [ "$SERVICES_COUNT" -gt "0"  ]; then
+        echo "$SERVICES_IDS" | xargs docker rm -f
+    fi
+}
+
+
+printf "\n🚀 Stop & clean up (run services)\n============================\n"
+"$ROOT_DIR"/bin/compose stop
+remove_runnig_services "app"
+printf "============================\n👍 Done!\n\n"

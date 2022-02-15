@@ -1,0 +1,155 @@
+#!/usr/bin/env bash
+set -e
+
+ROOT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )/.." && pwd )"
+
+####################################################################### 
+#  Command ussage (print when --help is called)
+#######################################################################
+usage() {
+printf "Start selected service.
+
+    This service is defined in docker-compose and is started with 
+    docker-compose run command. 
+    If other instances this service is running. You will be ask to 
+    kill them and start new one.
+
+For example:
+    $ bin/start api /app/bin/app-start
+
+Usage:
+    start [options] SERVICE [COMMAND] [ARGS...]
+
+Options:
+-d, --detach        Detached mode: Run container in the background, print
+                    new container name.  
+--no-kill           Do not kill service instances when other instances 
+                    is runnig
+--no-create         Do not create new service instance when other instances
+                    is running
+\n"
+}
+
+#######################################################################
+# Question helper - recursive when wrong answer
+#######################################################################
+question_YN() {
+    _QUESTION="$1"
+    read -p "$_QUESTION" ANSWER
+
+    if [ "$ANSWER" = "y" ] || [ "$ANSWER" = "n" ]; then
+        echo "$ANSWER"
+        exit;
+    fi
+
+    printf  "    👊  Wrong  answer... Try again"
+    echo $(question_YN "$_QUESTION");
+}
+
+#######################################################################
+# Create new instance helper
+#######################################################################
+create_new_instance() {
+    printf "🏗  Creating new instance $SERVICE service\n";
+    "$ROOT_DIR"/bin/compose run  $SERVICE_OPTIONS $SERVICE $SERVICE_CMD
+    printf "\n"
+
+    # refetch service info
+    service_info
+}
+
+kill_instances() {
+    # Kill if continue
+    printf "\n☠️  Killing other instances of running services:\n"
+    echo "$SERVICES_IDS" | xargs docker rm -f
+    printf "\n"
+
+    # refetch service info
+    service_info
+}
+
+#######################################################################
+# Recalculate service parameters
+#######################################################################
+service_info() {
+    SERVICES_LIST="$( "$ROOT_DIR"/bin/compose ps | { grep -e "${SERVICE}_run" || true; } )"
+    SERVICES_COUNT="$( "$ROOT_DIR"/bin/compose ps | { grep -e "${SERVICE}_run" -c || true; } )"
+    SERVICES_IDS="$( echo "$SERVICES_LIST" | awk '{print $1}' )"
+}
+
+####################################################################### 
+#  Parse parameter from input
+#######################################################################
+SERVICE_OPTIONS="--rm --use-aliases"
+SERVICE=""
+SERVICE_CMD=""
+
+NO_KILL=""
+NO_CREATE=""
+
+# READ ARGS
+while [ "$1" != "" ]; do
+    case $1 in
+        -d | --detach )     SERVICE_OPTIONS="$SERVICE_OPTIONS --detach"
+                            ;;
+        --no-kill )         NO_KILL=true
+                            ;;
+        --no-create )       NO_CREATE=true
+                            ;;
+        -h | --help )       usage
+                            ;;
+        * )                 if [[ -z $SERVICE ]]; then
+                                SERVICE="$1"
+                            else
+                                SERVICE_CMD="${SERVICE_CMD}$1 "
+                            fi;
+    esac
+    shift
+done
+
+if [[ -z $SERVICE ]]; then
+    usage
+    exit;
+fi
+
+#######################################################################
+# Start proccessing start command
+#######################################################################
+
+printf "\n🚀 Starting $SERVICE service\n============================\n"
+
+# Check if another instance this service is running
+service_info
+
+if [ "$SERVICES_COUNT" -gt "0"  ]; then
+    printf "Found $SERVICES_COUNT running instance(s)\n"
+fi
+
+# Running services detected, ask if I should kill others
+if [ "$SERVICES_COUNT" -gt "0"  ]; then
+
+    if [[ -n $NO_KILL ]] ; then
+        printf "Skipp killing other instances\n"
+    else
+        if [ "$(question_YN "Shoud I kill them (y/n)? ")" = "y" ]; then
+            kill_instances
+        fi
+    fi
+fi
+
+
+if [ "$SERVICES_COUNT" -gt "0"  ]; then
+    if [[ -n $NO_CREATE ]]; then
+        printf "Skipp creating new instance \n"
+    else
+        # Ask if
+        if [ "$(question_YN "Shoud I create new instance (y/n)? ")" = "y" ]; then 
+            create_new_instance
+        fi
+    fi;
+else
+    create_new_instance
+fi
+
+printf "============================\n"
+printf "👍 $SERVICE service is ready \n\n";

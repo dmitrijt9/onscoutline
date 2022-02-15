@@ -1,0 +1,45 @@
+version: "3"
+services:
+  api:
+    image: $API_NODE_IMAGE
+    labels:
+      # enable traefik
+      - traefik.enable=true
+      - traefik.docker.network=traefik
+      # setup service
+      - traefik.http.services.service:${COMPOSE_PROJECT_NAME}:api.loadbalancer.server.port=3000
+      # setup router
+      - traefik.http.routers.router:${COMPOSE_PROJECT_NAME}:api.entrypoints=http
+      - traefik.http.routers.router:${COMPOSE_PROJECT_NAME}:api.rule=Host(`${API_HOST}`)
+      - traefik.http.routers.router:${COMPOSE_PROJECT_NAME}:api.service=service:${COMPOSE_PROJECT_NAME}:api
+    environment:
+      NODE_ENV: development
+      HOST: ${API_HOST}
+      WEB_HOST: ${WEB_HOST}
+      DB_HOST: database
+      DB_PORT: 3306
+      DB_USER: ${DB_USER}
+      DB_PASSWORD: ${DB_PASSWORD}
+      DB_DATABASE: ${DB_DATABASE}
+      APP_ELASTIC_NODE_URL: http://elastic:9200
+      JWT_SECRET: ${API_JWT_SECRET}
+      JWT_EXPIRES: ${API_JWT_EXPIRES}
+      SMTP_CONNECTION_URL: ${SMTP_CONNECTION_URL}
+      NOTION_SECRET: ${NOTION_SECRET}
+      NOTION_DB_ID: ${NOTION_DB_ID}
+      NOTION_TAGS_DB_ID: ${NOTION_TAGS_DB_ID}
+    working_dir: /app
+    command: yarn app:start:dev
+    volumes:
+      - $ROOT_DIR/services/api:/app
+      #ignore this (performance issue)
+      - /app/dist
+    networks:
+      - api
+      - database
+      - elastic
+      - traefik
+networks:
+  api:
+  traefik:
+    external: true

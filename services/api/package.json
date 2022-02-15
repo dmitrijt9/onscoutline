@@ -1,0 +1,27 @@
+{
+  "name": "onscoutline-api",
+  "packageManager": "yarn@3.0.1",
+  "engines": {
+    "node": "14.17.5"
+  },
+  "scripts": {
+    "app:build": "yarn tsc --build ",
+    "app:cli": "yarn ts-node ./cli",
+    "app:eslint": "yarn eslint",
+    "app:start:dev": "yarn nodemon ./src/index.ts",
+    "app:start:prod": "yarn node ./dist/index.js",
+    "app:test": "yarn ts-mocha ./test/**/*"
+  },
+  "devDependencies": {
+    "@types/express": "^4",
+    "@types/jest": "^27.4.0",
+    "@types/node": "^17.0.18",
+    "@types/prettier": "^2",
+    "jest": "^27.5.1",
+    "prettier": "^2.5.1"
+  },
+  "dependencies": {
+    "apollo-server-express": "^3.6.3",
+    "express": "^4.17.2"
+  }
+}

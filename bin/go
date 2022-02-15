@@ -1,0 +1,60 @@
+#!/usr/bin/env bash
+set -e
+
+ROOT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )/.." && pwd )"
+
+usage() {
+printf "Step into selected service.
+
+For example:
+    $ bin/go api sh - go into api service with shell 
+    $ bin/go api bash - go into api service with bash 
+
+Usage:
+    go SERVICE EXECUTOR
+\n"
+}
+
+#######################################################################
+# Recalculate service parameters
+#######################################################################
+service_info() {
+    SERVICES_LIST="$( "$ROOT_DIR"/bin/compose ps | { grep -e "${SERVICE}_run" || true; } )"
+    SERVICES_COUNT="$( "$ROOT_DIR"/bin/compose ps | { grep -e "${SERVICE}_run" -c || true; } )"
+    SERVICES_IDS="$( echo "$SERVICES_LIST" | awk '{print $1}' )"
+}
+
+#######################################################################
+# Start proccessing start command
+#######################################################################
+
+SERVICE=$1
+EXECUTOR=$2
+SERVICE_INSTANCE=""
+
+if [[ -z $SERVICE ]] || [[ -z $EXECUTOR ]]; then
+    usage
+    exit;
+fi
+
+printf "\n🚀 Go into the instance of $SERVICE service\n============================\n"
+
+# Check if another instance this service is running
+service_info
+
+printf "Found $SERVICES_COUNT running instance(s)\n"
+
+if [ "$SERVICES_COUNT" -eq "0"  ]; then
+    printf "\n✋ Sorry I cant go into any instance. No instace is running...\n\n"
+    exit;
+fi
+
+if [ "$SERVICES_COUNT" -eq "1"  ]; then
+    SERVICE_INSTANCE="$SERVICES_IDS"
+else
+    printf "\nInstances:\n$SERVICES_IDS\n"
+    read -p "Select one: " SERVICE_INSTANCE
+fi
+
+printf "\n"
+docker exec -it $SERVICE_INSTANCE $EXECUTOR

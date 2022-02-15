@@ -1,0 +1,89 @@
+#!/usr/bin/env bash
+set -e
+
+SERVICE_ROOT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )/.." && pwd )"
+ROOT_DIR="$( cd "$SERVICE_ROOT_DIR/../.." && pwd )"
+SERVICE_NAME="$(basename $SERVICE_ROOT_DIR)"
+
+usage() {
+printf "Build service
+
+For example:
+    $ bin/build 1.0.0 
+    $ bin/build ci-1.0.0 --quayio-expire 2h                           - add label to expire in quay.io in 2 hours
+    $ bin/build 1.0.0 --duplicate ci-1.0.0 --quayio-expire never  - use existing image and setup labels for quay.io expiration
+    
+Usage:
+    build TAG [options] 
+
+Options:
+    --quayio-expire     Add autoexpiration into metadata image for quay.io (example: 1h | 2h | never)
+    --duplicate         Build new image as duplicate as selcted tag, use --quayio-expire to setup different value (typicaly never for production image)
+\n"
+}
+
+LABELS=""
+DUPLICATE_FROM_TAG=""
+
+# READ ARGS
+while [ "$1" != "" ]; do
+    case $1 in
+        --quayio-expire )   shift
+                            LABELS="${LABELS}--label quay.expires-after=$1 "
+                            ;;
+        --duplicate )       shift
+                            DUPLICATE_FROM_TAG="$1"
+                            ;;
+        -h | --help )       usage
+                            exit 0
+                            ;;
+        
+        *)                  if [[ -z $SERVICE ]] || [[ -z $TAG ]]; then 
+                                if [[ -z $SERVICE ]]; then 
+                                    SERVICE="$1";  
+                                else
+                                    if [[ -z $TAG ]]; then  
+                                        TAG="$1"; 
+                                    fi;
+                                fi;
+                            else
+                                usage
+                                exit 1                    
+                            fi
+                            ;;
+    esac
+    shift
+done
+
+
+if [[ -z $SERVICE ]] || [[ -z $TAG ]]; then
+    usage;
+fi
+
+if [[ $SERVICE == "app" ]]; then
+    REGISTRY="$(getenv 'APP_IMAGE_REGISTRY')"
+    NODE_IMAGE="$(getenv 'APP_NODE_IMAGE')"
+
+    # If DUPLICATE_FROM_TAG is set make a copy of existing image
+    if [[ -n $DUPLICATE_FROM_TAG ]]; then 
+        echo "FROM $REGISTRY:$DUPLICATE_FROM_TAG" | DOCKER_BUILDKIT=1  docker build \
+            --tag "$REGISTRY:$TAG" \
+            ${LABELS} \
+            -
+        exit
+    fi
+
+    # Do regular build
+    DOCKER_BUILDKIT=1 docker build \
+        --network host \
+        --file "${ROOT_DIR}/dev-ops/docker/images/${SERVICE}/Dockerfile" \
+        --build-arg NODE_IMAGE="$NODE_IMAGE" \
+        --tag "$REGISTRY:$TAG" \
+        ${LABELS} \
+        ${CACHE_FROM} \
+        "$ROOT_DIR/$SERVICE"
+    exit
+fi;
+    
+printf "☠️  Definition for service $SERVICE was not found."
+exit 1;

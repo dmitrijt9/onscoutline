@@ -1,0 +1,20 @@
+#!/usr/bin/env bash
+set -e
+
+export ROOT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )/../.." && pwd )"
+
+# load env into context
+ENVS="$(grep -v '^#' "${ROOT_DIR}/.env" | xargs)"
+if [ ! -z "$ENVS" ]; then export $ENVS;  fi
+
+# load env.local into context
+LOCAL_ENVS=""
+if [ -f "${ROOT_DIR}/.env.local" ]; then LOCAL_ENVS="$(grep -v '^#' "${ROOT_DIR}/.env.local" | xargs)"; fi
+if [ ! -z "$LOCAL_ENVS" ]; then export $LOCAL_ENVS;  fi
+
+
+if [ -z $1 ]; then
+    echo $ENVS $LOCAL_ENVS
+else
+    echo ${!1}
+fi

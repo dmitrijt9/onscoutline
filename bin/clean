@@ -1,0 +1,8 @@
+#!/usr/bin/env bash
+set -e
+
+ROOT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )/.." && pwd )"
+
+printf "\n🚀 Stop & clean up\n============================\n"
+"$ROOT_DIR"/bin/compose down -t 0
+printf "============================\n👍 Done!\n\n"

@@ -1,0 +1,14 @@
+#!/usr/bin/env bash
+set -e
+
+SERVICE_ROOT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )/.." && pwd )"
+ROOT_DIR="$( cd "$SERVICE_ROOT_DIR/../.." && pwd )"
+SERVICE_NAME="$(basename $SERVICE_ROOT_DIR)"
+
+CMD="$@"
+if [[ -z $CMD ]]; then
+    CMD="sh"
+fi
+
+# start service
+"$ROOT_DIR"/bin/start $SERVICE_NAME $CMD

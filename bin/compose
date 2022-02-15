@@ -1,0 +1,17 @@
+#!/usr/bin/env bash
+set -e
+
+export ROOT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )/.." && pwd )"
+
+
+services=( $(cd $ROOT_DIR/services && echo * | tr ' ' '\n'))
+
+# load docker-compose with services configuration (services/*/dev-ops/docker/docker-compose.yml)
+dockerComposeFiles=""
+for i in "${!services[@]}"
+do
+    dockerComposeFiles="${dockerComposeFiles} -f ${ROOT_DIR}/services/${services[i]}/dev-ops/docker/docker-compose.yml"
+done
+
+export ROOT_DIR="$ROOT_DIR" $($ROOT_DIR/bin/libs/loadEnvs) 
+docker-compose $dockerComposeFiles $@
