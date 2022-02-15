@@ -5,6 +5,11 @@ module.exports = {
         project: './tsconfig.json',
         tsconfigRootDir: __dirname,
     },
+    root: true,
+
+    env: {
+        node: true,
+    },
     extends: [
         'plugin:@typescript-eslint/recommended',
         'plugin:import/errors',
