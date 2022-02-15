@@ -1,6 +1,5 @@
-import fetch from 'node-fetch'
-
-const HARD_KILL_TIMEOUT_MS = 10 * 1000
+import axios from 'axios'
+import { parse } from 'node-html-parser'
 
 const signals = {
     SIGHUP: 1,
@@ -19,9 +18,17 @@ Object.keys(signals).forEach((signal) => {
 const start = async () => {
     // TODO: Start actual application
     console.log('Start app...')
-    const response = await fetch('https://souteze.fotbal.cz/subjekty/')
-    const body = response.text()
-    console.log(body)
+
+    try {
+        const { data } = await axios.get('https://souteze.fotbal.cz/subjekty/')
+        const parsedPage = parse(data)
+        const competitionsUrls = parsedPage.querySelectorAll('div.box a.btn').map((atag) => {
+            return atag.getAttribute('href')
+        })
+        console.log(competitionsUrls, `length: ${competitionsUrls.length}`)
+    } catch (e) {
+        console.error(e)
+    }
 }
 
 start().catch((err) => {
