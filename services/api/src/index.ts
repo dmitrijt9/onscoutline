@@ -24,7 +24,7 @@ expressApplication
     .start()
     .then(async ({ container }) => {
         const competitionsUrls = await container.facrScraper.getScrapedCompetitions()
-        console.log(competitionsUrls)
+        console.log(competitionsUrls?.length)
     })
     .catch((err) => {
         console.error(`Error while starting the server ${err}`)
