@@ -1,5 +1,4 @@
-import axios from 'axios'
-import { parse } from 'node-html-parser'
+import { ExpressApplication } from './dependency/application/ExpressApplication'
 
 const signals = {
     SIGHUP: 1,
@@ -7,31 +6,27 @@ const signals = {
     SIGTERM: 15,
 }
 
+const HARD_KILL_TIMEOUT = 10 * 1000
+
+// Should be more abstract.. Something like new Application, which extends Express Application.
+// But quite sure, that I will have just this express aplication the whole time.
+const expressApplication = new ExpressApplication()
+
 Object.keys(signals).forEach((signal) => {
     process.on(signal, async () => {
         console.log(`SERVER: Got ${signal}. Graceful shutdown.`)
-        // TODO: application shutdown
+        await expressApplication.shutdown(HARD_KILL_TIMEOUT)
         process.exit(0)
     })
 })
 
-const start = async () => {
-    // TODO: Start actual application
-    console.log('Start app...')
-
-    try {
-        const { data } = await axios.get('https://souteze.fotbal.cz/subjekty/')
-        const parsedPage = parse(data)
-        const competitionsUrls = parsedPage.querySelectorAll('div.box a.btn').map((atag) => {
-            return atag.getAttribute('href')
-        })
-        console.log(competitionsUrls, `length: ${competitionsUrls.length}`)
-    } catch (e) {
-        console.error(e)
-    }
-}
-
-start().catch((err) => {
-    console.error(`Error while starting the server ${err}`)
-    process.exit(1)
-})
+expressApplication
+    .start()
+    .then(async ({ container }) => {
+        const competitionsUrls = await container.facrScraper.getScrapedCompetitions()
+        console.log(competitionsUrls)
+    })
+    .catch((err) => {
+        console.error(`Error while starting the server ${err}`)
+        process.exit(1)
+    })

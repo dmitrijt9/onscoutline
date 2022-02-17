@@ -11,9 +11,7 @@ if [[ -z $CMD ]]; then
 fi
 
 # start dependent  services
-"$ROOT_DIR"/bin/start database --detach --no-kill --no-create
-"$ROOT_DIR"/bin/start adminer --detach --no-kill --no-create
-"$ROOT_DIR"/bin/start elastic --detach --no-kill --no-create
+# "$ROOT_DIR"/bin/start database --detach --no-kill --no-create
 
 # start service
 "$ROOT_DIR"/bin/start $SERVICE_NAME $CMD

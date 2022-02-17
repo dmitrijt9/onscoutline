@@ -12,7 +12,7 @@
         "declaration": true,
         "moduleResolution": "node",
         "typeRoots": ["@types"],
-        "types": ["@types/node", "@types/jest", "jest", "node-fetch"],
+        "types": ["@types/node", "@types/jest", "jest"],
         "noUnusedLocals": true,
         "resolveJsonModule": true,
         "esModuleInterop": true
