@@ -15,4 +15,4 @@ services:
     volumes:
       - $ROOT_DIR/services/database/dev-ops/docker/volumes/data:/var/lib/mysql
 networks:
-  database: {}
+  database:
