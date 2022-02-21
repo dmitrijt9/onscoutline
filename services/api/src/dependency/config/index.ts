@@ -1,3 +1,4 @@
+import { databaseConfig } from './database-config'
 import { getValidatedEnvironment } from './env'
 import { facrScraperConfig } from './facr-scraper-config'
 
@@ -9,7 +10,7 @@ export const getAppConfig = (unvalidatedEnv: unknown) => {
         environment: env.NODE_ENV,
         httpServerPort: env.HTTP_SERVER_PORT ?? 3000,
         facrScraper: facrScraperConfig(),
-        // db: databaseConfig(env),
+        db: databaseConfig(env),
         // logger: {
         //     level: env.LOGGER_LEVEL,
         // },

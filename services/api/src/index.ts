@@ -23,8 +23,10 @@ Object.keys(signals).forEach((signal) => {
 expressApplication
     .start()
     .then(async ({ container }) => {
-        const competitionsUrls = await container.facrScraper.getScrapedCompetitions()
-        console.log(competitionsUrls?.length)
+        await container.facrScraper.scrapeAndSaveCompetitions()
+        const savedCompetitions = await container.competitionRepository.find()
+        console.log(savedCompetitions.length)
+        console.log(savedCompetitions)
     })
     .catch((err) => {
         console.error(`Error while starting the server ${err}`)
