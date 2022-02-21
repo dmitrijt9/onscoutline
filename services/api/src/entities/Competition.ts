@@ -1,6 +1,7 @@
-import { Column, Entity, PrimaryGeneratedColumn } from 'typeorm'
+import { Column, Entity, Index, PrimaryGeneratedColumn } from 'typeorm'
 
 @Entity()
+@Index('competition_facr_id', ['regionId', 'facrId'])
 export class Competition {
     @PrimaryGeneratedColumn()
     id: number
@@ -9,11 +10,14 @@ export class Competition {
     name: string
 
     @Column()
+    regionId: string
+
+    @Column()
     regionName: string
 
-    @Column({ unique: true })
+    @Column()
     facrId: string
 
-    @Column({ unique: true })
+    @Column()
     facrUuid: string
 }

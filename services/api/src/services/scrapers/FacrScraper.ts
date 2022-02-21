@@ -31,13 +31,29 @@ export class FacrScraper {
             )
 
             const regionsPaths = regionsParsedPage.querySelectorAll('div.box a.btn').map((atag) => {
-                return atag.getAttribute('href')
+                const href = atag.getAttribute('href')
+                if (!href) {
+                    // TODO: custom error
+                    throw new Error(
+                        `FACR Scraper: Failed to scrape competitions. Query selector: 'div.box a.btn'. Attribute 'href'`,
+                    )
+                }
+                return href
             })
+
+            if (!regionsPaths) {
+                // TODO: custom error
+                throw new Error(
+                    `FACR Scraper: Failed to scrape competitions. Query selector: 'div.box a.btn'`,
+                )
+            }
+
             const competitionsBasicDataFetchers = regionsPaths.map(async (regionPath) => {
                 // #souteze anchor ensures that page opens with opened tab that we need, where table with competitions is hidden
                 const parsedCompetitionPage = await this.scraper.getParsedPage(
                     `${this.facrCompetitionsUrl}${regionPath}#souteze`,
                 )
+                const competitionRegionId = regionPath.split('/')[3]
                 const competitionRegionName =
                     parsedCompetitionPage.querySelector('h1.h1')?.innerText
                 return parsedCompetitionPage
@@ -45,6 +61,7 @@ export class FacrScraper {
                     .map((row: HTMLElement) => {
                         return {
                             regionName: competitionRegionName,
+                            regionId: competitionRegionId,
                             facrId: row.querySelector('td:nth-child(1)')?.innerText,
                             name: row.querySelector('td:nth-child(2) a')?.innerText,
                             facrUuid: row
@@ -59,7 +76,9 @@ export class FacrScraper {
                 await Promise.all(competitionsBasicDataFetchers).finally(() => {
                     console.log('FACR Scraper: Successfully scraped competitions data.')
                 })
-            ).flat()
+            )
+                .flat()
+                .filter((c) => c.name != undefined)
 
             await this.competitionRepository.save(competitionsData)
         } catch (e) {
@@ -91,21 +110,21 @@ export class FacrScraper {
                         if (!nameColumn) {
                             // TODO: custom error for scraper missconfigurations, clubRow as a payload
                             throw new Error(
-                                `FACR Scraper: Failed to scrape clubs. Query selector: ${nameColumn}`,
+                                `FACR Scraper: Failed to scrape clubs. Query selector: 'td:nth-child(2)'`,
                             )
                         }
 
                         if (!clubLink) {
                             // TODO: custom error for scraper missconfigurations, clubRow as a payload
                             throw new Error(
-                                `FACR Scraper: Failed to scrape clubs. Query selector: ${clubLink}`,
+                                `FACR Scraper: Failed to scrape clubs. Query selector: 'td:nth-child(2) a'`,
                             )
                         }
 
                         if (!idColumn) {
                             // TODO: custom error for scraper missconfigurations, clubRow as a payload
                             throw new Error(
-                                `FACR Scraper: Failed to scrape clubs. Query selector: ${idColumn}`,
+                                `FACR Scraper: Failed to scrape clubs. Query selector: 'td:nth-child(3)'`,
                             )
                         }
                         return {
