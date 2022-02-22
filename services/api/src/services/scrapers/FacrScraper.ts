@@ -1,5 +1,6 @@
 import { HTMLElement } from 'node-html-parser'
 import { AppConfig } from '../../dependency/config/index'
+import { Competition } from '../../entities/Competition'
 import { CompetitionRepository } from '../../repositories/CompetitionRepository'
 import { IScraper } from './types'
 
@@ -54,11 +55,24 @@ export class FacrScraper {
                     `${this.facrCompetitionsUrl}${regionPath}#souteze`,
                 )
                 const competitionRegionId = regionPath.split('/')[3]
+
                 const competitionRegionName =
                     parsedCompetitionPage.querySelector('h1.h1')?.innerText
                 return parsedCompetitionPage
                     .querySelectorAll('#souteze table.table tbody tr')
                     .map((row: HTMLElement) => {
+                        const tableFirstRowContent = row.querySelector('td:nth-child(1)')
+                        if (!tableFirstRowContent) {
+                            throw new Error(
+                                'FACR Scraper: Failed to scrape competitions. Query selector: td:nth-child(1)',
+                            )
+                        }
+
+                        if (this.isTableEmpty(tableFirstRowContent)) {
+                            return undefined
+                        }
+
+                        // TODO: add validation to query selectors -> throw custom errors if selector not valid..
                         return {
                             regionName: competitionRegionName,
                             regionId: competitionRegionId,
@@ -76,11 +90,12 @@ export class FacrScraper {
                 await Promise.all(competitionsBasicDataFetchers).finally(() => {
                     console.log('FACR Scraper: Successfully scraped competitions data.')
                 })
-            )
-                .flat()
-                .filter((c) => c.name != undefined)
+            ).flat()
 
-            await this.competitionRepository.save(competitionsData)
+            // Type cast is ok here. We know that there won't be undefined competitions as we filter them here.
+            const competitions = competitionsData.filter((c) => c != undefined) as Competition[]
+
+            await this.competitionRepository.save(competitions)
         } catch (e) {
             console.error('FACR Scraper: Error while scraping competitions.', e)
         }
@@ -151,5 +166,9 @@ export class FacrScraper {
         } catch (e) {
             console.error('FACR Scraper: Error while scraping clubs.', e)
         }
+    }
+
+    private isTableEmpty(element: HTMLElement) {
+        return element.innerText.includes('Tabulka neobsahuje žádné údaje')
     }
 }
