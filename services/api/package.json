@@ -12,7 +12,9 @@
         "start:prod": "yarn node ./dist/index.js",
         "test": "yarn ts-mocha ./test/**/*",
         "typeorm": "node -r tsconfig-paths/register -r ts-node/register ./src/scripts/typeorm/cli.ts",
-        "scraper:competitions": "node -r tsconfig-paths/register -r ts-node/register ./src/scripts/scraper/index.ts"
+        "scraper:competitions": "node -r tsconfig-paths/register -r ts-node/register ./src/scripts/scraper/competitions.ts",
+        "scraper:clubsUrls": "node -r tsconfig-paths/register -r ts-node/register ./src/scripts/scraper/clubs-urls.ts",
+        "scraper:clubs": "node -r tsconfig-paths/register -r ts-node/register ./src/scripts/scraper/clubs.ts"
     },
     "devDependencies": {
         "@types/eslint": "^8",

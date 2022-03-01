@@ -1,9 +1,14 @@
+import { writeFileSync } from 'fs'
 import { HTMLElement } from 'node-html-parser'
 import { AppConfig } from '../../dependency/config/index'
+import { Club } from '../../entities/Club'
 import { Competition } from '../../entities/Competition'
 import { ClubRepository } from '../../repositories/ClubRepository'
 import { CompetitionRepository } from '../../repositories/CompetitionRepository'
+import chunk from '../utils/chunk'
+import readFiles from '../utils/read-files'
 import { Scraper } from './Scraper'
+import { ScrapedClub, ScrapedCompetition } from './types'
 
 export class FacrScraper extends Scraper {
     private facrCompetitionsUrl: string
@@ -11,7 +16,7 @@ export class FacrScraper extends Scraper {
 
     // format of the competitions path is -> `${COMPETITION_X_PAGE_PATH_PREFIX}/[UUID]`
     // private COMPETITION_MAIN_PAGE_PATH_PREFIX = '/turnaje/hlavni'
-    // private static readonly COMPETITION_CLUBS_PAGE_PATH_PREFIX = '/turnaje/team'
+    private static readonly COMPETITION_CLUBS_PAGE_PATH_PREFIX = '/turnaje/team'
     // private COMPETITION_MATCHES_PAGE_PATH_PREFIX = '/turnaje/zapas'
 
     // private static readonly CLUB_MAIN_PAGE_PATH_PREFIX = '/club/club'
@@ -98,7 +103,7 @@ export class FacrScraper extends Scraper {
             // Type cast is ok here. We know that there won't be undefined competitions as we filter them here.
             const scrapedCompetitions = competitionsData.filter(
                 (c) => c != undefined,
-            ) as Competition[]
+            ) as ScrapedCompetition[]
 
             const currentCompetitions = await this.competitionRepository.find()
 
@@ -131,78 +136,140 @@ export class FacrScraper extends Scraper {
                 ...competitionsToInsert,
                 ...competitionsToUpdate,
             ])
+
+            console.log(
+                `FACR Scraper: Successfully saved ${competitionsToInsert.length} new competitions.`,
+            )
         } catch (e) {
             console.error('FACR Scraper: Error while scraping competitions.', e)
         }
     }
 
-    async scrapeAndSaveClubs() {
-        console.log('FACR Scraper: Starting to scrape clubs data.')
+    async saveClubListsUrlsToFile(filePath: string) {
+        console.log('FACR Scraper: Starting to get clubs data.')
 
         try {
             const competitions = await this.competitionRepository.find()
             if (competitions.length <= 0) {
-                console.log('FACR Scraper: No competitions to scrape clubs.')
+                console.log('FACR Scraper: No competitions to get clubs lists.')
                 return
             }
 
-            competitions.map(async (competition) => {
-                // const clubsParsedPage = await this.getParsedPage(
-                //     `${this.facrCompetitionsUrl}${FacrScraper.COMPETITION_CLUBS_PAGE_PATH_PREFIX}/${competition.facrUuid}`,
-                // )
-                // const tableRows = clubsParsedPage.querySelectorAll(
-                //     '.container-content .table-container .table tbody tr',
-                // )
-                // const leagueName = clubsParsedPage.querySelector('.h3')?.innerText
-                // console.log('tableRows', tableRows, leagueName)
-                // tableRows
-                //     .map((clubRow) => {
-                //         console.log(clubRow)
-                //         const nameColumn = clubRow.querySelector('td:nth-child(2)')
-                //         const clubLink = clubRow.querySelector('td:nth-child(2) a')
-                //         const idColumn = clubRow.querySelector('td:nth-child(3)')
-                //         if (!nameColumn) {
-                //             // TODO: custom error for scraper missconfigurations, clubRow as a payload
-                //             throw new Error(
-                //                 `FACR Scraper: Failed to scrape clubs. Query selector: 'td:nth-child(2)'`,
-                //             )
-                //         }
-                //         if (!clubLink) {
-                //             // TODO: custom error for scraper missconfigurations, clubRow as a payload
-                //             throw new Error(
-                //                 `FACR Scraper: Failed to scrape clubs. Query selector: 'td:nth-child(2) a'`,
-                //             )
-                //         }
-                //         if (!idColumn) {
-                //             // TODO: custom error for scraper missconfigurations, clubRow as a payload
-                //             throw new Error(
-                //                 `FACR Scraper: Failed to scrape clubs. Query selector: 'td:nth-child(3)'`,
-                //             )
-                //         }
-                //         return {
-                //             name: nameColumn.innerText,
-                //             facrId: idColumn.innerText,
-                //             facrUuid: clubLink.getAttribute('href')?.split('/')[3],
-                //         }
-                //     })
-                //     .flat()
-                // return tableRows
+            const urls = competitions.map((c) => {
+                return `${this.facrCompetitionsUrl}${FacrScraper.COMPETITION_CLUBS_PAGE_PATH_PREFIX}/${c.facrUuid}`
             })
+            const chunks = chunk(urls, 100)
 
-            // const clubs = (
-            //     await Promise.all(clubsDataFetchers).finally(() => {
-            //         console.log('FACR Scraper: Successfully scraped clubs data.')
-            //     })
-            // ).flat()
+            for (const [i, chunk] of chunks.entries()) {
+                const dataToWrite = chunk.reduce((dataToWrite: string, url: string) => {
+                    dataToWrite += url + '\n'
+                    return dataToWrite
+                }, '')
 
-            // To ensure that there are no duplicates
-            // const clubsSet = new Set(clubs)
-            // console.log(clubsSet)
+                writeFileSync(`${i}-${filePath}`, dataToWrite, 'utf-8')
+            }
+        } catch (e) {
+            console.error('FACR Scraper: Error while getting clubs lists.', e)
+        }
+    }
 
-            await this.clubRepository.save([])
+    async scrapeAndSaveClubs(dirname: string) {
+        const htmlsToScrape: string[] = []
+        try {
+            readFiles(dirname, (_, content) => {
+                htmlsToScrape.push(content)
+            })
         } catch (e) {
             console.error('FACR Scraper: Error while scraping clubs.', e)
+            return
         }
+
+        const clubsData: ScrapedClub[] = htmlsToScrape
+            .map((htmlToScrape) => {
+                const parsedHtml = this.parseHtml(htmlToScrape)
+
+                const tableElement = parsedHtml.querySelector(
+                    '.container-content .table-container .table',
+                )
+
+                if (!tableElement) {
+                    throw new Error(
+                        'FACR Scraper: Error while scraping clubs. Table element not found.',
+                    )
+                }
+
+                if (this.isTableEmpty(parsedHtml)) {
+                    console.log('FACR Scraper: No clubs to scrape.')
+                    return
+                }
+
+                const tableRows = parsedHtml.querySelectorAll(
+                    '.container-content .table-container .table tbody tr',
+                )
+
+                const clubsData = tableRows.map((clubRow) => {
+                    const nameColumn = clubRow.querySelector('td:nth-child(2)')
+                    const clubLink = clubRow.querySelector('td:nth-child(2) a')
+                    const idColumn = clubRow.querySelector('td:nth-child(3)')
+                    if (!nameColumn) {
+                        // TODO: custom error for scraper missconfigurations, clubRow as a payload
+                        throw new Error(
+                            `FACR Scraper: Failed to scrape clubs. Query selector: 'td:nth-child(2)'`,
+                        )
+                    }
+                    if (!clubLink) {
+                        // TODO: custom error for scraper missconfigurations, clubRow as a payload
+                        throw new Error(
+                            `FACR Scraper: Failed to scrape clubs. Query selector: 'td:nth-child(2) a'`,
+                        )
+                    }
+                    if (!idColumn) {
+                        // TODO: custom error for scraper missconfigurations, clubRow as a payload
+                        throw new Error(
+                            `FACR Scraper: Failed to scrape clubs. Query selector: 'td:nth-child(3)'`,
+                        )
+                    }
+                    return {
+                        name: nameColumn.innerText,
+                        facrId: idColumn.innerText,
+                        facrUuid: clubLink.getAttribute('href')?.split('/')[5],
+                    }
+                })
+
+                return clubsData
+            })
+            .flat()
+            // Type cast is ok here. We know that there won't be undefined clubs as we filter them here.
+            .filter((club) => club !== undefined) as ScrapedClub[]
+
+        // To ensure that there are no duplicates
+        const scrapedClubs: ScrapedClub[] = clubsData.filter(
+            (club, index, array) => array.findIndex((c) => c.facrId === club.facrId) === index,
+        )
+
+        const currentClubs = await this.clubRepository.find()
+        const currentClubsMap: Map<string, Club> = currentClubs.reduce(
+            (map: Map<string, Club>, c: Club) => {
+                map.set(c.facrId, c)
+                return map
+            },
+            new Map(),
+        )
+
+        const clubsToInsert = scrapedClubs.filter(({ facrId }) => !currentClubsMap.get(facrId))
+
+        const clubsToUpdate = scrapedClubs
+            .filter(({ facrId }) => currentClubsMap.get(facrId))
+            .map(({ facrId, facrUuid, name }) => {
+                return {
+                    ...currentClubsMap.get(facrId),
+                    facrUuid,
+                    name,
+                }
+            })
+
+        await this.clubRepository.save([...clubsToInsert, ...clubsToUpdate])
+        console.log(`FACR Scraper: Successfully saved ${clubsToInsert.length} new clubs.`)
     }
 
     private isTableEmpty(element: HTMLElement) {

@@ -12,6 +12,10 @@ export abstract class Scraper implements IScraper {
                 `Scraper: Error with status ${status} while fetching data from source. ${data}`,
             )
         }
-        return parse(data)
+        return this.parseHtml(data)
+    }
+
+    parseHtml(htmlString: string) {
+        return parse(htmlString)
     }
 }
