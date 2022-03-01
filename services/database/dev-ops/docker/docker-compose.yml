@@ -12,6 +12,8 @@ services:
       MYSQL_USER: ${DB_USER}
     networks:
       - database
+    ports:
+      - 3306:3306
     volumes:
       - $ROOT_DIR/services/database/dev-ops/docker/volumes/data:/var/lib/mysql
 networks:
