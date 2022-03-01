@@ -1244,6 +1244,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@types/yargs@npm:^17":
+  version: 17.0.8
+  resolution: "@types/yargs@npm:17.0.8"
+  dependencies:
+    "@types/yargs-parser": "*"
+  checksum: 63d06700ffbed745f00d7994eb92416649c8a3ead22f26446979d383f3af52fa9400bb185268f3a44a2348749098ffe33a8185ca676b77bc3206c63b8b73fd01
+  languageName: node
+  linkType: hard
+
 "abab@npm:^2.0.3, abab@npm:^2.0.5":
   version: 2.0.5
   resolution: "abab@npm:2.0.5"
@@ -5308,6 +5317,7 @@ __metadata:
     "@types/jest": ^27.4.0
     "@types/node": ^17.0.18
     "@types/prettier": ^2
+    "@types/yargs": ^17
     apollo-server-express: ^3.6.3
     axios: ^0.26.0
     cockatiel: ^2.0.2
@@ -5328,6 +5338,7 @@ __metadata:
     tsconfig-paths: ^3.12.0
     typeorm: ^0.2.43
     typescript: ^4.5.5
+    yargs: ^17.3.1
   languageName: unknown
   linkType: soft
 
@@ -7113,7 +7124,7 @@ typescript@^4.5.5:
   languageName: node
   linkType: hard
 
-"yargs@npm:^17.0.1":
+"yargs@npm:^17.0.1, yargs@npm:^17.3.1":
   version: 17.3.1
   resolution: "yargs@npm:17.3.1"
   dependencies:

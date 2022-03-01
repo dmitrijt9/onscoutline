@@ -40,6 +40,7 @@ function $$SETUP_STATE(hydrateRuntimeState, basePath) {
             ["@types/jest", "npm:27.4.0"],
             ["@types/node", "npm:17.0.18"],
             ["@types/prettier", "npm:2.4.4"],
+            ["@types/yargs", "npm:17.0.8"],
             ["apollo-server-express", "virtual:036c6c461b467c8f51885000960c513f225e91a0a2515f2e1deb6791ac64f10883778cd1ca7f469e8b56ba255ced602bb51bbf51e9dd9e52f8df92d123fe4e42#npm:3.6.3"],
             ["axios", "npm:0.26.0"],
             ["cockatiel", "npm:2.0.2"],
@@ -59,7 +60,8 @@ function $$SETUP_STATE(hydrateRuntimeState, basePath) {
             ["ts-node", "virtual:036c6c461b467c8f51885000960c513f225e91a0a2515f2e1deb6791ac64f10883778cd1ca7f469e8b56ba255ced602bb51bbf51e9dd9e52f8df92d123fe4e42#npm:10.5.0"],
             ["tsconfig-paths", "npm:3.12.0"],
             ["typeorm", "virtual:036c6c461b467c8f51885000960c513f225e91a0a2515f2e1deb6791ac64f10883778cd1ca7f469e8b56ba255ced602bb51bbf51e9dd9e52f8df92d123fe4e42#npm:0.2.43"],
-            ["typescript", "patch:typescript@npm%3A4.5.5#~builtin<compat/typescript>::version=4.5.5&hash=493e53"]
+            ["typescript", "patch:typescript@npm%3A4.5.5#~builtin<compat/typescript>::version=4.5.5&hash=493e53"],
+            ["yargs", "npm:17.3.1"]
           ],
           "linkType": "SOFT",
         }]
@@ -1843,6 +1845,14 @@ function $$SETUP_STATE(hydrateRuntimeState, basePath) {
           "packageLocation": "./.yarn/cache/@types-yargs-npm-16.0.4-7aaef7d6c8-caa21d2c95.zip/node_modules/@types/yargs/",
           "packageDependencies": [
             ["@types/yargs", "npm:16.0.4"],
+            ["@types/yargs-parser", "npm:20.2.1"]
+          ],
+          "linkType": "HARD",
+        }],
+        ["npm:17.0.8", {
+          "packageLocation": "./.yarn/cache/@types-yargs-npm-17.0.8-e5cb83d738-63d06700ff.zip/node_modules/@types/yargs/",
+          "packageDependencies": [
+            ["@types/yargs", "npm:17.0.8"],
             ["@types/yargs-parser", "npm:20.2.1"]
           ],
           "linkType": "HARD",
@@ -6689,6 +6699,7 @@ function $$SETUP_STATE(hydrateRuntimeState, basePath) {
             ["@types/jest", "npm:27.4.0"],
             ["@types/node", "npm:17.0.18"],
             ["@types/prettier", "npm:2.4.4"],
+            ["@types/yargs", "npm:17.0.8"],
             ["apollo-server-express", "virtual:036c6c461b467c8f51885000960c513f225e91a0a2515f2e1deb6791ac64f10883778cd1ca7f469e8b56ba255ced602bb51bbf51e9dd9e52f8df92d123fe4e42#npm:3.6.3"],
             ["axios", "npm:0.26.0"],
             ["cockatiel", "npm:2.0.2"],
@@ -6708,7 +6719,8 @@ function $$SETUP_STATE(hydrateRuntimeState, basePath) {
             ["ts-node", "virtual:036c6c461b467c8f51885000960c513f225e91a0a2515f2e1deb6791ac64f10883778cd1ca7f469e8b56ba255ced602bb51bbf51e9dd9e52f8df92d123fe4e42#npm:10.5.0"],
             ["tsconfig-paths", "npm:3.12.0"],
             ["typeorm", "virtual:036c6c461b467c8f51885000960c513f225e91a0a2515f2e1deb6791ac64f10883778cd1ca7f469e8b56ba255ced602bb51bbf51e9dd9e52f8df92d123fe4e42#npm:0.2.43"],
-            ["typescript", "patch:typescript@npm%3A4.5.5#~builtin<compat/typescript>::version=4.5.5&hash=493e53"]
+            ["typescript", "patch:typescript@npm%3A4.5.5#~builtin<compat/typescript>::version=4.5.5&hash=493e53"],
+            ["yargs", "npm:17.3.1"]
           ],
           "linkType": "SOFT",
         }]
