@@ -1,7 +1,7 @@
 import { Connection, getCustomRepository } from 'typeorm'
+import { ClubRepository } from '../../repositories/ClubRepository'
 import { CompetitionRepository } from '../../repositories/CompetitionRepository'
 import { FacrScraper } from '../../services/scrapers/FacrScraper'
-import { Scraper } from '../../services/scrapers/Scraper'
 import { AppConfig, getAppConfig } from '../config/index'
 import { bootstrapDbConnection } from './bootstrap/db-connection'
 
@@ -11,14 +11,15 @@ export const createContainer = async (
     const typeormConnection = await bootstrapDbConnection(appConfig)
 
     const competitionRepository = getCustomRepository(CompetitionRepository)
+    const clubRepository = getCustomRepository(ClubRepository)
 
-    const scraper = new Scraper()
-    const facrScraper = new FacrScraper(scraper, appConfig, competitionRepository)
+    const facrScraper = new FacrScraper(appConfig, competitionRepository, clubRepository)
 
     return {
         config: appConfig,
         typeormConnection,
         competitionRepository,
+        clubRepository,
         facrScraper: facrScraper,
     }
 }
@@ -27,5 +28,6 @@ export interface Container {
     config: AppConfig
     typeormConnection: Connection
     competitionRepository: CompetitionRepository
+    clubRepository: ClubRepository
     facrScraper: FacrScraper
 }

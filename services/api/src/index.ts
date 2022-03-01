@@ -20,15 +20,7 @@ Object.keys(signals).forEach((signal) => {
     })
 })
 
-expressApplication
-    .start()
-    .then(async ({ container }) => {
-        await container.facrScraper.scrapeAndSaveCompetitions()
-        const savedCompetitions = await container.competitionRepository.find()
-        console.log(savedCompetitions.length)
-        console.log(savedCompetitions)
-    })
-    .catch((err) => {
-        console.error(`Error while starting the server ${err}`)
-        process.exit(1)
-    })
+expressApplication.start().catch((err) => {
+    console.error(`Error while starting the server ${err}`)
+    process.exit(1)
+})
