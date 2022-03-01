@@ -1,6 +1,6 @@
 export const facrScraperConfig = () => {
     return {
-        facrCompetitionsUrl: 'http://souteze.fotbal.cz',
+        facrCompetitionsUrl: 'https://souteze.fotbal.cz',
         facrMembersUrl: 'https://is.fotbal.cz',
     }
 }
