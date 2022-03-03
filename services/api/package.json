@@ -10,8 +10,11 @@
         "eslint": "yarn eslint",
         "start:dev": "yarn nodemon ./src/index.ts",
         "start:prod": "yarn node ./dist/index.js",
-        "test": "yarn ts-mocha ./test/**/*",
+        "test": "yarn test:db:init && yarn typeorm:test migration:run && yarn test:quick",
+        "test:quick": "jest --colors --runInBand --coverage --forceExit",
+        "test:db:init": "node -r tsconfig-paths/register -r ts-node/register ./src/scripts/testing/create-database.ts",
         "typeorm": "node -r tsconfig-paths/register -r ts-node/register ./src/scripts/typeorm/cli.ts",
+        "typeorm:test": "NODE_ENV=test yarn typeorm",
         "scraper:competitions": "node -r tsconfig-paths/register -r ts-node/register ./src/scripts/scraper/competitions.ts",
         "scraper:clubsUrls": "node -r tsconfig-paths/register -r ts-node/register ./src/scripts/scraper/clubs-urls.ts",
         "scraper:clubs": "node -r tsconfig-paths/register -r ts-node/register ./src/scripts/scraper/clubs.ts"
@@ -31,6 +34,8 @@
         "jest": "^27.5.1",
         "nodemon": "^2.0.15",
         "prettier": "^2.5.1",
+        "supertest": "^6.2.2",
+        "ts-jest": "^27.1.3",
         "ts-node": "^10.5.0",
         "tsconfig-paths": "^3.12.0"
     },

@@ -34,6 +34,12 @@ export class ExpressApplication {
         this._expressApp = value
     }
 
+    constructor(container?: Container) {
+        if (container) {
+            this.container = container
+        }
+    }
+
     initExpressApp() {
         // TODO: Add Graphql API
         return express()
@@ -50,6 +56,8 @@ export class ExpressApplication {
         console.info('SERVER: Begin start process.')
 
         if (!this.container) {
+            console.log('tvorim kontak')
+
             this.container = await createContainer()
         }
 

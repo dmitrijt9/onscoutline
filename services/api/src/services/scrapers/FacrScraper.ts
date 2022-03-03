@@ -123,16 +123,19 @@ export class FacrScraper extends Scraper implements IFacrScraper {
                     })
             })
 
-            const competitionsData = await (
+            const competitionsData = (await (
                 await Promise.all(competitionsBasicDataFetchers).finally(() => {
                     console.log('FACR Scraper: Successfully scraped competitions data.')
                 })
-            ).flat()
+            )
+                .flat()
+                // Type cast is ok here. We know that there won't be undefined competitions as we filter them here.
+                .filter((c) => c != undefined)) as ScrapedCompetition[]
 
-            // Type cast is ok here. We know that there won't be undefined competitions as we filter them here.
             const scrapedCompetitions = competitionsData.filter(
-                (c) => c != undefined,
-            ) as ScrapedCompetition[]
+                (competition, index, array) =>
+                    array.findIndex(({ facrId }) => facrId === competition.facrId) === index,
+            )
 
             const currentCompetitions = await this.competitionRepository.find()
 
