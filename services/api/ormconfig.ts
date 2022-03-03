@@ -1,6 +1,5 @@
 import { databaseConfig } from './src/dependency/config/database-config'
 import { getValidatedEnvironment } from './src/dependency/config/env'
 
-export default {
-    ...databaseConfig(getValidatedEnvironment(process.env)).typeorm,
-}
+const { typeorm, typeormTest } = databaseConfig(getValidatedEnvironment(process.env))
+export default process.env.NODE_ENV === 'test' ? typeormTest : typeorm

@@ -1,8 +1,7 @@
-import { Connection, createConnection } from 'typeorm'
 import { Policy } from 'cockatiel'
-import { AppConfig } from '../../config/index'
+import { Connection, ConnectionOptions, createConnection } from 'typeorm'
 
-export const bootstrapDbConnection = async (config: AppConfig): Promise<Connection> => {
+export const bootstrapDbConnection = async (config: ConnectionOptions): Promise<Connection> => {
     console.info('DB Bootstrap: Waiting for service...')
 
     const retry = Policy.handleAll()
@@ -21,6 +20,6 @@ export const bootstrapDbConnection = async (config: AppConfig): Promise<Connecti
     })
 
     return retry.execute(async () => {
-        return await createConnection(config.db.typeorm)
+        return await createConnection(config)
     })
 }

@@ -9,7 +9,7 @@ import { bootstrapDbConnection } from './bootstrap/db-connection'
 export const createContainer = async (
     appConfig = getAppConfig(process.env),
 ): Promise<Container> => {
-    const typeormConnection = await bootstrapDbConnection(appConfig)
+    const typeormConnection = await bootstrapDbConnection(appConfig.db.typeorm)
 
     const competitionRepository = getCustomRepository(CompetitionRepository)
     const clubRepository = getCustomRepository(ClubRepository)
