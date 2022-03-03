@@ -7,6 +7,7 @@ import { ClubRepository } from '../../repositories/ClubRepository'
 import { CompetitionRepository } from '../../repositories/CompetitionRepository'
 import chunk from '../utils/chunk'
 import readFiles from '../utils/read-files'
+import { FACRScraperElementNotFoundError } from './errors'
 import { Scraper } from './Scraper'
 import { IFacrScraper, ScrapedClub, ScrapedCompetition } from './types'
 
@@ -41,19 +42,13 @@ export class FacrScraper extends Scraper implements IFacrScraper {
             const regionsPaths = regionsParsedPage.querySelectorAll('div.box a.btn').map((atag) => {
                 const href = atag.getAttribute('href')
                 if (!href) {
-                    // TODO: custom error
-                    throw new Error(
-                        `FACR Scraper: Failed to scrape competitions. Query selector: 'div.box a.btn'. Attribute 'href'`,
-                    )
+                    throw new FACRScraperElementNotFoundError('href in regionPaths')
                 }
                 return href
             })
 
             if (!regionsPaths) {
-                // TODO: custom error
-                throw new Error(
-                    `FACR Scraper: Failed to scrape competitions. Query selector: 'div.box a.btn'`,
-                )
+                throw new FACRScraperElementNotFoundError('regionPaths')
             }
 
             const competitionsBasicDataFetchers = regionsPaths.map(async (regionPath) => {
@@ -67,23 +62,19 @@ export class FacrScraper extends Scraper implements IFacrScraper {
                     parsedCompetitionPage.querySelector('h1.h1')?.innerText
 
                 if (!competitionRegionId) {
-                    throw new Error(
-                        'FACR Scraper: Failed to scrape competitions. Could not get competitionRegionId.',
-                    )
+                    throw new FACRScraperElementNotFoundError('competitionRegionId')
                 }
 
                 if (!competitionRegionName) {
-                    throw new Error(
-                        'FACR Scraper: Failed to scrape competitions. Could not get competitionRegionName.',
-                    )
+                    throw new FACRScraperElementNotFoundError('competitionRegionName')
                 }
                 return parsedCompetitionPage
                     .querySelectorAll('#souteze table.table tbody tr')
                     .map((row: HTMLElement) => {
                         const tableFirstRowContent = row.querySelector('td:nth-child(1)')
                         if (!tableFirstRowContent) {
-                            throw new Error(
-                                'FACR Scraper: Failed to scrape competitions. Query selector: td:nth-child(1)',
+                            throw new FACRScraperElementNotFoundError(
+                                'tableFirstRowContent in #souteze table',
                             )
                         }
 
@@ -99,19 +90,13 @@ export class FacrScraper extends Scraper implements IFacrScraper {
                             ?.split('/')[3]
 
                         if (!facrId) {
-                            throw new Error(
-                                'FACR Scraper: Failed to scrape competitions. Could not get facrId.',
-                            )
+                            throw new FACRScraperElementNotFoundError('facrId')
                         }
                         if (!name) {
-                            throw new Error(
-                                'FACR Scraper: Failed to scrape competitions. Could not get name.',
-                            )
+                            throw new FACRScraperElementNotFoundError('name')
                         }
                         if (!facrUuid) {
-                            throw new Error(
-                                'FACR Scraper: Failed to scrape competitions. Could not get facrUuid.',
-                            )
+                            throw new FACRScraperElementNotFoundError('facrUuid')
                         }
                         return {
                             regionName: competitionRegionName,
