@@ -13,23 +13,16 @@ services:
       - traefik.http.routers.router:${COMPOSE_PROJECT_NAME}:api.rule=Host(`${API_HOST}`)
       - traefik.http.routers.router:${COMPOSE_PROJECT_NAME}:api.service=service:${COMPOSE_PROJECT_NAME}:api
     environment:
-      NODE_ENV: development
+      NODE_ENV: ${NODE_ENV}
       HOST: ${API_HOST}
-      WEB_HOST: ${WEB_HOST}
-      DB_HOST: database
-      DB_PORT: 3306
+      HTTP_SERVER_PORT: ${HTTP_SERVER_PORT}
+      DB_HOST: ${DB_HOST}
+      DB_PORT: ${DB_PORT}
       DB_USER: ${DB_USER}
       DB_PASSWORD: ${DB_PASSWORD}
-      DB_DATABASE: ${DB_DATABASE}
-      APP_ELASTIC_NODE_URL: http://elastic:9200
-      JWT_SECRET: ${API_JWT_SECRET}
-      JWT_EXPIRES: ${API_JWT_EXPIRES}
-      SMTP_CONNECTION_URL: ${SMTP_CONNECTION_URL}
-      NOTION_SECRET: ${NOTION_SECRET}
-      NOTION_DB_ID: ${NOTION_DB_ID}
-      NOTION_TAGS_DB_ID: ${NOTION_TAGS_DB_ID}
+      DB_NAME: ${DB_NAME}
     working_dir: /app
-    command: yarn app:start:dev
+    command: yarn start:dev
     volumes:
       - $ROOT_DIR/services/api:/app
       #ignore this (performance issue)
@@ -37,7 +30,6 @@ services:
     networks:
       - api
       - database
-      - elastic
       - traefik
 networks:
   api:

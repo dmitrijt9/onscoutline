@@ -10,7 +10,11 @@
         "eslint": "yarn eslint",
         "start:dev": "yarn nodemon ./src/index.ts",
         "start:prod": "yarn node ./dist/index.js",
-        "test": "yarn ts-mocha ./test/**/*"
+        "test": "yarn ts-mocha ./test/**/*",
+        "typeorm": "node -r tsconfig-paths/register -r ts-node/register ./src/scripts/typeorm/cli.ts",
+        "scraper:competitions": "node -r tsconfig-paths/register -r ts-node/register ./src/scripts/scraper/competitions.ts",
+        "scraper:clubsUrls": "node -r tsconfig-paths/register -r ts-node/register ./src/scripts/scraper/clubs-urls.ts",
+        "scraper:clubs": "node -r tsconfig-paths/register -r ts-node/register ./src/scripts/scraper/clubs.ts"
     },
     "devDependencies": {
         "@types/eslint": "^8",
@@ -18,6 +22,7 @@
         "@types/jest": "^27.4.0",
         "@types/node": "^17.0.18",
         "@types/prettier": "^2",
+        "@types/yargs": "^17",
         "eslint": "^8.9.0",
         "eslint-config-prettier": "^8.3.0",
         "eslint-import-resolver-typescript": "^2.5.0",
@@ -26,13 +31,20 @@
         "jest": "^27.5.1",
         "nodemon": "^2.0.15",
         "prettier": "^2.5.1",
-        "ts-node": "^10.5.0"
+        "ts-node": "^10.5.0",
+        "tsconfig-paths": "^3.12.0"
     },
     "dependencies": {
         "apollo-server-express": "^3.6.3",
+        "axios": "^0.26.0",
+        "cockatiel": "^2.0.2",
+        "envalid": "^7.2.2",
         "express": "^4.17.2",
-        "node-fetch": "^3.2.0",
+        "helmet": "^5.0.2",
+        "mysql2": "^2.3.3",
         "node-html-parser": "^5.2.0",
-        "typescript": "^4.5.5"
+        "typeorm": "^0.2.43",
+        "typescript": "^4.5.5",
+        "yargs": "^17.3.1"
     }
 }

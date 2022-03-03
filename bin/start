@@ -27,6 +27,7 @@ Options:
                     is runnig
 --no-create         Do not create new service instance when other instances
                     is running
+--service-ports     Run command with the service's ports enabled and mapped to the host
 \n"
 }
 
@@ -91,6 +92,8 @@ NO_CREATE=""
 while [ "$1" != "" ]; do
     case $1 in
         -d | --detach )     SERVICE_OPTIONS="$SERVICE_OPTIONS --detach"
+                            ;;
+        --service-ports )   SERVICE_OPTIONS="$SERVICE_OPTIONS --service-ports"
                             ;;
         --no-kill )         NO_KILL=true
                             ;;

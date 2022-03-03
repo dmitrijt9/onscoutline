@@ -1,6 +1,4 @@
-import fetch from 'node-fetch'
-
-const HARD_KILL_TIMEOUT_MS = 10 * 1000
+import { ExpressApplication } from './dependency/application/ExpressApplication'
 
 const signals = {
     SIGHUP: 1,
@@ -8,23 +6,21 @@ const signals = {
     SIGTERM: 15,
 }
 
+const HARD_KILL_TIMEOUT = 10 * 1000
+
+// Should be more abstract.. Something like new Application, which extends Express Application.
+// But quite sure, that I will have just this express aplication the whole time.
+const expressApplication = new ExpressApplication()
+
 Object.keys(signals).forEach((signal) => {
     process.on(signal, async () => {
         console.log(`SERVER: Got ${signal}. Graceful shutdown.`)
-        // TODO: application shutdown
+        await expressApplication.shutdown(HARD_KILL_TIMEOUT)
         process.exit(0)
     })
 })
 
-const start = async () => {
-    // TODO: Start actual application
-    console.log('Start app...')
-    const response = await fetch('https://souteze.fotbal.cz/subjekty/')
-    const body = response.text()
-    console.log(body)
-}
-
-start().catch((err) => {
+expressApplication.start().catch((err) => {
     console.error(`Error while starting the server ${err}`)
     process.exit(1)
 })

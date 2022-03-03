@@ -1,19 +1,11 @@
 {
+    "extends": "./tsconfig.build.json",
     "compilerOptions": {
-        "experimentalDecorators": true,
-        "inlineSources": false,
-        "module": "commonjs",
-        "noErrorTruncation": true,
-        "noFallthroughCasesInSwitch": true,
-        "noImplicitReturns": true,
-        "noImplicitThis": true,
-        "outDir": "./dist",
-        "sourceMap": true,
-        "target": "ES2020",
-        "emitDecoratorMetadata": true,
-        "lib": ["ES2020"],
-        "esModuleInterop": true,
-        "typeRoots": ["@types"]
+        "paths": {
+            "@root/*": ["./src/*"]
+        },
+        "rootDir": "./",
+        "baseUrl": "./"
     },
-    "include": ["src/**/*", ".eslintrc.js"]
+    "include": ["src/**/*.ts", ".eslintrc.js"]
 }
