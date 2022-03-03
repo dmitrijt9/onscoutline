@@ -2,6 +2,7 @@ import { Connection, getCustomRepository } from 'typeorm'
 import { ClubRepository } from '../../repositories/ClubRepository'
 import { CompetitionRepository } from '../../repositories/CompetitionRepository'
 import { FacrScraper } from '../../services/scrapers/FacrScraper'
+import { IFacrScraper } from '../../services/scrapers/types'
 import { AppConfig, getAppConfig } from '../config/index'
 import { bootstrapDbConnection } from './bootstrap/db-connection'
 
@@ -29,5 +30,5 @@ export interface Container {
     typeormConnection: Connection
     competitionRepository: CompetitionRepository
     clubRepository: ClubRepository
-    facrScraper: FacrScraper
+    facrScraper: IFacrScraper
 }

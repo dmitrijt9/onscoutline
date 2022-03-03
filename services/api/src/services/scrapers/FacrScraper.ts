@@ -8,14 +8,13 @@ import { CompetitionRepository } from '../../repositories/CompetitionRepository'
 import chunk from '../utils/chunk'
 import readFiles from '../utils/read-files'
 import { Scraper } from './Scraper'
-import { ScrapedClub, ScrapedCompetition } from './types'
+import { IFacrScraper, ScrapedClub, ScrapedCompetition } from './types'
 
-export class FacrScraper extends Scraper {
+export class FacrScraper extends Scraper implements IFacrScraper {
     private facrCompetitionsUrl: string
     // private facrMembersUrl: string
 
     // format of the competitions path is -> `${COMPETITION_X_PAGE_PATH_PREFIX}/[UUID]`
-    // private COMPETITION_MAIN_PAGE_PATH_PREFIX = '/turnaje/hlavni'
     private static readonly COMPETITION_CLUBS_PAGE_PATH_PREFIX = '/turnaje/team'
     // private COMPETITION_MATCHES_PAGE_PATH_PREFIX = '/turnaje/zapas'
 
@@ -31,7 +30,7 @@ export class FacrScraper extends Scraper {
         // this.facrMembersUrl = facrScraper.facrMembersUrl
     }
 
-    async scrapeAndSaveCompetitions() {
+    async scrapeAndSaveCompetitions(): Promise<Competition[] | undefined> {
         console.log('FACR Scraper: Starting to scrape competitions data.')
 
         try {
@@ -66,6 +65,18 @@ export class FacrScraper extends Scraper {
 
                 const competitionRegionName =
                     parsedCompetitionPage.querySelector('h1.h1')?.innerText
+
+                if (!competitionRegionId) {
+                    throw new Error(
+                        'FACR Scraper: Failed to scrape competitions. Could not get competitionRegionId.',
+                    )
+                }
+
+                if (!competitionRegionName) {
+                    throw new Error(
+                        'FACR Scraper: Failed to scrape competitions. Could not get competitionRegionName.',
+                    )
+                }
                 return parsedCompetitionPage
                     .querySelectorAll('#souteze table.table tbody tr')
                     .map((row: HTMLElement) => {
@@ -80,16 +91,34 @@ export class FacrScraper extends Scraper {
                             return undefined
                         }
 
-                        // TODO: add validation to query selectors -> throw custom errors if selector not valid..
+                        const facrId = row.querySelector('td:nth-child(1)')?.innerText
+                        const name = row.querySelector('td:nth-child(2) a')?.innerText
+                        const facrUuid = row
+                            .querySelector('td:nth-child(2) a')
+                            ?.getAttribute('href')
+                            ?.split('/')[3]
+
+                        if (!facrId) {
+                            throw new Error(
+                                'FACR Scraper: Failed to scrape competitions. Could not get facrId.',
+                            )
+                        }
+                        if (!name) {
+                            throw new Error(
+                                'FACR Scraper: Failed to scrape competitions. Could not get name.',
+                            )
+                        }
+                        if (!facrUuid) {
+                            throw new Error(
+                                'FACR Scraper: Failed to scrape competitions. Could not get facrUuid.',
+                            )
+                        }
                         return {
                             regionName: competitionRegionName,
                             regionId: competitionRegionId,
-                            facrId: row.querySelector('td:nth-child(1)')?.innerText,
-                            name: row.querySelector('td:nth-child(2) a')?.innerText,
-                            facrUuid: row
-                                .querySelector('td:nth-child(2) a')
-                                ?.getAttribute('href')
-                                ?.split('/')[3],
+                            facrId,
+                            name,
+                            facrUuid,
                         }
                     })
             })
@@ -132,20 +161,19 @@ export class FacrScraper extends Scraper {
                     }
                 })
 
-            await this.competitionRepository.save([
-                ...competitionsToInsert,
-                ...competitionsToUpdate,
-            ])
-
-            console.log(
-                `FACR Scraper: Successfully saved ${competitionsToInsert.length} new competitions.`,
-            )
+            return await this.competitionRepository
+                .save([...competitionsToInsert, ...competitionsToUpdate])
+                .finally(() => {
+                    console.log(
+                        `FACR Scraper: Successfully saved ${competitionsToInsert.length} new competitions.`,
+                    )
+                })
         } catch (e) {
             console.error('FACR Scraper: Error while scraping competitions.', e)
         }
     }
 
-    async saveClubListsUrlsToFile(filePath: string) {
+    async saveClubListsUrlsToFile(filePath: string): Promise<void> {
         console.log('FACR Scraper: Starting to get clubs data.')
 
         try {
@@ -173,7 +201,7 @@ export class FacrScraper extends Scraper {
         }
     }
 
-    async scrapeAndSaveClubs(dirname: string) {
+    async scrapeAndSaveClubs(dirname: string): Promise<Club[] | undefined> {
         const htmlsToScrape: string[] = []
         try {
             readFiles(dirname, (_, content) => {
@@ -268,8 +296,9 @@ export class FacrScraper extends Scraper {
                 }
             })
 
-        await this.clubRepository.save([...clubsToInsert, ...clubsToUpdate])
-        console.log(`FACR Scraper: Successfully saved ${clubsToInsert.length} new clubs.`)
+        return await this.clubRepository.save([...clubsToInsert, ...clubsToUpdate]).finally(() => {
+            console.log(`FACR Scraper: Successfully saved ${clubsToInsert.length} new clubs.`)
+        })
     }
 
     private isTableEmpty(element: HTMLElement) {
