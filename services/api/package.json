@@ -17,7 +17,8 @@
         "typeorm:test": "NODE_ENV=test yarn typeorm",
         "scraper:competitions": "node -r tsconfig-paths/register -r ts-node/register ./src/scripts/scraper/competitions.ts",
         "scraper:clubsUrls": "node -r tsconfig-paths/register -r ts-node/register ./src/scripts/scraper/clubs-urls.ts",
-        "scraper:clubs": "node -r tsconfig-paths/register -r ts-node/register ./src/scripts/scraper/clubs.ts"
+        "scraper:clubs": "node -r tsconfig-paths/register -r ts-node/register ./src/scripts/scraper/clubs.ts",
+        "scraper:players": "node -r tsconfig-paths/register -r ts-node/register ./src/scripts/scraper/players.ts"
     },
     "devDependencies": {
         "@types/eslint": "^8",
@@ -48,6 +49,7 @@
         "helmet": "^5.0.2",
         "mysql2": "^2.3.3",
         "node-html-parser": "^5.2.0",
+        "puppeteer": "^13.4.1",
         "typeorm": "^0.2.43",
         "typescript": "^4.5.5",
         "yargs": "^17.3.1"

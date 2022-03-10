@@ -1,10 +1,11 @@
-export default (arr: string[], len: number) => {
-    const chunks: any[] = []
+export default <T>(arr: T[], len: number) => {
+    const chunks: T[][] = []
     let i = 0
     const n = arr.length
 
     while (i < n) {
-        chunks.push(arr.slice(i, (i += len)))
+        const toPush = arr.slice(i, (i += len))
+        chunks.push(toPush)
     }
 
     return chunks
