@@ -1,7 +1,7 @@
 {
     "compilerOptions": {
         "target": "es6",
-        "lib": ["ES2020"],
+        "lib": ["ES2020", "DOM"],
         "strictNullChecks": true,
         "skipLibCheck": true,
         "experimentalDecorators": true,

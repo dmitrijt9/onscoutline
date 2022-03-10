@@ -1,6 +1,7 @@
 import { Column, Entity, ManyToOne, PrimaryGeneratedColumn } from 'typeorm'
 import { Club } from '../Club'
 import { Player } from '../Player'
+import { ISO8601 } from '../types'
 
 @Entity()
 export class PlayerInClub {
@@ -14,7 +15,7 @@ export class PlayerInClub {
     club: Club
 
     @Column('date', { nullable: false })
-    playingFrom: string
+    playingFrom: ISO8601
 
     @Column({ default: false })
     isOnLoan: boolean

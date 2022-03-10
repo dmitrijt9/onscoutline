@@ -3,7 +3,9 @@ import { ClubRepository } from '../../repositories/ClubRepository'
 import { CompetitionRepository } from '../../repositories/CompetitionRepository'
 import { PlayerInClubRepository } from '../../repositories/PlayerInClubRepository'
 import { PlayerRepository } from '../../repositories/PlayerRepository'
+import { PlayerService } from '../../services/player/PlayerService'
 import { FacrScraper } from '../../services/scrapers/FacrScraper'
+import { PuppeteerBrowser } from '../../services/scrapers/PuppeteerBrowser'
 import { IFacrScraper } from '../../services/scrapers/types'
 import { AppConfig, getAppConfig } from '../config/index'
 import { bootstrapDbConnection } from './bootstrap/db-connection'
@@ -18,7 +20,16 @@ export const createContainer = async (
     const playerRepository = getCustomRepository(PlayerRepository)
     const playerInClubRepository = getCustomRepository(PlayerInClubRepository)
 
-    const facrScraper = new FacrScraper(appConfig, competitionRepository, clubRepository)
+    const playerService = new PlayerService(playerRepository, playerInClubRepository)
+
+    const puppeteerBrowser = new PuppeteerBrowser()
+    const facrScraper = new FacrScraper(
+        appConfig,
+        competitionRepository,
+        clubRepository,
+        playerService,
+        puppeteerBrowser,
+    )
 
     return {
         config: appConfig,

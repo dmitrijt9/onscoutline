@@ -17,7 +17,7 @@ CMD ["yarn", "app:start:prod"]
 FROM temp-base-image as temp-builder-image
 COPY . /app
 RUN yarn install
-RUN yarn app:build
+RUN yarn build
 # # It is cache not remove?!
 # RUN yarn cache clean
 # RUN rm -rf \
@@ -33,3 +33,5 @@ RUN yarn app:build
 ################################
 FROM temp-base-image
 COPY --from=temp-builder-image /app /app
+RUN apt-get update && \
+  apt-get install chromium 
