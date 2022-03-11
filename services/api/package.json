@@ -18,7 +18,9 @@
         "scraper:competitions": "node -r tsconfig-paths/register -r ts-node/register ./src/scripts/scraper/competitions.ts",
         "scraper:clubsUrls": "node -r tsconfig-paths/register -r ts-node/register ./src/scripts/scraper/clubs-urls.ts",
         "scraper:clubs": "node -r tsconfig-paths/register -r ts-node/register ./src/scripts/scraper/clubs.ts",
-        "scraper:players": "node -r tsconfig-paths/register -r ts-node/register ./src/scripts/scraper/players.ts"
+        "scraper:players": "node -r tsconfig-paths/register -r ts-node/register ./src/scripts/scraper/players.ts",
+        "scraper:matchesUrls": "node -r tsconfig-paths/register -r ts-node/register ./src/scripts/scraper/matches-urls.ts",
+        "scraper:matches": "node -r tsconfig-paths/register -r ts-node/register ./src/scripts/scraper/matches.ts"
     },
     "devDependencies": {
         "@types/eslint": "^8",

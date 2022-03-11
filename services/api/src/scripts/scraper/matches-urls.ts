@@ -2,10 +2,10 @@ import yargs from 'yargs'
 import { createContainer } from '../../dependency/container/index'
 
 const scrape = async () => {
-    const defaultFilePath = 'clubs-url-to-open.txt'
+    const defaultFilePath = 'matches-url-to-open.txt'
 
     const argv = await yargs(process.argv)
-        .usage('Get FACR clubs lists urls')
+        .usage('Get FACR matches lists urls')
         .option('path', {
             type: 'string',
             alias: 'p',
@@ -19,7 +19,7 @@ const scrape = async () => {
     const filePath = argv.path ?? defaultFilePath
 
     const container = await createContainer()
-    await container.facrScraper.saveClubListUrlsToFile(filePath)
+    await container.facrScraper.saveMatchesListUrlsToFile(filePath)
 }
 
 scrape()

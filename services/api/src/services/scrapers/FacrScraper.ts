@@ -10,18 +10,25 @@ import chunk from '../utils/chunk'
 import readFiles from '../utils/read-files'
 import { FACRScraperElementNotFoundError } from './errors'
 import { PuppeteerBrowser } from './PuppeteerBrowser'
-import { Scraper } from './Scraper'
-import { IFacrScraper, ScrapedClub, ScrapedCompetition, ScrapedPlayer } from './types'
+import { AbstractScraper } from './AbstractScraper'
+import {
+    IFacrScraper,
+    ScrapedClub,
+    ScrapedCompetition,
+    ScrapedMatchOverview,
+    ScrapedPlayer,
+} from './types'
+import { NewMatchRequest } from '../match/types'
 
-export class FacrScraper extends Scraper implements IFacrScraper {
+export class FacrScraper extends AbstractScraper implements IFacrScraper {
     private facrCompetitionsUrl: string
     private facrMembersUrl: string
 
     // format of the competitions path is -> `${COMPETITION_X_PAGE_PATH_PREFIX}/[UUID]`
     private static readonly COMPETITION_CLUBS_PAGE_PATH_PREFIX = '/turnaje/team'
-    // private COMPETITION_MATCHES_PAGE_PATH_PREFIX = '/turnaje/zapas'
+    private static readonly COMPETITION_MATCHES_PAGE_PATH_PREFIX = '/turnaje/zapas'
 
-    // private static readonly CLUB_MAIN_PAGE_PATH_PREFIX = '/club/club'
+    private static readonly MATCH_DETAIL_PAGE_PATH_PREFIX = '/zapasy/zapas'
 
     constructor(
         { facrScraper }: AppConfig,
@@ -46,13 +53,21 @@ export class FacrScraper extends Scraper implements IFacrScraper {
             const regionsPaths = regionsParsedPage.querySelectorAll('div.box a.btn').map((atag) => {
                 const href = atag.getAttribute('href')
                 if (!href) {
-                    throw new FACRScraperElementNotFoundError('href in regionPaths')
+                    throw new FACRScraperElementNotFoundError(
+                        'href in regionPaths',
+                        'competitions',
+                        'href',
+                    )
                 }
                 return href
             })
 
             if (!regionsPaths) {
-                throw new FACRScraperElementNotFoundError('regionPaths')
+                throw new FACRScraperElementNotFoundError(
+                    'regionPaths',
+                    'competitions',
+                    'div.box a.btn',
+                )
             }
 
             const competitionsBasicDataFetchers = regionsPaths.map(async (regionPath) => {
@@ -66,11 +81,15 @@ export class FacrScraper extends Scraper implements IFacrScraper {
                     parsedCompetitionPage.querySelector('h1.h1')?.innerText
 
                 if (!competitionRegionId) {
-                    throw new FACRScraperElementNotFoundError('competitionRegionId')
+                    throw new FACRScraperElementNotFoundError('competitionRegionId', 'competitions')
                 }
 
                 if (!competitionRegionName) {
-                    throw new FACRScraperElementNotFoundError('competitionRegionName')
+                    throw new FACRScraperElementNotFoundError(
+                        'competitionRegionName',
+                        'competitions',
+                        'h1.h1',
+                    )
                 }
                 return parsedCompetitionPage
                     .querySelectorAll('#souteze table.table tbody tr')
@@ -79,6 +98,8 @@ export class FacrScraper extends Scraper implements IFacrScraper {
                         if (!tableFirstRowContent) {
                             throw new FACRScraperElementNotFoundError(
                                 'tableFirstRowContent in #souteze table',
+                                'competitions',
+                                'td:nth-child(1)',
                             )
                         }
 
@@ -94,13 +115,25 @@ export class FacrScraper extends Scraper implements IFacrScraper {
                             ?.split('/')[3]
 
                         if (!facrId) {
-                            throw new FACRScraperElementNotFoundError('facrId')
+                            throw new FACRScraperElementNotFoundError(
+                                'facrId',
+                                'competitions',
+                                'td:nth-child(1)',
+                            )
                         }
                         if (!name) {
-                            throw new FACRScraperElementNotFoundError('name')
+                            throw new FACRScraperElementNotFoundError(
+                                'name',
+                                'competitions',
+                                'td:nth-child(2) a',
+                            )
                         }
                         if (!facrUuid) {
-                            throw new FACRScraperElementNotFoundError('facrUuid')
+                            throw new FACRScraperElementNotFoundError(
+                                'facrUuid',
+                                'competitions',
+                                'td:nth-child(2) a',
+                            )
                         }
                         return {
                             regionName: competitionRegionName,
@@ -165,7 +198,7 @@ export class FacrScraper extends Scraper implements IFacrScraper {
         }
     }
 
-    async saveClubListsUrlsToFile(filePath: string): Promise<void> {
+    async saveClubListUrlsToFile(filePath: string): Promise<void> {
         console.log('FACR Scraper: Starting to get clubs data.')
 
         try {
@@ -190,6 +223,34 @@ export class FacrScraper extends Scraper implements IFacrScraper {
             }
         } catch (e) {
             console.error('FACR Scraper: Error while getting clubs lists.', e)
+        }
+    }
+
+    async saveMatchesListUrlsToFile(filePath: string): Promise<void> {
+        console.log('FACR Scraper: Starting to get matches data.')
+
+        try {
+            const competitions = await this.competitionRepository.find()
+            if (competitions.length <= 0) {
+                console.log('FACR Scraper: No competitions to get match lists.')
+                return
+            }
+
+            const urls = competitions.map((c) => {
+                return `${this.facrCompetitionsUrl}${FacrScraper.COMPETITION_MATCHES_PAGE_PATH_PREFIX}/${c.facrUuid}`
+            })
+            const chunks = chunk(urls, 100)
+
+            for (const [i, chunk] of chunks.entries()) {
+                const dataToWrite = chunk.reduce((dataToWrite: string, url: string) => {
+                    dataToWrite += url + '\n'
+                    return dataToWrite
+                }, '')
+
+                writeFileSync(`${i}-${filePath}`, dataToWrite, 'utf-8')
+            }
+        } catch (e) {
+            console.error('FACR Scraper: Error while getting match lists.', e)
         }
     }
 
@@ -370,6 +431,7 @@ export class FacrScraper extends Scraper implements IFacrScraper {
             if (!numberOfClubInputElement) {
                 throw new FACRScraperElementNotFoundError(
                     'numberOfClubInputElement',
+                    'players',
                     '#ctl00_MainContent_OddilBoxClenem_txtCisloKlubu',
                 )
             }
@@ -396,6 +458,7 @@ export class FacrScraper extends Scraper implements IFacrScraper {
             if (!suggestedClubLinkElement) {
                 throw new FACRScraperElementNotFoundError(
                     'suggestedClubLinkElement',
+                    'players',
                     '.ui-autocomplete .ui-menu-item a',
                 )
             }
@@ -415,6 +478,7 @@ export class FacrScraper extends Scraper implements IFacrScraper {
             if (!searchButtonElement) {
                 throw new FACRScraperElementNotFoundError(
                     'searchButtonElement',
+                    'players',
                     '#MainContent_btnSearch > span',
                 )
             }
@@ -438,6 +502,7 @@ export class FacrScraper extends Scraper implements IFacrScraper {
             if (!paginationSummaryElement) {
                 throw new FACRScraperElementNotFoundError(
                     'paginationSummaryElement',
+                    'players',
                     '.pages .sumary',
                 )
             }
@@ -454,7 +519,7 @@ export class FacrScraper extends Scraper implements IFacrScraper {
                     visible: true,
                 })
                 if (!bodyElement) {
-                    throw new FACRScraperElementNotFoundError('bodyElement', 'body')
+                    throw new FACRScraperElementNotFoundError('bodyElement', 'players', 'body')
                 }
                 const currentPageHtml = await bodyElement.evaluate((element) => element.innerHTML)
                 htmlBodiesWithPlayers.push(currentPageHtml)
@@ -471,6 +536,7 @@ export class FacrScraper extends Scraper implements IFacrScraper {
                     if (!nextPageLinkElement) {
                         throw new FACRScraperElementNotFoundError(
                             'nextPageLinkElement',
+                            'players',
                             '.pages .paging li:nth-last-child(2) a',
                         )
                     }
@@ -489,6 +555,7 @@ export class FacrScraper extends Scraper implements IFacrScraper {
                     if (!tableElement) {
                         throw new FACRScraperElementNotFoundError(
                             'tableElement',
+                            'players',
                             '#MainContent_VypisClenu1_gridData',
                         )
                     }
@@ -498,6 +565,7 @@ export class FacrScraper extends Scraper implements IFacrScraper {
                     if (!tableRowElemnts) {
                         throw new FACRScraperElementNotFoundError(
                             'tableRowElemnts',
+                            'players',
                             'tr:not(.first)',
                         )
                     }
@@ -505,7 +573,11 @@ export class FacrScraper extends Scraper implements IFacrScraper {
                     return tableRowElemnts.map((rowElement) => {
                         const facrId = rowElement.querySelector('td.first')?.innerText
                         if (!facrId) {
-                            throw new FACRScraperElementNotFoundError('player facrId', 'td.first')
+                            throw new FACRScraperElementNotFoundError(
+                                'player facrId',
+                                'players',
+                                'td.first',
+                            )
                         }
 
                         if (facrId === '&nbsp;') {
@@ -516,6 +588,7 @@ export class FacrScraper extends Scraper implements IFacrScraper {
                         if (!surname) {
                             throw new FACRScraperElementNotFoundError(
                                 'player surname',
+                                'players',
                                 'td:nth-child(2) a',
                             )
                         }
@@ -524,6 +597,7 @@ export class FacrScraper extends Scraper implements IFacrScraper {
                         if (!name) {
                             throw new FACRScraperElementNotFoundError(
                                 'player name',
+                                'players',
                                 'td:nth-child(3) a',
                             )
                         }
@@ -531,6 +605,7 @@ export class FacrScraper extends Scraper implements IFacrScraper {
                         if (!yearOfBirth) {
                             throw new FACRScraperElementNotFoundError(
                                 'player yearOfBirth',
+                                'players',
                                 'td:nth-child(4)',
                             )
                         }
@@ -539,6 +614,7 @@ export class FacrScraper extends Scraper implements IFacrScraper {
                         if (!playingFrom) {
                             throw new FACRScraperElementNotFoundError(
                                 'player playingFrom',
+                                'players',
                                 'td:nth-child(7)',
                             )
                         }
@@ -548,6 +624,7 @@ export class FacrScraper extends Scraper implements IFacrScraper {
                         if (!facrMemberFrom) {
                             throw new FACRScraperElementNotFoundError(
                                 'player facrMemberFrom',
+                                'players',
                                 'td:nth-child(8)',
                             )
                         }
@@ -575,6 +652,157 @@ export class FacrScraper extends Scraper implements IFacrScraper {
             throw e
         } finally {
             await browser.close()
+        }
+    }
+
+    async scrapeMatches(htmlsToScrape: string[]): Promise<NewMatchRequest[]> {
+        console.time('scrapeMatches')
+        console.info(
+            `FACR Scraper: Start to scrape matches from HTML files ${htmlsToScrape.length}.`,
+        )
+        let totalMatchesToScrape = 0
+        const scrapedMatchOverviews: ScrapedMatchOverview[] = htmlsToScrape
+            .map((htmlToScrape) => {
+                const parsedHtml = this.parseHtml(htmlToScrape)
+                const matchRows = parsedHtml.querySelectorAll('.match-meta .row')
+
+                return matchRows.map((matchRow) => {
+                    const linkElement = matchRow.querySelector('div:nth-child(2) a')
+                    if (!linkElement) {
+                        return undefined
+                    }
+
+                    totalMatchesToScrape++
+
+                    const url = linkElement.getAttribute('href')
+                    if (!url) {
+                        throw new FACRScraperElementNotFoundError('url', 'matches', 'href')
+                    }
+                    const facrUuid = url.split('/').slice(-1).pop()
+
+                    const takePlace = matchRow.querySelector('div:nth-child(1)')?.innerText
+                    if (!takePlace) {
+                        throw new FACRScraperElementNotFoundError(
+                            'takePlace',
+                            'matches',
+                            'div:nth-child(1)',
+                        )
+                    }
+
+                    return {
+                        facrUuid,
+                        takePlace: takePlace.trim(),
+                    }
+                })
+            })
+            .flat()
+            .filter(
+                (scrapedMatchOverview): scrapedMatchOverview is ScrapedMatchOverview =>
+                    !!scrapedMatchOverview,
+            )
+
+        const chunks = chunk(scrapedMatchOverviews, 5)
+        const scrapedMatches: NewMatchRequest[] = []
+        for (const chunk of chunks) {
+            const scrapePromises = chunk.map(
+                async (matchOverview) => await this.scrapeMatchDetailPage(matchOverview),
+            )
+            const scraped = (await Promise.all(scrapePromises)).filter(
+                (scrapedMatch): scrapedMatch is NewMatchRequest => !!scrapedMatch,
+            )
+
+            scrapedMatches.push(...scraped)
+        }
+
+        console.timeEnd('scrapeMatches')
+        console.info(
+            `FACR Scraper: Successfully scraped ${scrapedMatches.length} matches from total ${totalMatchesToScrape} matches to scrape.`,
+        )
+        return scrapedMatches
+    }
+
+    private async scrapeMatchDetailPage(
+        matchOverview: ScrapedMatchOverview,
+    ): Promise<NewMatchRequest | undefined> {
+        console.info(`FACR Scraper: Start to scrape a match: ${matchOverview.facrUuid}`)
+        const { facrUuid, takePlace } = matchOverview
+        let matchDetailHtml: HTMLElement | null = null
+        const url = `${this.facrCompetitionsUrl}${FacrScraper.MATCH_DETAIL_PAGE_PATH_PREFIX}/${facrUuid}`
+        try {
+            matchDetailHtml = await this.getParsedPage(url)
+        } catch (e) {
+            console.warn(
+                `FACR Scraper: Could not get parsed match detail page: ${url}. Skipping to the next match.`,
+                e,
+            )
+            return
+        }
+
+        // TODO: Scrape match details
+        const homeTeam = matchDetailHtml.querySelector(
+            'h2.h2 .row div:nth-child(1) span',
+        )?.innerText
+        if (!homeTeam) {
+            throw new FACRScraperElementNotFoundError(
+                'homeTeam',
+                'matches',
+                'h2.h2 .row div:nth-child(1) span',
+            )
+        }
+
+        const awayTeam = matchDetailHtml.querySelector(
+            'h2.h2 .row div:nth-child(3) span',
+        )?.innerText
+        if (!awayTeam) {
+            throw new FACRScraperElementNotFoundError(
+                'awayTeam',
+                'matches',
+                'h2.h2 .row div:nth-child(3) span',
+            )
+        }
+
+        let score: string | null = null
+        const scoreContainer = matchDetailHtml.querySelector(
+            'h2.h2 .row div:nth-child(2)',
+        )?.innerText
+        if (scoreContainer?.trim() !== '') {
+            const scrapedScore = matchDetailHtml.querySelector(
+                'h2.h2 .row div:nth-child(2) p.h2',
+            )?.innerText
+            if (!scrapedScore) {
+                console.log('content:', scoreContainer?.trim())
+
+                throw new FACRScraperElementNotFoundError(
+                    'score',
+                    `matches ${url}`,
+                    'h2.h2 .row div:nth-child(2) p.h2',
+                )
+            }
+
+            score = scrapedScore
+        }
+
+        let homeTeamScore: number | null = null
+        let awayTeamScore: number | null = null
+        if (score) {
+            const [hScore, aScore] = score.split(':')
+            homeTeamScore = parseInt(hScore)
+            awayTeamScore = parseInt(aScore)
+        }
+
+        // TODO: scrape linups and goalscorers
+        return {
+            facrUuid,
+            takePlace,
+            homeTeamScore,
+            awayTeamScore,
+            homeTeam,
+            awayTeam,
+            lineups: {
+                home: [],
+                away: [],
+            },
+            goalScorers: [],
         }
     }
 
