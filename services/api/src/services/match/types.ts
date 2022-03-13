@@ -12,7 +12,6 @@ export type NewMatchRequest = {
 type GoalScorerRequest = {
     player: string
     minute: number
-    assistPlayer?: string
     type: string
     team: string
 }
@@ -26,8 +25,8 @@ type MatchPlayerRequest = {
     shirt: number
     position: string
     fullname: string
-    yellowCards: number
-    redCards: number
-    substitutionMinute: number
+    yellowCard: boolean
+    redCard: boolean
+    substitution: string
     isInStartingLineup: boolean
 }

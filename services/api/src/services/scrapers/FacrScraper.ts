@@ -770,8 +770,6 @@ export class FacrScraper extends AbstractScraper implements IFacrScraper {
                 'h2.h2 .row div:nth-child(2) p.h2',
             )?.innerText
             if (!scrapedScore) {
-                console.log('content:', scoreContainer?.trim())
-
                 throw new FACRScraperElementNotFoundError(
                     'score',
                     `matches ${url}`,
@@ -790,7 +788,36 @@ export class FacrScraper extends AbstractScraper implements IFacrScraper {
             awayTeamScore = parseInt(aScore)
         }
 
-        // TODO: scrape linups and goalscorers
+        const homeTeamLineupRows = matchDetailHtml.querySelectorAll(
+            '.container-content div:nth-child(5) div:nth-child(1) table.table tbody:nth-child(2) tr',
+        )
+
+        const homeTeamSubstitutesRows = matchDetailHtml.querySelectorAll(
+            '.container-content div:nth-child(5) div:nth-child(1) table.table tbody:nth-child(4) tr',
+        )
+
+        const awayTeamLineupRows = matchDetailHtml.querySelectorAll(
+            '.container-content div:nth-child(5) div:nth-child(2) table.table tbody:nth-child(2) tr',
+        )
+
+        const awayTeamSubstitutesRows = matchDetailHtml.querySelectorAll(
+            '.container-content div:nth-child(5) div:nth-child(2) table.table tbody:nth-child(4) tr',
+        )
+
+        const homeTeamMatchLineup = this.scrapeMatchTeamLineup(
+            homeTeamLineupRows,
+            homeTeamSubstitutesRows,
+        )
+
+        const awayTeamMatchLineup = this.scrapeMatchTeamLineup(
+            awayTeamLineupRows,
+            awayTeamSubstitutesRows,
+        )
+
+        const goalscorersRows = matchDetailHtml.querySelectorAll(
+            '.container-content>table.table tbody tr',
+        )
+
         return {
             facrUuid,
             takePlace,
@@ -799,11 +826,137 @@ export class FacrScraper extends AbstractScraper implements IFacrScraper {
             homeTeam,
             awayTeam,
             lineups: {
-                home: [],
-                away: [],
+                home: homeTeamMatchLineup,
+                away: awayTeamMatchLineup,
             },
-            goalScorers: [],
+            goalScorers: this.scrapeGoalscorers(goalscorersRows),
         }
+    }
+
+    private scrapeMatchTeamLineup(lineupRows: HTMLElement[], substituteRows: HTMLElement[]) {
+        const lineup = lineupRows.map((row) => {
+            const shirt = row.querySelector('td:nth-child(1)')?.innerText?.trim()
+            if (shirt === undefined) {
+                throw new FACRScraperElementNotFoundError('shirt', 'matches', 'td:nth-child(1)')
+            }
+
+            const position = row.querySelector('td:nth-child(2) span')?.getAttribute('title')
+            if (position === undefined) {
+                throw new FACRScraperElementNotFoundError('position', 'matches', 'td:nth-child(2)')
+            }
+
+            const fullname = row.querySelector('td:nth-child(3)')?.innerText?.trim()
+            if (fullname === undefined) {
+                throw new FACRScraperElementNotFoundError('fullname', 'matches', 'td:nth-child(3)')
+            }
+            const yellowCard = row.querySelector('td:nth-child(4)')?.innerText?.trim()
+            if (yellowCard === undefined) {
+                throw new FACRScraperElementNotFoundError(
+                    'yellowCard',
+                    'matches',
+                    'td:nth-child(4)',
+                )
+            }
+            const redCard = row.querySelector('td:nth-child(5)')?.innerText?.trim()
+            if (redCard === undefined) {
+                throw new FACRScraperElementNotFoundError('redCard', 'matches', 'td:nth-child(5)')
+            }
+            const substitution = row.querySelector('td:nth-child(6)')?.innerText?.trim()
+            if (substitution === undefined) {
+                throw new FACRScraperElementNotFoundError(
+                    'substitution',
+                    'matches',
+                    'td:nth-child(6)',
+                )
+            }
+
+            return {
+                shirt: shirt !== '' ? parseInt(shirt) : 0,
+                position,
+                fullname,
+                yellowCard: yellowCard !== '' ? true : false,
+                redCard: redCard !== '' ? true : false,
+                substitution,
+                isInStartingLineup: true,
+            }
+        })
+
+        const substitutes = substituteRows.map((row) => {
+            const shirt = row.querySelector('td:nth-child(1)')?.innerText?.trim()
+            if (shirt === undefined) {
+                throw new FACRScraperElementNotFoundError('shirt', 'matches', 'td:nth-child(1)')
+            }
+
+            const position = row.querySelector('td:nth-child(2) span')?.getAttribute('title')
+            if (position === undefined) {
+                throw new FACRScraperElementNotFoundError('position', 'matches', 'td:nth-child(2)')
+            }
+
+            const fullname = row.querySelector('td:nth-child(3)')?.innerText?.trim()
+            if (fullname === undefined) {
+                throw new FACRScraperElementNotFoundError('fullname', 'matches', 'td:nth-child(3)')
+            }
+            const yellowCard = row.querySelector('td:nth-child(4)')?.innerText?.trim()
+            if (yellowCard === undefined) {
+                throw new FACRScraperElementNotFoundError(
+                    'yellowCard',
+                    'matches',
+                    'td:nth-child(4)',
+                )
+            }
+            const redCard = row.querySelector('td:nth-child(5)')?.innerText?.trim()
+            if (redCard === undefined) {
+                throw new FACRScraperElementNotFoundError('redCard', 'matches', 'td:nth-child(5)')
+            }
+            const substitution = row.querySelector('td:nth-child(6)')?.innerText?.trim()
+            if (substitution === undefined) {
+                throw new FACRScraperElementNotFoundError(
+                    'substitution',
+                    'matches',
+                    'td:nth-child(6)',
+                )
+            }
+
+            return {
+                shirt: shirt !== '' ? parseInt(shirt) : 0,
+                position,
+                fullname,
+                yellowCard: yellowCard !== '' ? true : false,
+                redCard: redCard !== '' ? true : false,
+                substitution,
+                isInStartingLineup: false,
+            }
+        })
+
+        return [...lineup, ...substitutes]
+    }
+
+    private scrapeGoalscorers(goalScorerRows: HTMLElement[]) {
+        return goalScorerRows.map((row) => {
+            const team = row.querySelector('td:nth-child(1)')?.innerText?.trim()
+            if (team === undefined) {
+                throw new FACRScraperElementNotFoundError('team', 'matches', 'td:nth-child(1)')
+            }
+            const player = row.querySelector('td:nth-child(2)')?.innerText?.trim()
+            if (player === undefined) {
+                throw new FACRScraperElementNotFoundError('player', 'matches', 'td:nth-child(2)')
+            }
+            const type = row.querySelector('td:nth-child(3)')?.innerText?.trim()
+            if (type === undefined) {
+                throw new FACRScraperElementNotFoundError('type', 'matches', 'td:nth-child(3)')
+            }
+            const minute = row.querySelector('td:nth-child(4)')?.innerText?.trim()
+            if (minute === undefined) {
+                throw new FACRScraperElementNotFoundError('minute', 'matches', 'td:nth-child(4)')
+            }
+
+            return {
+                team,
+                player,
+                type,
+                minute: minute !== '' ? parseInt(minute) : 0,
+            }
+        })
     }
 
     private isTableEmpty(element: HTMLElement) {
