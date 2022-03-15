@@ -25,7 +25,6 @@ export class FacrScraper extends AbstractScraper implements IFacrScraper {
     private facrMembersUrl: string
 
     // format of the competitions path is -> `${COMPETITION_X_PAGE_PATH_PREFIX}/[UUID]`
-    private static readonly COMPETITION_CLUBS_PAGE_PATH_PREFIX = '/turnaje/team'
     private static readonly COMPETITION_MATCHES_PAGE_PATH_PREFIX = '/turnaje/zapas'
 
     private static readonly MATCH_DETAIL_PAGE_PATH_PREFIX = '/zapasy/zapas'
@@ -158,34 +157,6 @@ export class FacrScraper extends AbstractScraper implements IFacrScraper {
         )
 
         return scrapedCompetitionsData
-    }
-
-    async saveClubListUrlsToFile(filePath: string): Promise<void> {
-        console.log('FACR Scraper: Starting to get clubs data.')
-
-        try {
-            const competitions = await this.competitionRepository.find()
-            if (competitions.length <= 0) {
-                console.log('FACR Scraper: No competitions to get clubs lists.')
-                return
-            }
-
-            const urls = competitions.map((c) => {
-                return `${this.facrCompetitionsUrl}${FacrScraper.COMPETITION_CLUBS_PAGE_PATH_PREFIX}/${c.facrUuid}`
-            })
-            const chunks = chunk(urls, 100)
-
-            for (const [i, chunk] of chunks.entries()) {
-                const dataToWrite = chunk.reduce((dataToWrite: string, url: string) => {
-                    dataToWrite += url + '\n'
-                    return dataToWrite
-                }, '')
-
-                writeFileSync(`${i}-${filePath}`, dataToWrite, 'utf-8')
-            }
-        } catch (e) {
-            console.error('FACR Scraper: Error while getting clubs lists.', e)
-        }
     }
 
     async saveMatchesListUrlsToFile(filePath: string): Promise<void> {

@@ -22,7 +22,7 @@ export const createContainer = async (
     const playerInClubRepository = getCustomRepository(PlayerInClubRepository)
 
     const playerService = new PlayerService(playerRepository, playerInClubRepository)
-    const competitionService = new CompetitionService(competitionRepository)
+    const competitionService = new CompetitionService(competitionRepository, appConfig)
 
     const puppeteerBrowser = new PuppeteerBrowser()
     const facrScraper = new FacrScraper(

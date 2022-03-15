@@ -1,9 +1,19 @@
+import { writeFileSync } from 'fs'
+import { AppConfig } from '../../dependency/config/index'
 import { Competition } from '../../entities/Competition'
 import { CompetitionRepository } from '../../repositories/CompetitionRepository'
+import chunk from '../utils/chunk'
 import { NewCompetitionRequest } from './types'
 
 export class CompetitionService {
-    constructor(private readonly competitionRepository: CompetitionRepository) {}
+    private facrCompetitionsUrl: string
+    private static readonly COMPETITION_CLUBS_PAGE_PATH_PREFIX = '/turnaje/team'
+    constructor(
+        private readonly competitionRepository: CompetitionRepository,
+        { facrScraper }: AppConfig,
+    ) {
+        this.facrCompetitionsUrl = facrScraper.facrCompetitionsUrl
+    }
 
     async saveNewCompetitions(newCompetitions: NewCompetitionRequest[]): Promise<Competition[]> {
         const currentCompetitions = await this.competitionRepository.find()
@@ -38,5 +48,33 @@ export class CompetitionService {
             ...competitionsToInsert,
             ...competitionsToUpdate,
         ])
+    }
+
+    async writeUrlsOfListsOfClubsToFile(filePath: string): Promise<void> {
+        console.log('Competitions: Starting to get urls of lists of clubs from competitions.')
+
+        const competitions = await this.competitionRepository.find()
+        if (competitions.length <= 0) {
+            console.log(
+                'Competitions: No competitions to get clubs lists. Need to scrape competitions first.',
+            )
+            return
+        }
+
+        const urls = competitions.map(({ facrUuid }) => {
+            return `${this.facrCompetitionsUrl}${CompetitionService.COMPETITION_CLUBS_PAGE_PATH_PREFIX}/${facrUuid}`
+        })
+        const chunks = chunk(urls, 100)
+
+        for (const [i, chunk] of chunks.entries()) {
+            const dataToWrite = chunk.reduce((dataToWrite: string, url: string) => {
+                dataToWrite += url + '\n'
+                return dataToWrite
+            }, '')
+
+            writeFileSync(`${i}-${filePath}`, dataToWrite, 'utf-8')
+        }
+
+        console.log(`Competitions: Successfully written ${urls.length} urls to files.`)
     }
 }
