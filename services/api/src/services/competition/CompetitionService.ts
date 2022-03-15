@@ -8,6 +8,7 @@ import { NewCompetitionRequest } from './types'
 export class CompetitionService {
     private facrCompetitionsUrl: string
     private static readonly COMPETITION_CLUBS_PAGE_PATH_PREFIX = '/turnaje/team'
+    private static readonly COMPETITION_MATCHES_PAGE_PATH_PREFIX = '/turnaje/zapas'
     constructor(
         private readonly competitionRepository: CompetitionRepository,
         { facrScraper }: AppConfig,
@@ -63,6 +64,34 @@ export class CompetitionService {
 
         const urls = competitions.map(({ facrUuid }) => {
             return `${this.facrCompetitionsUrl}${CompetitionService.COMPETITION_CLUBS_PAGE_PATH_PREFIX}/${facrUuid}`
+        })
+        const chunks = chunk(urls, 100)
+
+        for (const [i, chunk] of chunks.entries()) {
+            const dataToWrite = chunk.reduce((dataToWrite: string, url: string) => {
+                dataToWrite += url + '\n'
+                return dataToWrite
+            }, '')
+
+            writeFileSync(`${i}-${filePath}`, dataToWrite, 'utf-8')
+        }
+
+        console.log(`Competitions: Successfully written ${urls.length} urls to files.`)
+    }
+
+    async writeUrlsOfListsOfMatchesToFile(filePath: string): Promise<void> {
+        console.log('Competitions: Starting to get urls of lists of matches from competitions.')
+
+        const competitions = await this.competitionRepository.find()
+        if (competitions.length <= 0) {
+            console.log(
+                'Competitions: No competitions to get match lists. Need to scrape competitions first.',
+            )
+            return
+        }
+
+        const urls = competitions.map(({ facrUuid }) => {
+            return `${this.facrCompetitionsUrl}${CompetitionService.COMPETITION_MATCHES_PAGE_PATH_PREFIX}/${facrUuid}`
         })
         const chunks = chunk(urls, 100)
 

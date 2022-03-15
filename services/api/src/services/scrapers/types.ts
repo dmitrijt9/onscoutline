@@ -15,7 +15,6 @@ export interface IFacrScraper {
     scrapeAndSaveClubs(dirname: string): Promise<Club[] | undefined>
     scrapeAndSavePlayersOfAllClubs(): Promise<void>
     scrapeAndSavePlayersOfAClub(clubFacrId: Club['facrId']): Promise<void>
-    saveMatchesListUrlsToFile(filePath: string): Promise<void>
     scrapeMatches(htmlsToScrape: string[]): Promise<NewMatchRequest[]>
 }
 

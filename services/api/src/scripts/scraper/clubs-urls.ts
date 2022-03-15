@@ -24,6 +24,7 @@ const scrape = async () => {
 
 scrape()
     .then(() => {
+        console.log('✅ Clubs urls script done.')
         process.exit(0)
     })
     .catch((e) => {

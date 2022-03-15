@@ -1,9 +1,7 @@
-import { writeFileSync } from 'fs'
 import { HTMLElement } from 'node-html-parser'
 import { AppConfig } from '../../dependency/config/index'
 import { Club } from '../../entities/Club'
 import { ClubRepository } from '../../repositories/ClubRepository'
-import { CompetitionRepository } from '../../repositories/CompetitionRepository'
 import { NewCompetitionRequest } from '../competition/types'
 import { NewMatchRequest } from '../match/types'
 import { PlayerService } from '../player/PlayerService'
@@ -25,13 +23,11 @@ export class FacrScraper extends AbstractScraper implements IFacrScraper {
     private facrMembersUrl: string
 
     // format of the competitions path is -> `${COMPETITION_X_PAGE_PATH_PREFIX}/[UUID]`
-    private static readonly COMPETITION_MATCHES_PAGE_PATH_PREFIX = '/turnaje/zapas'
 
     private static readonly MATCH_DETAIL_PAGE_PATH_PREFIX = '/zapasy/zapas'
 
     constructor(
         { facrScraper }: AppConfig,
-        private readonly competitionRepository: CompetitionRepository,
         private readonly clubRepository: ClubRepository,
         private readonly playerService: PlayerService,
         private readonly puppeteerBrowser: PuppeteerBrowser,
@@ -157,34 +153,6 @@ export class FacrScraper extends AbstractScraper implements IFacrScraper {
         )
 
         return scrapedCompetitionsData
-    }
-
-    async saveMatchesListUrlsToFile(filePath: string): Promise<void> {
-        console.log('FACR Scraper: Starting to get matches data.')
-
-        try {
-            const competitions = await this.competitionRepository.find()
-            if (competitions.length <= 0) {
-                console.log('FACR Scraper: No competitions to get match lists.')
-                return
-            }
-
-            const urls = competitions.map((c) => {
-                return `${this.facrCompetitionsUrl}${FacrScraper.COMPETITION_MATCHES_PAGE_PATH_PREFIX}/${c.facrUuid}`
-            })
-            const chunks = chunk(urls, 100)
-
-            for (const [i, chunk] of chunks.entries()) {
-                const dataToWrite = chunk.reduce((dataToWrite: string, url: string) => {
-                    dataToWrite += url + '\n'
-                    return dataToWrite
-                }, '')
-
-                writeFileSync(`${i}-${filePath}`, dataToWrite, 'utf-8')
-            }
-        } catch (e) {
-            console.error('FACR Scraper: Error while getting match lists.', e)
-        }
     }
 
     async scrapeAndSaveClubs(dirname: string): Promise<Club[] | undefined> {

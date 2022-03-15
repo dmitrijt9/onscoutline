@@ -51,7 +51,11 @@ describe('FacrScraper', () => {
                 return parse(mainCompetitionsTestHtmlString)
             })
 
-        const savedCompetitions = await facrScraper.scrapeAndSaveCompetitions()
+        const scrapedCompetitions = await facrScraper.scrapeCompetitions()
+        const savedCompetitions =
+            await testingClient.container.competitionService.saveNewCompetitions(
+                scrapedCompetitions,
+            )
 
         expect(getParsedPageMock).toHaveBeenCalled()
         expect(savedCompetitions).not.toBeUndefined()

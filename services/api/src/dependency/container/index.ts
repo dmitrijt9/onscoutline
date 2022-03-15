@@ -25,13 +25,7 @@ export const createContainer = async (
     const competitionService = new CompetitionService(competitionRepository, appConfig)
 
     const puppeteerBrowser = new PuppeteerBrowser()
-    const facrScraper = new FacrScraper(
-        appConfig,
-        competitionRepository,
-        clubRepository,
-        playerService,
-        puppeteerBrowser,
-    )
+    const facrScraper = new FacrScraper(appConfig, clubRepository, playerService, puppeteerBrowser)
 
     return {
         config: appConfig,
