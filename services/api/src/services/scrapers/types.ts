@@ -3,6 +3,7 @@ import { Club } from '../../entities/Club'
 import { Competition } from '../../entities/Competition'
 import { Player } from '../../entities/Player'
 import { ISO8601 } from '../../entities/types'
+import { NewClubRequest } from '../club/types'
 import { NewCompetitionRequest } from '../competition/types'
 import { NewMatchRequest } from '../match/types'
 
@@ -12,7 +13,7 @@ export interface IScraper {
 
 export interface IFacrScraper {
     scrapeCompetitions(): Promise<NewCompetitionRequest[]>
-    scrapeAndSaveClubs(dirname: string): Promise<Club[] | undefined>
+    scrapeClubs(dirname: string): Promise<NewClubRequest[]>
     scrapeAndSavePlayersOfAllClubs(): Promise<void>
     scrapeAndSavePlayersOfAClub(clubFacrId: Club['facrId']): Promise<void>
     scrapeMatches(htmlsToScrape: string[]): Promise<NewMatchRequest[]>

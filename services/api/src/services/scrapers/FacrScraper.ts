@@ -2,13 +2,14 @@ import { HTMLElement } from 'node-html-parser'
 import { AppConfig } from '../../dependency/config/index'
 import { Club } from '../../entities/Club'
 import { ClubRepository } from '../../repositories/ClubRepository'
+import { NewClubRequest } from '../club/types'
 import { NewCompetitionRequest } from '../competition/types'
 import { NewMatchRequest } from '../match/types'
 import { PlayerService } from '../player/PlayerService'
 import chunk from '../utils/chunk'
 import readFiles from '../utils/read-files'
 import { AbstractScraper } from './AbstractScraper'
-import { FACRScraperElementNotFoundError } from './errors'
+import { FACRScraperElementNotFoundError, FACRScraperNoHTMLS } from './errors'
 import { PuppeteerBrowser } from './PuppeteerBrowser'
 import {
     IFacrScraper,
@@ -23,7 +24,6 @@ export class FacrScraper extends AbstractScraper implements IFacrScraper {
     private facrMembersUrl: string
 
     // format of the competitions path is -> `${COMPETITION_X_PAGE_PATH_PREFIX}/[UUID]`
-
     private static readonly MATCH_DETAIL_PAGE_PATH_PREFIX = '/zapasy/zapas'
 
     constructor(
@@ -155,18 +155,17 @@ export class FacrScraper extends AbstractScraper implements IFacrScraper {
         return scrapedCompetitionsData
     }
 
-    async scrapeAndSaveClubs(dirname: string): Promise<Club[] | undefined> {
+    async scrapeClubs(dirname: string): Promise<NewClubRequest[]> {
         const htmlsToScrape: string[] = []
-        try {
-            readFiles(dirname, (_, content) => {
-                htmlsToScrape.push(content)
-            })
-        } catch (e) {
-            console.error('FACR Scraper: Error while scraping clubs.', e)
-            return
+        readFiles(dirname, (_, content) => {
+            htmlsToScrape.push(content)
+        })
+
+        if (!htmlsToScrape.length) {
+            throw new FACRScraperNoHTMLS(dirname, 'clubs')
         }
 
-        const clubsData: ScrapedClub[] = htmlsToScrape
+        const scrapedClubs: ScrapedClub[] = htmlsToScrape
             .map((htmlToScrape) => {
                 const parsedHtml = this.parseHtml(htmlToScrape)
 
@@ -175,8 +174,10 @@ export class FacrScraper extends AbstractScraper implements IFacrScraper {
                 )
 
                 if (!tableElement) {
-                    throw new Error(
-                        'FACR Scraper: Error while scraping clubs. Table element not found.',
+                    throw new FACRScraperElementNotFoundError(
+                        'tableElement',
+                        'clubs',
+                        '.container-content .table-container .table',
                     )
                 }
 
@@ -194,21 +195,24 @@ export class FacrScraper extends AbstractScraper implements IFacrScraper {
                     const clubLink = clubRow.querySelector('td:nth-child(2) a')
                     const idColumn = clubRow.querySelector('td:nth-child(3)')
                     if (!nameColumn) {
-                        // TODO: custom error for scraper missconfigurations, clubRow as a payload
-                        throw new Error(
-                            `FACR Scraper: Failed to scrape clubs. Query selector: 'td:nth-child(2)'`,
+                        throw new FACRScraperElementNotFoundError(
+                            'nameColumn',
+                            'clubs',
+                            'td:nth-child(2)',
                         )
                     }
                     if (!clubLink) {
-                        // TODO: custom error for scraper missconfigurations, clubRow as a payload
-                        throw new Error(
-                            `FACR Scraper: Failed to scrape clubs. Query selector: 'td:nth-child(2) a'`,
+                        throw new FACRScraperElementNotFoundError(
+                            'clubLink',
+                            'clubs',
+                            'td:nth-child(2) a',
                         )
                     }
                     if (!idColumn) {
-                        // TODO: custom error for scraper missconfigurations, clubRow as a payload
-                        throw new Error(
-                            `FACR Scraper: Failed to scrape clubs. Query selector: 'td:nth-child(3)'`,
+                        throw new FACRScraperElementNotFoundError(
+                            'idColumn',
+                            'clubs',
+                            'td:nth-child(3)',
                         )
                     }
                     return {
@@ -221,38 +225,15 @@ export class FacrScraper extends AbstractScraper implements IFacrScraper {
                 return clubsData
             })
             .flat()
-            // Type cast is ok here. We know that there won't be undefined clubs as we filter them here.
-            .filter((club) => club !== undefined) as ScrapedClub[]
+            .filter((club): club is ScrapedClub => !!club)
+            // To ensure that there are no duplicates
+            .filter(
+                (club, index, array) => array.findIndex((c) => c.facrId === club.facrId) === index,
+            )
 
-        // To ensure that there are no duplicates
-        const scrapedClubs: ScrapedClub[] = clubsData.filter(
-            (club, index, array) => array.findIndex((c) => c.facrId === club.facrId) === index,
-        )
+        console.log(`FACR Scraper: Successfully scraped ${scrapedClubs.length} clubs.`)
 
-        const currentClubs = await this.clubRepository.find()
-        const currentClubsMap: Map<string, Club> = currentClubs.reduce(
-            (map: Map<string, Club>, c: Club) => {
-                map.set(c.facrId, c)
-                return map
-            },
-            new Map(),
-        )
-
-        const clubsToInsert = scrapedClubs.filter(({ facrId }) => !currentClubsMap.get(facrId))
-
-        const clubsToUpdate = scrapedClubs
-            .filter(({ facrId }) => currentClubsMap.get(facrId))
-            .map(({ facrId, facrUuid, name }) => {
-                return {
-                    ...currentClubsMap.get(facrId),
-                    facrUuid,
-                    name,
-                }
-            })
-
-        return await this.clubRepository.save([...clubsToInsert, ...clubsToUpdate]).finally(() => {
-            console.log(`FACR Scraper: Successfully saved ${clubsToInsert.length} new clubs.`)
-        })
+        return scrapedClubs
     }
 
     /**

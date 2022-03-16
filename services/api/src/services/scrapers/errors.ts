@@ -16,3 +16,18 @@ export class FACRScraperElementNotFoundError extends BaseError {
         })
     }
 }
+
+export class FACRScraperNoHTMLS extends BaseError {
+    constructor(
+        dirname: string,
+        subject: string,
+        message = `FACR Scraper: No HTML files to scrape: ${subject}`,
+    ) {
+        super({
+            message,
+            payload: {
+                dirname,
+            },
+        })
+    }
+}

@@ -3,6 +3,7 @@ import { ClubRepository } from '../../repositories/ClubRepository'
 import { CompetitionRepository } from '../../repositories/CompetitionRepository'
 import { PlayerInClubRepository } from '../../repositories/PlayerInClubRepository'
 import { PlayerRepository } from '../../repositories/PlayerRepository'
+import { ClubService } from '../../services/club/ClubService'
 import { CompetitionService } from '../../services/competition/CompetitionService'
 import { PlayerService } from '../../services/player/PlayerService'
 import { FacrScraper } from '../../services/scrapers/FacrScraper'
@@ -23,6 +24,7 @@ export const createContainer = async (
 
     const playerService = new PlayerService(playerRepository, playerInClubRepository)
     const competitionService = new CompetitionService(competitionRepository, appConfig)
+    const clubService = new ClubService(clubRepository)
 
     const puppeteerBrowser = new PuppeteerBrowser()
     const facrScraper = new FacrScraper(appConfig, clubRepository, playerService, puppeteerBrowser)
@@ -38,6 +40,7 @@ export const createContainer = async (
 
         facrScraper: facrScraper,
         competitionService,
+        clubService,
     }
 }
 
@@ -50,4 +53,5 @@ export interface Container {
     playerInClubRepository: PlayerInClubRepository
     facrScraper: IFacrScraper
     competitionService: CompetitionService
+    clubService: ClubService
 }

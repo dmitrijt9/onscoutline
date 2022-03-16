@@ -28,7 +28,7 @@ describe('FacrScraper', () => {
         await cleanDb(testingClient)
     })
 
-    it('should test the testing clinet', async () => {
+    it('should scrape and save competitions', async () => {
         const regionsTestHtmlString = readFileSync(__dirname + '/mocks/facr-regions-test.html', {
             encoding: 'utf8',
             flag: 'r',
