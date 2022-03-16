@@ -3,6 +3,8 @@ import { ClubRepository } from '../../repositories/ClubRepository'
 import { CompetitionRepository } from '../../repositories/CompetitionRepository'
 import { PlayerInClubRepository } from '../../repositories/PlayerInClubRepository'
 import { PlayerRepository } from '../../repositories/PlayerRepository'
+import { ClubService } from '../../services/club/ClubService'
+import { CompetitionService } from '../../services/competition/CompetitionService'
 import { PlayerService } from '../../services/player/PlayerService'
 import { FacrScraper } from '../../services/scrapers/FacrScraper'
 import { PuppeteerBrowser } from '../../services/scrapers/PuppeteerBrowser'
@@ -20,16 +22,16 @@ export const createContainer = async (
     const playerRepository = getCustomRepository(PlayerRepository)
     const playerInClubRepository = getCustomRepository(PlayerInClubRepository)
 
-    const playerService = new PlayerService(playerRepository, playerInClubRepository)
+    const playerService = new PlayerService(
+        playerRepository,
+        playerInClubRepository,
+        clubRepository,
+    )
+    const competitionService = new CompetitionService(competitionRepository, appConfig)
+    const clubService = new ClubService(clubRepository)
 
     const puppeteerBrowser = new PuppeteerBrowser()
-    const facrScraper = new FacrScraper(
-        appConfig,
-        competitionRepository,
-        clubRepository,
-        playerService,
-        puppeteerBrowser,
-    )
+    const facrScraper = new FacrScraper(appConfig, puppeteerBrowser)
 
     return {
         config: appConfig,
@@ -41,6 +43,9 @@ export const createContainer = async (
         playerInClubRepository,
 
         facrScraper: facrScraper,
+        competitionService,
+        clubService,
+        playerService,
     }
 }
 
@@ -52,4 +57,7 @@ export interface Container {
     playerRepository: PlayerRepository
     playerInClubRepository: PlayerInClubRepository
     facrScraper: IFacrScraper
+    competitionService: CompetitionService
+    clubService: ClubService
+    playerService: PlayerService
 }

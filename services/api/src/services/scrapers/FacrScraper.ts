@@ -1,16 +1,15 @@
-import { writeFileSync } from 'fs'
 import { HTMLElement } from 'node-html-parser'
 import { AppConfig } from '../../dependency/config/index'
 import { Club } from '../../entities/Club'
-import { Competition } from '../../entities/Competition'
-import { ClubRepository } from '../../repositories/ClubRepository'
-import { CompetitionRepository } from '../../repositories/CompetitionRepository'
-import { PlayerService } from '../player/PlayerService'
+import { NewClubRequest } from '../club/types'
+import { NewCompetitionRequest } from '../competition/types'
+import { NewMatchRequest } from '../match/types'
+import { NewPlayerRequest } from '../player/types'
 import chunk from '../utils/chunk'
 import readFiles from '../utils/read-files'
-import { FACRScraperElementNotFoundError } from './errors'
-import { PuppeteerBrowser } from './PuppeteerBrowser'
 import { AbstractScraper } from './AbstractScraper'
+import { FACRScraperElementNotFoundError, FACRScraperNoHTMLS } from './errors'
+import { PuppeteerBrowser } from './PuppeteerBrowser'
 import {
     IFacrScraper,
     ScrapedClub,
@@ -18,254 +17,149 @@ import {
     ScrapedMatchOverview,
     ScrapedPlayer,
 } from './types'
-import { NewMatchRequest } from '../match/types'
 
 export class FacrScraper extends AbstractScraper implements IFacrScraper {
     private facrCompetitionsUrl: string
     private facrMembersUrl: string
 
     // format of the competitions path is -> `${COMPETITION_X_PAGE_PATH_PREFIX}/[UUID]`
-    private static readonly COMPETITION_CLUBS_PAGE_PATH_PREFIX = '/turnaje/team'
-    private static readonly COMPETITION_MATCHES_PAGE_PATH_PREFIX = '/turnaje/zapas'
-
     private static readonly MATCH_DETAIL_PAGE_PATH_PREFIX = '/zapasy/zapas'
 
-    constructor(
-        { facrScraper }: AppConfig,
-        private readonly competitionRepository: CompetitionRepository,
-        private readonly clubRepository: ClubRepository,
-        private readonly playerService: PlayerService,
-        private readonly puppeteerBrowser: PuppeteerBrowser,
-    ) {
+    constructor({ facrScraper }: AppConfig, private readonly puppeteerBrowser: PuppeteerBrowser) {
         super()
         this.facrCompetitionsUrl = facrScraper.facrCompetitionsUrl
         this.facrMembersUrl = facrScraper.facrMembersUrl
     }
 
-    async scrapeAndSaveCompetitions(): Promise<Competition[] | undefined> {
+    async scrapeCompetitions(): Promise<NewCompetitionRequest[]> {
         console.log('FACR Scraper: Starting to scrape competitions data.')
 
-        try {
-            const regionsParsedPage = await this.getParsedPage(
-                `${this.facrCompetitionsUrl}/subjekty`,
-            )
+        const regionsParsedPage = await this.getParsedPage(`${this.facrCompetitionsUrl}/subjekty`)
 
-            const regionsPaths = regionsParsedPage.querySelectorAll('div.box a.btn').map((atag) => {
-                const href = atag.getAttribute('href')
-                if (!href) {
-                    throw new FACRScraperElementNotFoundError(
-                        'href in regionPaths',
-                        'competitions',
-                        'href',
-                    )
-                }
-                return href
-            })
-
-            if (!regionsPaths) {
+        const regionsPaths = regionsParsedPage.querySelectorAll('div.box a.btn').map((atag) => {
+            const href = atag.getAttribute('href')
+            if (!href) {
                 throw new FACRScraperElementNotFoundError(
-                    'regionPaths',
+                    'href in regionPaths',
                     'competitions',
-                    'div.box a.btn',
+                    'href',
                 )
             }
+            return href
+        })
 
-            const competitionsBasicDataFetchers = regionsPaths.map(async (regionPath) => {
-                // #souteze anchor ensures that page opens with opened tab that we need, where table with competitions is hidden
-                const parsedCompetitionPage = await this.getParsedPage(
-                    `${this.facrCompetitionsUrl}${regionPath}#souteze`,
-                )
-                const competitionRegionId = regionPath.split('/')[3]
-
-                const competitionRegionName =
-                    parsedCompetitionPage.querySelector('h1.h1')?.innerText
-
-                if (!competitionRegionId) {
-                    throw new FACRScraperElementNotFoundError('competitionRegionId', 'competitions')
-                }
-
-                if (!competitionRegionName) {
-                    throw new FACRScraperElementNotFoundError(
-                        'competitionRegionName',
-                        'competitions',
-                        'h1.h1',
-                    )
-                }
-                return parsedCompetitionPage
-                    .querySelectorAll('#souteze table.table tbody tr')
-                    .map((row: HTMLElement) => {
-                        const tableFirstRowContent = row.querySelector('td:nth-child(1)')
-                        if (!tableFirstRowContent) {
-                            throw new FACRScraperElementNotFoundError(
-                                'tableFirstRowContent in #souteze table',
-                                'competitions',
-                                'td:nth-child(1)',
-                            )
-                        }
-
-                        if (this.isTableEmpty(tableFirstRowContent)) {
-                            return undefined
-                        }
-
-                        const facrId = row.querySelector('td:nth-child(1)')?.innerText
-                        const name = row.querySelector('td:nth-child(2) a')?.innerText
-                        const facrUuid = row
-                            .querySelector('td:nth-child(2) a')
-                            ?.getAttribute('href')
-                            ?.split('/')[3]
-
-                        if (!facrId) {
-                            throw new FACRScraperElementNotFoundError(
-                                'facrId',
-                                'competitions',
-                                'td:nth-child(1)',
-                            )
-                        }
-                        if (!name) {
-                            throw new FACRScraperElementNotFoundError(
-                                'name',
-                                'competitions',
-                                'td:nth-child(2) a',
-                            )
-                        }
-                        if (!facrUuid) {
-                            throw new FACRScraperElementNotFoundError(
-                                'facrUuid',
-                                'competitions',
-                                'td:nth-child(2) a',
-                            )
-                        }
-                        return {
-                            regionName: competitionRegionName,
-                            regionId: competitionRegionId,
-                            facrId,
-                            name,
-                            facrUuid,
-                        }
-                    })
-            })
-
-            const competitionsData = (await (
-                await Promise.all(competitionsBasicDataFetchers).finally(() => {
-                    console.log('FACR Scraper: Successfully scraped competitions data.')
-                })
+        if (!regionsPaths) {
+            throw new FACRScraperElementNotFoundError(
+                'regionPaths',
+                'competitions',
+                'div.box a.btn',
             )
-                .flat()
-                // Type cast is ok here. We know that there won't be undefined competitions as we filter them here.
-                .filter((c) => c != undefined)) as ScrapedCompetition[]
+        }
 
-            const scrapedCompetitions = competitionsData.filter(
+        const competitionsBasicDataFetchers = regionsPaths.map(async (regionPath) => {
+            // #souteze anchor ensures that page opens with opened tab that we need, where table with competitions is hidden
+            const parsedCompetitionPage = await this.getParsedPage(
+                `${this.facrCompetitionsUrl}${regionPath}#souteze`,
+            )
+            const competitionRegionId = regionPath.split('/')[3]
+
+            const competitionRegionName = parsedCompetitionPage.querySelector('h1.h1')?.innerText
+
+            if (!competitionRegionId) {
+                throw new FACRScraperElementNotFoundError('competitionRegionId', 'competitions')
+            }
+
+            if (!competitionRegionName) {
+                throw new FACRScraperElementNotFoundError(
+                    'competitionRegionName',
+                    'competitions',
+                    'h1.h1',
+                )
+            }
+            return parsedCompetitionPage
+                .querySelectorAll('#souteze table.table tbody tr')
+                .map((row: HTMLElement) => {
+                    const tableFirstRowContent = row.querySelector('td:nth-child(1)')
+                    if (!tableFirstRowContent) {
+                        throw new FACRScraperElementNotFoundError(
+                            'tableFirstRowContent in #souteze table',
+                            'competitions',
+                            'td:nth-child(1)',
+                        )
+                    }
+
+                    if (this.isTableEmpty(tableFirstRowContent)) {
+                        return undefined
+                    }
+
+                    const facrId = row.querySelector('td:nth-child(1)')?.innerText
+                    const name = row.querySelector('td:nth-child(2) a')?.innerText
+                    const facrUuid = row
+                        .querySelector('td:nth-child(2) a')
+                        ?.getAttribute('href')
+                        ?.split('/')[3]
+
+                    if (!facrId) {
+                        throw new FACRScraperElementNotFoundError(
+                            'facrId',
+                            'competitions',
+                            'td:nth-child(1)',
+                        )
+                    }
+                    if (!name) {
+                        throw new FACRScraperElementNotFoundError(
+                            'name',
+                            'competitions',
+                            'td:nth-child(2) a',
+                        )
+                    }
+                    if (!facrUuid) {
+                        throw new FACRScraperElementNotFoundError(
+                            'facrUuid',
+                            'competitions',
+                            'td:nth-child(2) a',
+                        )
+                    }
+                    return {
+                        regionName: competitionRegionName,
+                        regionId: competitionRegionId,
+                        facrId,
+                        name,
+                        facrUuid,
+                    }
+                })
+        })
+
+        const scrapedCompetitionsData = await (
+            await Promise.all(competitionsBasicDataFetchers)
+        )
+            .flat()
+            // get rid of undefined elements
+            .filter((competition): competition is ScrapedCompetition => !!competition)
+            // get rid of duplicates
+            .filter(
                 (competition, index, array) =>
                     array.findIndex(({ facrId }) => facrId === competition.facrId) === index,
             )
 
-            const currentCompetitions = await this.competitionRepository.find()
+        console.log(
+            `FACR Scraper: Successfully scraped ${scrapedCompetitionsData.length} competitions.`,
+        )
 
-            const currentCompetitionsMap: Map<string, Competition> = currentCompetitions.reduce(
-                (map: Map<string, Competition>, c: Competition) => {
-                    map.set(`${c.regionId}:${c.facrId}`, c)
-                    return map
-                },
-                new Map(),
-            )
-
-            const competitionsToInsert = scrapedCompetitions.filter(
-                ({ facrId, regionId }) => !currentCompetitionsMap.get(`${regionId}:${facrId}`),
-            )
-
-            const competitionsToUpdate = scrapedCompetitions
-                .filter(({ facrId, regionId }) =>
-                    currentCompetitionsMap.get(`${regionId}:${facrId}`),
-                )
-                .map(({ facrId, facrUuid, name, regionId, regionName }) => {
-                    return {
-                        ...currentCompetitionsMap.get(`${regionId}:${facrId}`),
-                        facrUuid,
-                        name,
-                        regionName,
-                    }
-                })
-
-            return await this.competitionRepository
-                .save([...competitionsToInsert, ...competitionsToUpdate])
-                .finally(() => {
-                    console.log(
-                        `FACR Scraper: Successfully saved ${competitionsToInsert.length} new competitions.`,
-                    )
-                })
-        } catch (e) {
-            console.error('FACR Scraper: Error while scraping competitions.', e)
-        }
+        return scrapedCompetitionsData
     }
 
-    async saveClubListUrlsToFile(filePath: string): Promise<void> {
-        console.log('FACR Scraper: Starting to get clubs data.')
-
-        try {
-            const competitions = await this.competitionRepository.find()
-            if (competitions.length <= 0) {
-                console.log('FACR Scraper: No competitions to get clubs lists.')
-                return
-            }
-
-            const urls = competitions.map((c) => {
-                return `${this.facrCompetitionsUrl}${FacrScraper.COMPETITION_CLUBS_PAGE_PATH_PREFIX}/${c.facrUuid}`
-            })
-            const chunks = chunk(urls, 100)
-
-            for (const [i, chunk] of chunks.entries()) {
-                const dataToWrite = chunk.reduce((dataToWrite: string, url: string) => {
-                    dataToWrite += url + '\n'
-                    return dataToWrite
-                }, '')
-
-                writeFileSync(`${i}-${filePath}`, dataToWrite, 'utf-8')
-            }
-        } catch (e) {
-            console.error('FACR Scraper: Error while getting clubs lists.', e)
-        }
-    }
-
-    async saveMatchesListUrlsToFile(filePath: string): Promise<void> {
-        console.log('FACR Scraper: Starting to get matches data.')
-
-        try {
-            const competitions = await this.competitionRepository.find()
-            if (competitions.length <= 0) {
-                console.log('FACR Scraper: No competitions to get match lists.')
-                return
-            }
-
-            const urls = competitions.map((c) => {
-                return `${this.facrCompetitionsUrl}${FacrScraper.COMPETITION_MATCHES_PAGE_PATH_PREFIX}/${c.facrUuid}`
-            })
-            const chunks = chunk(urls, 100)
-
-            for (const [i, chunk] of chunks.entries()) {
-                const dataToWrite = chunk.reduce((dataToWrite: string, url: string) => {
-                    dataToWrite += url + '\n'
-                    return dataToWrite
-                }, '')
-
-                writeFileSync(`${i}-${filePath}`, dataToWrite, 'utf-8')
-            }
-        } catch (e) {
-            console.error('FACR Scraper: Error while getting match lists.', e)
-        }
-    }
-
-    async scrapeAndSaveClubs(dirname: string): Promise<Club[] | undefined> {
+    async scrapeClubs(dirname: string): Promise<NewClubRequest[]> {
         const htmlsToScrape: string[] = []
-        try {
-            readFiles(dirname, (_, content) => {
-                htmlsToScrape.push(content)
-            })
-        } catch (e) {
-            console.error('FACR Scraper: Error while scraping clubs.', e)
-            return
+        readFiles(dirname, (_, content) => {
+            htmlsToScrape.push(content)
+        })
+
+        if (!htmlsToScrape.length) {
+            throw new FACRScraperNoHTMLS(dirname, 'clubs')
         }
 
-        const clubsData: ScrapedClub[] = htmlsToScrape
+        const scrapedClubs: ScrapedClub[] = htmlsToScrape
             .map((htmlToScrape) => {
                 const parsedHtml = this.parseHtml(htmlToScrape)
 
@@ -274,8 +168,10 @@ export class FacrScraper extends AbstractScraper implements IFacrScraper {
                 )
 
                 if (!tableElement) {
-                    throw new Error(
-                        'FACR Scraper: Error while scraping clubs. Table element not found.',
+                    throw new FACRScraperElementNotFoundError(
+                        'tableElement',
+                        'clubs',
+                        '.container-content .table-container .table',
                     )
                 }
 
@@ -293,21 +189,24 @@ export class FacrScraper extends AbstractScraper implements IFacrScraper {
                     const clubLink = clubRow.querySelector('td:nth-child(2) a')
                     const idColumn = clubRow.querySelector('td:nth-child(3)')
                     if (!nameColumn) {
-                        // TODO: custom error for scraper missconfigurations, clubRow as a payload
-                        throw new Error(
-                            `FACR Scraper: Failed to scrape clubs. Query selector: 'td:nth-child(2)'`,
+                        throw new FACRScraperElementNotFoundError(
+                            'nameColumn',
+                            'clubs',
+                            'td:nth-child(2)',
                         )
                     }
                     if (!clubLink) {
-                        // TODO: custom error for scraper missconfigurations, clubRow as a payload
-                        throw new Error(
-                            `FACR Scraper: Failed to scrape clubs. Query selector: 'td:nth-child(2) a'`,
+                        throw new FACRScraperElementNotFoundError(
+                            'clubLink',
+                            'clubs',
+                            'td:nth-child(2) a',
                         )
                     }
                     if (!idColumn) {
-                        // TODO: custom error for scraper missconfigurations, clubRow as a payload
-                        throw new Error(
-                            `FACR Scraper: Failed to scrape clubs. Query selector: 'td:nth-child(3)'`,
+                        throw new FACRScraperElementNotFoundError(
+                            'idColumn',
+                            'clubs',
+                            'td:nth-child(3)',
                         )
                     }
                     return {
@@ -320,61 +219,33 @@ export class FacrScraper extends AbstractScraper implements IFacrScraper {
                 return clubsData
             })
             .flat()
-            // Type cast is ok here. We know that there won't be undefined clubs as we filter them here.
-            .filter((club) => club !== undefined) as ScrapedClub[]
+            .filter((club): club is ScrapedClub => !!club)
+            // To ensure that there are no duplicates
+            .filter(
+                (club, index, array) => array.findIndex((c) => c.facrId === club.facrId) === index,
+            )
 
-        // To ensure that there are no duplicates
-        const scrapedClubs: ScrapedClub[] = clubsData.filter(
-            (club, index, array) => array.findIndex((c) => c.facrId === club.facrId) === index,
-        )
+        console.log(`FACR Scraper: Successfully scraped ${scrapedClubs.length} clubs.`)
 
-        const currentClubs = await this.clubRepository.find()
-        const currentClubsMap: Map<string, Club> = currentClubs.reduce(
-            (map: Map<string, Club>, c: Club) => {
-                map.set(c.facrId, c)
-                return map
-            },
-            new Map(),
-        )
-
-        const clubsToInsert = scrapedClubs.filter(({ facrId }) => !currentClubsMap.get(facrId))
-
-        const clubsToUpdate = scrapedClubs
-            .filter(({ facrId }) => currentClubsMap.get(facrId))
-            .map(({ facrId, facrUuid, name }) => {
-                return {
-                    ...currentClubsMap.get(facrId),
-                    facrUuid,
-                    name,
-                }
-            })
-
-        return await this.clubRepository.save([...clubsToInsert, ...clubsToUpdate]).finally(() => {
-            console.log(`FACR Scraper: Successfully saved ${clubsToInsert.length} new clubs.`)
-        })
+        return scrapedClubs
     }
 
     /**
      * Scrape players of all clubs using Chrome browser (puppeteer)
      */
-    async scrapeAndSavePlayersOfAllClubs() {
-        const clubs = await this.clubRepository.find()
-
-        if (!clubs.length) {
-            // TODO: custom error
-            throw Error('FACR Scraper: No clubs to scrape players for.')
-        }
+    async scrapePlayersOfClubs(clubs: Club[]): Promise<Map<string, NewPlayerRequest[]>> {
         // I dont want to launch hundreds of browser in parallel...
-        // This is why I run this sequentially wit for cycle
+        // This is why I run this sequentially with for cycle
         let scrapedPlayersLength = 0
         const chunks = chunk(clubs, 2)
+        const clubScrapedPlayersMap = new Map<string, NewPlayerRequest[]>()
 
         for (const chunk of chunks) {
             const results = await Promise.allSettled(
-                chunk.map(async (c) => {
-                    const clubsPlayers = await this.scrapePlayersWithPuppeteer(c.facrId)
-                    await this.playerService.saveScrapedPlayersOfAClub(clubsPlayers, c)
-                    scrapedPlayersLength += clubsPlayers.length
+                chunk.map(async (club) => {
+                    const clubsScrapedPlayers = await this.scrapePlayersWithPuppeteer(club.facrId)
+                    clubScrapedPlayersMap.set(club.facrId, clubsScrapedPlayers)
+                    scrapedPlayersLength += clubsScrapedPlayers.length
                 }),
             )
 
@@ -382,30 +253,10 @@ export class FacrScraper extends AbstractScraper implements IFacrScraper {
             rejected.forEach((r) => console.error(r))
         }
         console.info(
-            `FACR Scraper: Successfully scraped and saved ${scrapedPlayersLength} players from all clubs.`,
+            `FACR Scraper: Successfully scraped ${scrapedPlayersLength} players from all clubs.`,
         )
-    }
 
-    /**
-     * Scrape players of a given club using Chrome browser (puppeteer)
-     */
-    async scrapeAndSavePlayersOfAClub(clubFacrId: string): Promise<void> {
-        const club = await this.clubRepository.findOne({
-            where: {
-                facrId: clubFacrId,
-            },
-        })
-
-        if (!club) {
-            // TODO: custom error
-            throw Error('FACR Scraper: Could not find a club.')
-        }
-
-        const scrapedPlayers: ScrapedPlayer[] = await this.scrapePlayersWithPuppeteer(club.facrId)
-        await this.playerService.saveScrapedPlayersOfAClub(scrapedPlayers, club)
-        console.info(
-            `FACR Scraper: Successfully scraped ${scrapedPlayers.length} players from the club ${clubFacrId}.`,
-        )
+        return clubScrapedPlayersMap
     }
 
     private async scrapePlayersWithPuppeteer(clubFacrId: Club['facrId']): Promise<ScrapedPlayer[]> {

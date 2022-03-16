@@ -18,12 +18,13 @@ const scrape = async () => {
 
     const filePath = argv.path ?? defaultFilePath
 
-    const container = await createContainer()
-    await container.facrScraper.saveClubListUrlsToFile(filePath)
+    const { competitionService } = await createContainer()
+    await competitionService.writeUrlsOfListsOfClubsToFile(filePath)
 }
 
 scrape()
     .then(() => {
+        console.log('✅ Clubs urls script done.')
         process.exit(0)
     })
     .catch((e) => {

@@ -1,75 +1,100 @@
 import { Club } from '../../entities/Club'
 import { Player } from '../../entities/Player'
+import { ClubRepository } from '../../repositories/ClubRepository'
 import { PlayerInClubRepository } from '../../repositories/PlayerInClubRepository'
 import { PlayerRepository } from '../../repositories/PlayerRepository'
-import { PlayerToUpdate, ScrapedPlayer } from '../scrapers/types'
+import { PlayerToUpdate } from '../scrapers/types'
+import { NewPlayerClubNotFound } from './errors'
+import { NewPlayerRequest } from './types'
 
 export class PlayerService {
     constructor(
         private readonly playerRepository: PlayerRepository,
         private readonly playerInClubRepository: PlayerInClubRepository,
+        private readonly clubRepository: ClubRepository,
     ) {}
 
-    async saveScrapedPlayersOfAClub(scrapedPlayers: ScrapedPlayer[], club: Club) {
-        try {
-            const currentPlayers = await this.playerRepository.find()
+    async processNewPlayersOfClub(
+        newPlayers: NewPlayerRequest[],
+        clubFacrId: Club['facrId'],
+    ): Promise<Player[]> {
+        const club = await this.clubRepository.findByFacrId(clubFacrId)
 
-            const currentPlayersMap: Map<string, Player> = currentPlayers.reduce(
-                (map: Map<string, Player>, player: Player) => {
-                    map.set(player.facrId, player)
-                    return map
-                },
-                new Map(),
-            )
+        if (!club) {
+            throw new NewPlayerClubNotFound(clubFacrId)
+        }
 
-            const playersToInsert = scrapedPlayers.filter(
-                ({ facrId }) => !currentPlayersMap.get(facrId),
-            )
+        const currentPlayers = await this.playerRepository.find()
+        const currentPlayersMap: Map<string, Player> = currentPlayers.reduce(
+            (map: Map<string, Player>, player: Player) => {
+                map.set(player.facrId, player)
+                return map
+            },
+            new Map(),
+        )
 
-            const playersToUpdate: PlayerToUpdate[] = scrapedPlayers
-                .filter(({ facrId }) => currentPlayersMap.get(facrId))
-                .map(({ facrId, playingFrom }) => {
-                    return {
-                        ...(currentPlayersMap.get(facrId) as Player),
-                        playingFrom,
-                    }
-                })
+        const playersToInsert = newPlayers.filter(({ facrId }) => !currentPlayersMap.get(facrId))
 
-            const savedPlayers = await this.playerRepository.save(playersToInsert).finally(() => {
+        const playersToUpdate: PlayerToUpdate[] = newPlayers
+            .filter(({ facrId }) => currentPlayersMap.get(facrId))
+            .map(({ facrId, playingFrom }) => {
+                return {
+                    ...(currentPlayersMap.get(facrId) as Player),
+                    playingFrom,
+                }
+            })
+
+        const savedPlayers: Player[] = await this.playerRepository
+            .save(playersToInsert)
+            .finally(() => {
                 console.log(
                     `Player Service: Successfully saved ${playersToInsert.length} new players.`,
                 )
             })
 
-            await this.playerInClubRepository.save(
-                savedPlayers.map((player) => {
-                    return {
-                        player: {
-                            id: player.id,
-                        },
-                        club: {
-                            id: club.id,
-                        },
-                        playingFrom: playersToInsert.find((p) => p.facrId === player.facrId)
-                            ?.playingFrom,
-                    }
-                }),
-            )
-
-            // check for existing players club changes
-            for (const player of playersToUpdate) {
-                const relations = await this.playerInClubRepository.find({
-                    where: {
-                        club: {
-                            id: club.id,
-                        },
-                        player: {
-                            id: player.id,
-                        },
+        await this.playerInClubRepository.save(
+            savedPlayers.map((player) => {
+                return {
+                    player: {
+                        id: player.id,
                     },
-                })
+                    club: {
+                        id: club.id,
+                    },
+                    playingFrom: playersToInsert.find((p) => p.facrId === player.facrId)
+                        ?.playingFrom,
+                }
+            }),
+        )
 
-                if (!relations.length) {
+        // check for existing players club changes
+        for (const player of playersToUpdate) {
+            const relations = await this.playerInClubRepository.find({
+                where: {
+                    club: {
+                        id: club.id,
+                    },
+                    player: {
+                        id: player.id,
+                    },
+                },
+            })
+
+            if (!relations.length) {
+                await this.playerInClubRepository.save({
+                    player: {
+                        id: player.id,
+                    },
+                    club: {
+                        id: club.id,
+                    },
+                    playingFrom: player.playingFrom,
+                })
+            } else {
+                const sortedRalations = relations.sort(
+                    (a, b) => new Date(a.playingFrom).getTime() - new Date(b.playingFrom).getTime(),
+                )
+                if (sortedRalations[0].playingFrom < player.playingFrom) {
                     await this.playerInClubRepository.save({
                         player: {
                             id: player.id,
@@ -79,27 +104,10 @@ export class PlayerService {
                         },
                         playingFrom: player.playingFrom,
                     })
-                } else {
-                    const sortedRalations = relations.sort(
-                        (a, b) =>
-                            new Date(a.playingFrom).getTime() - new Date(b.playingFrom).getTime(),
-                    )
-                    if (sortedRalations[0].playingFrom < player.playingFrom) {
-                        await this.playerInClubRepository.save({
-                            player: {
-                                id: player.id,
-                            },
-                            club: {
-                                id: club.id,
-                            },
-                            playingFrom: player.playingFrom,
-                        })
-                    }
                 }
             }
-        } catch (e) {
-            console.error(e)
-            throw new Error('Player Service: Could not save scraped players.')
         }
+
+        return savedPlayers
     }
 }

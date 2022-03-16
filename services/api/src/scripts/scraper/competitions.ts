@@ -4,13 +4,14 @@ import { createContainer } from '../../dependency/container/index'
 const scrape = async () => {
     yargs(process.argv).usage('Scrape FACR competitions')
 
-    const container = await createContainer()
-    await container.facrScraper.scrapeAndSaveCompetitions()
+    const { facrScraper, competitionService } = await createContainer()
+    const scrapedCompetitions = await facrScraper.scrapeCompetitions()
+    await competitionService.saveNewCompetitions(scrapedCompetitions)
 }
 
 scrape()
     .then(() => {
-        console.log('successfully scraped and saved competitions')
+        console.log('✅ Competitions script done.')
         process.exit(0)
     })
     .catch((e) => {

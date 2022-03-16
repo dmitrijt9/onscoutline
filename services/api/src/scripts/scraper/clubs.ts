@@ -18,12 +18,14 @@ const scrape = async () => {
 
     const dirname = argv.path ?? defaultDirname
 
-    const container = await createContainer()
-    await container.facrScraper.scrapeAndSaveClubs(dirname)
+    const { facrScraper, clubService } = await createContainer()
+    const scrapedClubs = await facrScraper.scrapeClubs(dirname)
+    await clubService.processNewClubss(scrapedClubs)
 }
 
 scrape()
     .then(() => {
+        console.log('✅ Clubs script done.')
         process.exit(0)
     })
     .catch((e) => {

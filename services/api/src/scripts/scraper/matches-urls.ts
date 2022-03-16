@@ -18,12 +18,13 @@ const scrape = async () => {
 
     const filePath = argv.path ?? defaultFilePath
 
-    const container = await createContainer()
-    await container.facrScraper.saveMatchesListUrlsToFile(filePath)
+    const { competitionService } = await createContainer()
+    await competitionService.writeUrlsOfListsOfMatchesToFile(filePath)
 }
 
 scrape()
     .then(() => {
+        console.log('✅ Matches urls script done.')
         process.exit(0)
     })
     .catch((e) => {

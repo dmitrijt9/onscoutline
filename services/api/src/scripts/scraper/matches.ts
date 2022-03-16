@@ -35,7 +35,7 @@ const scrape = async () => {
 
 scrape()
     .then(() => {
-        console.log('Script done')
+        console.log('✅ Matches script done.')
         process.exit(0)
     })
     .catch((e) => {

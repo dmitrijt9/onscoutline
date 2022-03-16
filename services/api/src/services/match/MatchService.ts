@@ -1,7 +1,7 @@
 import { NewMatchRequest } from './types'
 
 export class MatchService {
-    processNewMatch(newMatchRequest: NewMatchRequest[]) {
+    processNewMatches(newMatchRequest: NewMatchRequest[]) {
         // TODO: business logic
     }
 }
