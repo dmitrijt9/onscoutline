@@ -22,12 +22,16 @@ export const createContainer = async (
     const playerRepository = getCustomRepository(PlayerRepository)
     const playerInClubRepository = getCustomRepository(PlayerInClubRepository)
 
-    const playerService = new PlayerService(playerRepository, playerInClubRepository)
+    const playerService = new PlayerService(
+        playerRepository,
+        playerInClubRepository,
+        clubRepository,
+    )
     const competitionService = new CompetitionService(competitionRepository, appConfig)
     const clubService = new ClubService(clubRepository)
 
     const puppeteerBrowser = new PuppeteerBrowser()
-    const facrScraper = new FacrScraper(appConfig, clubRepository, playerService, puppeteerBrowser)
+    const facrScraper = new FacrScraper(appConfig, puppeteerBrowser)
 
     return {
         config: appConfig,
@@ -41,6 +45,7 @@ export const createContainer = async (
         facrScraper: facrScraper,
         competitionService,
         clubService,
+        playerService,
     }
 }
 
@@ -54,4 +59,5 @@ export interface Container {
     facrScraper: IFacrScraper
     competitionService: CompetitionService
     clubService: ClubService
+    playerService: PlayerService
 }

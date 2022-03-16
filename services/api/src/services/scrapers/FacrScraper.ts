@@ -1,11 +1,10 @@
 import { HTMLElement } from 'node-html-parser'
 import { AppConfig } from '../../dependency/config/index'
 import { Club } from '../../entities/Club'
-import { ClubRepository } from '../../repositories/ClubRepository'
 import { NewClubRequest } from '../club/types'
 import { NewCompetitionRequest } from '../competition/types'
 import { NewMatchRequest } from '../match/types'
-import { PlayerService } from '../player/PlayerService'
+import { NewPlayerRequest } from '../player/types'
 import chunk from '../utils/chunk'
 import readFiles from '../utils/read-files'
 import { AbstractScraper } from './AbstractScraper'
@@ -26,12 +25,7 @@ export class FacrScraper extends AbstractScraper implements IFacrScraper {
     // format of the competitions path is -> `${COMPETITION_X_PAGE_PATH_PREFIX}/[UUID]`
     private static readonly MATCH_DETAIL_PAGE_PATH_PREFIX = '/zapasy/zapas'
 
-    constructor(
-        { facrScraper }: AppConfig,
-        private readonly clubRepository: ClubRepository,
-        private readonly playerService: PlayerService,
-        private readonly puppeteerBrowser: PuppeteerBrowser,
-    ) {
+    constructor({ facrScraper }: AppConfig, private readonly puppeteerBrowser: PuppeteerBrowser) {
         super()
         this.facrCompetitionsUrl = facrScraper.facrCompetitionsUrl
         this.facrMembersUrl = facrScraper.facrMembersUrl
@@ -239,24 +233,19 @@ export class FacrScraper extends AbstractScraper implements IFacrScraper {
     /**
      * Scrape players of all clubs using Chrome browser (puppeteer)
      */
-    async scrapeAndSavePlayersOfAllClubs() {
-        const clubs = await this.clubRepository.find()
-
-        if (!clubs.length) {
-            // TODO: custom error
-            throw Error('FACR Scraper: No clubs to scrape players for.')
-        }
+    async scrapePlayersOfClubs(clubs: Club[]): Promise<Map<string, NewPlayerRequest[]>> {
         // I dont want to launch hundreds of browser in parallel...
-        // This is why I run this sequentially wit for cycle
+        // This is why I run this sequentially with for cycle
         let scrapedPlayersLength = 0
         const chunks = chunk(clubs, 2)
+        const clubScrapedPlayersMap = new Map<string, NewPlayerRequest[]>()
 
         for (const chunk of chunks) {
             const results = await Promise.allSettled(
-                chunk.map(async (c) => {
-                    const clubsPlayers = await this.scrapePlayersWithPuppeteer(c.facrId)
-                    await this.playerService.saveScrapedPlayersOfAClub(clubsPlayers, c)
-                    scrapedPlayersLength += clubsPlayers.length
+                chunk.map(async (club) => {
+                    const clubsScrapedPlayers = await this.scrapePlayersWithPuppeteer(club.facrId)
+                    clubScrapedPlayersMap.set(club.facrId, clubsScrapedPlayers)
+                    scrapedPlayersLength += clubsScrapedPlayers.length
                 }),
             )
 
@@ -264,30 +253,10 @@ export class FacrScraper extends AbstractScraper implements IFacrScraper {
             rejected.forEach((r) => console.error(r))
         }
         console.info(
-            `FACR Scraper: Successfully scraped and saved ${scrapedPlayersLength} players from all clubs.`,
+            `FACR Scraper: Successfully scraped ${scrapedPlayersLength} players from all clubs.`,
         )
-    }
 
-    /**
-     * Scrape players of a given club using Chrome browser (puppeteer)
-     */
-    async scrapeAndSavePlayersOfAClub(clubFacrId: string): Promise<void> {
-        const club = await this.clubRepository.findOne({
-            where: {
-                facrId: clubFacrId,
-            },
-        })
-
-        if (!club) {
-            // TODO: custom error
-            throw Error('FACR Scraper: Could not find a club.')
-        }
-
-        const scrapedPlayers: ScrapedPlayer[] = await this.scrapePlayersWithPuppeteer(club.facrId)
-        await this.playerService.saveScrapedPlayersOfAClub(scrapedPlayers, club)
-        console.info(
-            `FACR Scraper: Successfully scraped ${scrapedPlayers.length} players from the club ${clubFacrId}.`,
-        )
+        return clubScrapedPlayersMap
     }
 
     private async scrapePlayersWithPuppeteer(clubFacrId: Club['facrId']): Promise<ScrapedPlayer[]> {
