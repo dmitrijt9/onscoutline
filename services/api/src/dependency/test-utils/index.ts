@@ -1,11 +1,13 @@
 import supertest from 'supertest'
 import { Repository } from 'typeorm'
 import { ClubRepository } from '../../repositories/club/ClubRepository'
+import { CompetitionHasSeasonRepository } from '../../repositories/competition/CompetitionHasSeasonRepository'
 import { CompetitionRepository } from '../../repositories/competition/CompetitionRepository'
 import { MatchRepository } from '../../repositories/match/MatchRepository'
 import { PlayerInClubRepository } from '../../repositories/player/PlayerInClubRepository'
 import { PlayerInMatchRepository } from '../../repositories/player/PlayerInMatchRepository'
 import { PlayerRepository } from '../../repositories/player/PlayerRepository'
+import { SeasonRepository } from '../../repositories/season/SeasonRepository'
 import { ExpressApplication } from '../application/ExpressApplication'
 import { getAppConfig } from '../config/index'
 import { Container, createContainer } from '../container/index'
@@ -48,6 +50,8 @@ export const cleanDb = async (client: TestingClient) => {
     const { typeormConnection } = client.container
 
     const repositories = [
+        typeormConnection.getCustomRepository(CompetitionHasSeasonRepository),
+        typeormConnection.getCustomRepository(SeasonRepository),
         typeormConnection.getCustomRepository(CompetitionRepository),
         typeormConnection.getCustomRepository(PlayerInClubRepository),
         typeormConnection.getCustomRepository(PlayerInMatchRepository),

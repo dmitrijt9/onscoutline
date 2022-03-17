@@ -6,6 +6,7 @@ import { addFacrIDPlayer1646912081829 } from './1646912081829-add-facrID-player'
 import { fixPlayerYearOfBirth1646912746976 } from './1646912746976-fix-player-year-of-birth'
 import { fixPlayerFacrMemberFrom1646913119806 } from './1646913119806-fix-player-facr-member-from'
 import { addMatchAndRelation1647520568926 } from './1647520568926-add-match-and-relation'
+import { addSeasonAndRelation1647526770063 } from './1647526770063-add-season-and-relation'
 
 export const migrations = [
     addCompetition1645357697040,
@@ -16,4 +17,5 @@ export const migrations = [
     fixPlayerYearOfBirth1646912746976,
     fixPlayerFacrMemberFrom1646913119806,
     addMatchAndRelation1647520568926,
+    addSeasonAndRelation1647526770063,
 ]
