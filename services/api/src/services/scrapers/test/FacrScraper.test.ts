@@ -24,7 +24,7 @@ describe('FacrScraper', () => {
         await stopTestApplication(testingClient.application)
     })
 
-    afterEach(async () => {
+    beforeEach(async () => {
         await cleanDb(testingClient)
     })
 

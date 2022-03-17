@@ -1,5 +1,5 @@
 import { Club } from '../../entities/Club'
-import { ClubRepository } from '../../repositories/ClubRepository'
+import { ClubRepository } from '../../repositories/club/ClubRepository'
 import { NewClubRequest } from './types'
 
 export class ClubService {

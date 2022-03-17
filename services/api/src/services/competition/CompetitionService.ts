@@ -1,7 +1,7 @@
 import { writeFileSync } from 'fs'
 import { AppConfig } from '../../dependency/config/index'
 import { Competition } from '../../entities/Competition'
-import { CompetitionRepository } from '../../repositories/CompetitionRepository'
+import { CompetitionRepository } from '../../repositories/competition/CompetitionRepository'
 import chunk from '../utils/chunk'
 import { NewCompetitionRequest } from './types'
 

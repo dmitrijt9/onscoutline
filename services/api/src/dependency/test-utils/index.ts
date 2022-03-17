@@ -1,7 +1,11 @@
 import supertest from 'supertest'
 import { Repository } from 'typeorm'
-import { ClubRepository } from '../../repositories/ClubRepository'
-import { CompetitionRepository } from '../../repositories/CompetitionRepository'
+import { ClubRepository } from '../../repositories/club/ClubRepository'
+import { CompetitionRepository } from '../../repositories/competition/CompetitionRepository'
+import { MatchRepository } from '../../repositories/match/MatchRepository'
+import { PlayerInClubRepository } from '../../repositories/player/PlayerInClubRepository'
+import { PlayerInMatchRepository } from '../../repositories/player/PlayerInMatchRepository'
+import { PlayerRepository } from '../../repositories/player/PlayerRepository'
 import { ExpressApplication } from '../application/ExpressApplication'
 import { getAppConfig } from '../config/index'
 import { Container, createContainer } from '../container/index'
@@ -45,7 +49,11 @@ export const cleanDb = async (client: TestingClient) => {
 
     const repositories = [
         typeormConnection.getCustomRepository(CompetitionRepository),
+        typeormConnection.getCustomRepository(PlayerInClubRepository),
+        typeormConnection.getCustomRepository(PlayerInMatchRepository),
+        typeormConnection.getCustomRepository(MatchRepository),
         typeormConnection.getCustomRepository(ClubRepository),
+        typeormConnection.getCustomRepository(PlayerRepository),
     ]
 
     for (const repository of repositories) {
