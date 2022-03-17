@@ -5,6 +5,7 @@ import { addPlayerAndPlayerInClubRelation1646472703778 } from './1646472703778-a
 import { addFacrIDPlayer1646912081829 } from './1646912081829-add-facrID-player'
 import { fixPlayerYearOfBirth1646912746976 } from './1646912746976-fix-player-year-of-birth'
 import { fixPlayerFacrMemberFrom1646913119806 } from './1646913119806-fix-player-facr-member-from'
+import { addMatchAndRelation1647520568926 } from './1647520568926-add-match-and-relation'
 
 export const migrations = [
     addCompetition1645357697040,
@@ -14,4 +15,5 @@ export const migrations = [
     addFacrIDPlayer1646912081829,
     fixPlayerYearOfBirth1646912746976,
     fixPlayerFacrMemberFrom1646913119806,
+    addMatchAndRelation1647520568926,
 ]
