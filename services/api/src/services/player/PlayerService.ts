@@ -3,7 +3,7 @@ import { Player } from '../../entities/Player'
 import { ClubRepository } from '../../repositories/club/ClubRepository'
 import { PlayerInClubRepository } from '../../repositories/player/PlayerInClubRepository'
 import { PlayerRepository } from '../../repositories/player/PlayerRepository'
-import { PlayerToUpdate } from '../scrapers/types'
+import { PlayerToUpdate } from './types'
 import { NewPlayerClubNotFound } from './errors'
 import { NewPlayerRequest } from './types'
 

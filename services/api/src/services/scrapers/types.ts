@@ -27,8 +27,6 @@ export type ScrapedPlayer = Omit<Player, 'id'> & {
     playingFrom: ISO8601
 }
 
-export type PlayerToUpdate = Player & ScrapedPlayer
-
 export type TPuppeteerSelector = string | string[]
 
 export type TPuppeteerSelectorOptions = {
