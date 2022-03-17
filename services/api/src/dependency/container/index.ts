@@ -1,8 +1,10 @@
 import { Connection, getCustomRepository } from 'typeorm'
-import { ClubRepository } from '../../repositories/ClubRepository'
-import { CompetitionRepository } from '../../repositories/CompetitionRepository'
-import { PlayerInClubRepository } from '../../repositories/PlayerInClubRepository'
-import { PlayerRepository } from '../../repositories/PlayerRepository'
+import { ClubRepository } from '../../repositories/club/ClubRepository'
+import { CompetitionRepository } from '../../repositories/competition/CompetitionRepository'
+import { MatchRepository } from '../../repositories/match/MatchRepository'
+import { PlayerInClubRepository } from '../../repositories/player/PlayerInClubRepository'
+import { PlayerInMatchRepository } from '../../repositories/player/PlayerInMatchRepository'
+import { PlayerRepository } from '../../repositories/player/PlayerRepository'
 import { ClubService } from '../../services/club/ClubService'
 import { CompetitionService } from '../../services/competition/CompetitionService'
 import { PlayerService } from '../../services/player/PlayerService'
@@ -21,6 +23,8 @@ export const createContainer = async (
     const clubRepository = getCustomRepository(ClubRepository)
     const playerRepository = getCustomRepository(PlayerRepository)
     const playerInClubRepository = getCustomRepository(PlayerInClubRepository)
+    const playerInMatchRepository = getCustomRepository(PlayerInMatchRepository)
+    const matchRepository = getCustomRepository(MatchRepository)
 
     const playerService = new PlayerService(
         playerRepository,
@@ -41,6 +45,8 @@ export const createContainer = async (
         clubRepository,
         playerRepository,
         playerInClubRepository,
+        playerInMatchRepository,
+        matchRepository,
 
         facrScraper: facrScraper,
         competitionService,
@@ -56,6 +62,8 @@ export interface Container {
     clubRepository: ClubRepository
     playerRepository: PlayerRepository
     playerInClubRepository: PlayerInClubRepository
+    playerInMatchRepository: PlayerInMatchRepository
+    matchRepository: MatchRepository
     facrScraper: IFacrScraper
     competitionService: CompetitionService
     clubService: ClubService
