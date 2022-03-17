@@ -1,0 +1,26 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`Season Repository should save a multiple seasons without problems 1`] = `
+Array [
+  Object {
+    "name": "jaro2020",
+    "type": "Spring",
+    "year": "2020",
+  },
+  Object {
+    "name": "podzim2020",
+    "type": "Autumn",
+    "year": "2020",
+  },
+  Object {
+    "name": "jaro2021",
+    "type": "Spring",
+    "year": "2021",
+  },
+  Object {
+    "name": "podzim2021",
+    "type": "Autumn",
+    "year": "2021",
+  },
+]
+`;
