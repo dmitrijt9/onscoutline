@@ -20,6 +20,4 @@ export class PlayerInMatch {
      */
     @Column('int', { nullable: true })
     playedFromMinute: number | null
-
-    // TODO: Add statistics
 }
