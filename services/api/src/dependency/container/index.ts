@@ -7,6 +7,7 @@ import { PlayerInClubRepository } from '../../repositories/player/PlayerInClubRe
 import { PlayerInMatchRepository } from '../../repositories/player/PlayerInMatchRepository'
 import { PlayerRepository } from '../../repositories/player/PlayerRepository'
 import { SeasonRepository } from '../../repositories/season/SeasonRepository'
+import { PlayerGameStatisticRepository } from '../../repositories/statistic/PlayerGameStatisticRepository'
 import { ClubService } from '../../services/club/ClubService'
 import { CompetitionService } from '../../services/competition/CompetitionService'
 import { PlayerService } from '../../services/player/PlayerService'
@@ -29,6 +30,7 @@ export const createContainer = async (
     const playerInMatchRepository = getCustomRepository(PlayerInMatchRepository)
     const matchRepository = getCustomRepository(MatchRepository)
     const seasonRepository = getCustomRepository(SeasonRepository)
+    const playerGameStatisticsRepository = getCustomRepository(PlayerGameStatisticRepository)
 
     const playerService = new PlayerService(
         playerRepository,
@@ -53,6 +55,7 @@ export const createContainer = async (
         playerInMatchRepository,
         matchRepository,
         seasonRepository,
+        playerGameStatisticsRepository,
 
         facrScraper: facrScraper,
         competitionService,
@@ -73,6 +76,7 @@ export interface Container {
     playerInMatchRepository: PlayerInMatchRepository
     matchRepository: MatchRepository
     seasonRepository: SeasonRepository
+    playerGameStatisticsRepository: PlayerGameStatisticRepository
 
     facrScraper: IFacrScraper
     competitionService: CompetitionService

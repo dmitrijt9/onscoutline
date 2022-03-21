@@ -8,6 +8,7 @@ import { PlayerInClubRepository } from '../../repositories/player/PlayerInClubRe
 import { PlayerInMatchRepository } from '../../repositories/player/PlayerInMatchRepository'
 import { PlayerRepository } from '../../repositories/player/PlayerRepository'
 import { SeasonRepository } from '../../repositories/season/SeasonRepository'
+import { PlayerGameStatisticRepository } from '../../repositories/statistic/PlayerGameStatisticRepository'
 import { ExpressApplication } from '../application/ExpressApplication'
 import { getAppConfig } from '../config/index'
 import { Container, createContainer } from '../container/index'
@@ -54,6 +55,7 @@ export const cleanDb = async (client: TestingClient) => {
         typeormConnection.getCustomRepository(SeasonRepository),
         typeormConnection.getCustomRepository(CompetitionRepository),
         typeormConnection.getCustomRepository(PlayerInClubRepository),
+        typeormConnection.getCustomRepository(PlayerGameStatisticRepository),
         typeormConnection.getCustomRepository(PlayerInMatchRepository),
         typeormConnection.getCustomRepository(MatchRepository),
         typeormConnection.getCustomRepository(ClubRepository),
