@@ -8,6 +8,7 @@ import { fixPlayerFacrMemberFrom1646913119806 } from './1646913119806-fix-player
 import { addMatchAndRelation1647520568926 } from './1647520568926-add-match-and-relation'
 import { addSeasonAndRelation1647526770063 } from './1647526770063-add-season-and-relation'
 import { addPlayerGameStat1647781826502 } from './1647781826502-add-player-game-stat'
+import { addCompetitionToMatch1647957563531 } from './1647957563531-add-competition-to-match'
 
 export const migrations = [
     addCompetition1645357697040,
@@ -20,4 +21,5 @@ export const migrations = [
     addMatchAndRelation1647520568926,
     addSeasonAndRelation1647526770063,
     addPlayerGameStat1647781826502,
+    addCompetitionToMatch1647957563531,
 ]

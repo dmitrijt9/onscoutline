@@ -5,6 +5,7 @@ import {
     stopTestApplication,
     TestingClient,
 } from '../../dependency/test-utils/index'
+import { SeasonType } from '../../entities/Season'
 
 describe('Match Repository', () => {
     let testingClient: TestingClient
@@ -24,7 +25,32 @@ describe('Match Repository', () => {
     })
 
     it('should save a match without problems', async () => {
-        const { matchRepository, clubRepository } = container
+        const {
+            matchRepository,
+            clubRepository,
+            competitionHasSeasonRepository,
+            competitionRepository,
+            seasonRepository,
+        } = container
+
+        const randomCompetition = await competitionRepository.save({
+            facrId: '12345',
+            facrUuid: 'djoiwejdow',
+            name: 'Fortuna liga',
+            regionId: '2A3',
+            regionName: 'CR',
+        })
+
+        const randomSeason = await seasonRepository.save({
+            name: 'jaro2020',
+            type: SeasonType.Spring,
+            year: '2020',
+        })
+
+        const randomCompetitionSeason = await competitionHasSeasonRepository.save({
+            competition: randomCompetition,
+            season: randomSeason,
+        })
 
         const randomClub1 = await clubRepository.save({
             facrId: '123456',
@@ -45,6 +71,7 @@ describe('Match Repository', () => {
             scoreAway: 2,
             when: new Date('2022-03-16').toUTCString(),
             where: 'Some place',
+            competition: randomCompetitionSeason,
         })
 
         expect(savedMatch).not.toBeNull()
