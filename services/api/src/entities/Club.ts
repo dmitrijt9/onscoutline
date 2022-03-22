@@ -8,7 +8,7 @@ export class Club {
     @Column({ unique: true })
     facrId: string
 
-    @Column()
+    @Column({ unique: true })
     name: string
 
     @Column()

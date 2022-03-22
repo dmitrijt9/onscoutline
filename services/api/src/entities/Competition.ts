@@ -1,12 +1,12 @@
-import { Column, Entity, Index, PrimaryGeneratedColumn } from 'typeorm'
+import { Column, Entity, PrimaryGeneratedColumn, Unique } from 'typeorm'
 
 @Entity()
-@Index('competition_facr_id', ['regionId', 'facrId'])
+@Unique('Competition_UQ_IDX', ['regionId', 'facrId'])
 export class Competition {
     @PrimaryGeneratedColumn()
     id: number
 
-    @Column()
+    @Column({ unique: true })
     name: string
 
     @Column()
