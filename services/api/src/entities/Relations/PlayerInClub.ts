@@ -8,10 +8,10 @@ export class PlayerInClub {
     @PrimaryGeneratedColumn('uuid')
     id: string
 
-    @ManyToOne(() => Player, { nullable: false })
+    @ManyToOne(() => Player, { nullable: false, cascade: ['insert', 'update'] })
     player: Player
 
-    @ManyToOne(() => Club, { nullable: false })
+    @ManyToOne(() => Club, { nullable: false, cascade: ['insert', 'update'] })
     club: Club
 
     @Column('date', { nullable: false })

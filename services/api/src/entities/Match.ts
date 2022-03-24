@@ -1,5 +1,6 @@
 import { Column, Entity, ManyToOne, PrimaryGeneratedColumn } from 'typeorm'
 import { Club } from './Club'
+import { CompetitionHasSeason } from './Relations/CompetitionHasSeason'
 import { ISO8601 } from './types'
 
 @Entity()
@@ -25,5 +26,6 @@ export class Match {
     @Column('int')
     scoreAway: number
 
-    // TODO: Add competitionHasSeason relation
+    @ManyToOne(() => CompetitionHasSeason, { nullable: true })
+    competitionSeason?: CompetitionHasSeason
 }
