@@ -9,7 +9,11 @@ export class ClubService {
         const currentClubs = await this.clubRepository.find()
         const currentClubsMap: Map<string, Club> = currentClubs.reduce(
             (map: Map<string, Club>, c: Club) => {
-                map.set(c.facrId, c)
+                // TODO: add logic for updating clubs withour facr id
+                if (c.facrId) {
+                    map.set(c.facrId, c)
+                }
+
                 return map
             },
             new Map(),

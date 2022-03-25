@@ -5,7 +5,6 @@ import {
     stopTestApplication,
     TestingClient,
 } from '../../dependency/test-utils/index'
-import { SeasonType } from '../../entities/Season'
 
 describe('Season Repository', () => {
     let testingClient: TestingClient
@@ -29,28 +28,18 @@ describe('Season Repository', () => {
 
         const savedSeasons = await seasonRepository.save([
             {
-                name: 'jaro2020',
-                type: SeasonType.Spring,
-                year: '2020',
+                name: '2020/2021',
+                year1: '2020',
+                year2: '2022',
             },
             {
-                name: 'podzim2020',
-                type: SeasonType.Autumn,
-                year: '2020',
-            },
-            {
-                name: 'jaro2021',
-                type: SeasonType.Spring,
-                year: '2021',
-            },
-            {
-                name: 'podzim2021',
-                type: SeasonType.Autumn,
-                year: '2021',
+                name: '2021/2022',
+                year1: '2021',
+                year2: '2022',
             },
         ])
 
-        expect(savedSeasons.length).toBe(4)
+        expect(savedSeasons.length).toBe(2)
         expect(savedSeasons).toMatchSnapshot()
     })
 })

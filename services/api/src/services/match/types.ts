@@ -1,4 +1,5 @@
 export type NewMatchRequest = {
+    competition: string
     takePlace: string
     facrUuid: string
     homeTeam: string

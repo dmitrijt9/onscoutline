@@ -14,6 +14,7 @@ import { PlayerService } from '../../services/player/PlayerService'
 import { FacrScraper } from '../../services/scrapers/FacrScraper'
 import { PuppeteerBrowser } from '../../services/scrapers/PuppeteerBrowser'
 import { IFacrScraper } from '../../services/scrapers/types'
+import { SeasonService } from '../../services/season/SeasonService'
 import { AppConfig, getAppConfig } from '../config/index'
 import { bootstrapDbConnection } from './bootstrap/db-connection'
 
@@ -37,11 +38,17 @@ export const createContainer = async (
         playerInClubRepository,
         clubRepository,
     )
-    const competitionService = new CompetitionService(competitionRepository, appConfig)
+    const competitionService = new CompetitionService(
+        competitionRepository,
+        competitionHasSeasonRepository,
+        appConfig,
+    )
     const clubService = new ClubService(clubRepository)
 
     const puppeteerBrowser = new PuppeteerBrowser()
     const facrScraper = new FacrScraper(appConfig, puppeteerBrowser)
+
+    const seasonService = new SeasonService(seasonRepository)
 
     return {
         config: appConfig,
@@ -61,6 +68,7 @@ export const createContainer = async (
         competitionService,
         clubService,
         playerService,
+        seasonService,
     }
 }
 
@@ -82,4 +90,5 @@ export interface Container {
     competitionService: CompetitionService
     clubService: ClubService
     playerService: PlayerService
+    seasonService: SeasonService
 }

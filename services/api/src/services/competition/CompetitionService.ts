@@ -1,6 +1,8 @@
 import { writeFileSync } from 'fs'
 import { AppConfig } from '../../dependency/config/index'
 import { Competition } from '../../entities/Competition'
+import { Season } from '../../entities/Season'
+import { CompetitionHasSeasonRepository } from '../../repositories/competition/CompetitionHasSeasonRepository'
 import { CompetitionRepository } from '../../repositories/competition/CompetitionRepository'
 import chunk from '../utils/chunk'
 import { NewCompetitionRequest } from './types'
@@ -11,6 +13,7 @@ export class CompetitionService {
     private static readonly COMPETITION_MATCHES_PAGE_PATH_PREFIX = '/turnaje/zapas'
     constructor(
         private readonly competitionRepository: CompetitionRepository,
+        private readonly competitionHasSeasonRepository: CompetitionHasSeasonRepository,
         { facrScraper }: AppConfig,
     ) {
         this.facrCompetitionsUrl = facrScraper.facrCompetitionsUrl
@@ -105,5 +108,20 @@ export class CompetitionService {
         }
 
         console.log(`Competitions: Successfully written ${urls.length} urls to files.`)
+    }
+
+    async getCompetitionHasSeason(competition: Competition, season: Season) {
+        const find = await this.competitionHasSeasonRepository.findByCompetitionAndSeason(
+            competition,
+            season,
+        )
+
+        return (
+            find ??
+            (await this.competitionHasSeasonRepository.save({
+                competition,
+                season,
+            }))
+        )
     }
 }

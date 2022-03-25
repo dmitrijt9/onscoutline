@@ -12,4 +12,14 @@ export class ClubRepository extends Repository<Club> {
 
         return club ?? null
     }
+
+    async findByName(name: Club['name']): Promise<Club | null> {
+        const club = await this.findOne({
+            where: {
+                name,
+            },
+        })
+
+        return club ?? null
+    }
 }

@@ -6,7 +6,6 @@ import {
     stopTestApplication,
     TestingClient,
 } from '../../dependency/test-utils/index'
-import { SeasonType } from '../../entities/Season'
 
 describe('Competition Has Season Repository', () => {
     let testingClient: TestingClient
@@ -30,9 +29,9 @@ describe('Competition Has Season Repository', () => {
             container
 
         const randomSeason = await seasonRepository.save({
-            name: 'jaro2020',
-            type: SeasonType.Spring,
-            year: '2020',
+            name: '2019/2020',
+            year1: '2021',
+            year2: '2020',
         })
 
         const randomCompetition = await competitionRepository.save({
@@ -58,9 +57,9 @@ describe('Competition Has Season Repository', () => {
             container
 
         const randomSeason = await seasonRepository.save({
-            name: 'jaro2020',
-            type: SeasonType.Spring,
-            year: '2020',
+            name: '2019/2020',
+            year1: '2021',
+            year2: '2020',
         })
 
         const randomCompetition = await competitionRepository.save({

@@ -3,24 +3,14 @@
 exports[`Season Repository should save a multiple seasons without problems 1`] = `
 Array [
   Object {
-    "name": "jaro2020",
-    "type": "Spring",
-    "year": "2020",
+    "name": "2020/2021",
+    "year1": "2020",
+    "year2": "2022",
   },
   Object {
-    "name": "podzim2020",
-    "type": "Autumn",
-    "year": "2020",
-  },
-  Object {
-    "name": "jaro2021",
-    "type": "Spring",
-    "year": "2021",
-  },
-  Object {
-    "name": "podzim2021",
-    "type": "Autumn",
-    "year": "2021",
+    "name": "2021/2022",
+    "year1": "2021",
+    "year2": "2022",
   },
 ]
 `;
