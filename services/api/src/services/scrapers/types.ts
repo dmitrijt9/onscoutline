@@ -19,7 +19,10 @@ export interface IFacrScraper {
     scrapeMatches(htmlsToScrape: string[]): Promise<NewMatchRequest[]>
 }
 
-export type ScrapedClub = Omit<Club, 'id'>
+export type ScrapedClub = Omit<Club, 'id' | 'facrId' | 'facrUuid'> & {
+    facrId: string
+    facrUuid: string
+}
 
 export type ScrapedCompetition = Omit<Competition, 'id'>
 

@@ -1,5 +1,5 @@
 import { Column, Entity, PrimaryGeneratedColumn, Unique } from 'typeorm'
-import { ISO8601 } from './types'
+import { ISO8601_NoTime } from './types'
 
 @Entity()
 @Unique('Player_Fullname_UQ_IDX', ['name', 'surname'])
@@ -20,5 +20,5 @@ export class Player {
     yearOfBirth: string
 
     @Column('date', { nullable: true })
-    facrMemberFrom?: ISO8601
+    facrMemberFrom?: ISO8601_NoTime
 }

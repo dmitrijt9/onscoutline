@@ -4,18 +4,14 @@ import { Column, Entity, PrimaryColumn } from 'typeorm'
 export class Season {
     /**
      * Name of the season should be unique by its principle
+     * @example "2020/2021"
      */
     @PrimaryColumn()
     name: string
 
     @Column()
-    year: string
+    year1: string
 
-    @Column('varchar')
-    type: SeasonType
-}
-
-export enum SeasonType {
-    Spring = 'Spring',
-    Autumn = 'Autumn',
+    @Column()
+    year2: string
 }

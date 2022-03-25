@@ -243,6 +243,10 @@ export class FacrScraper extends AbstractScraper implements IFacrScraper {
         for (const chunk of chunks) {
             const results = await Promise.allSettled(
                 chunk.map(async (club) => {
+                    if (!club.facrId) {
+                        // TODO: custom error
+                        throw new Error('Cannot scrape players of the club without facrId.')
+                    }
                     const clubsScrapedPlayers = await this.scrapePlayersWithPuppeteer(club.facrId)
                     clubScrapedPlayersMap.set(club.facrId, clubsScrapedPlayers)
                     scrapedPlayersLength += clubsScrapedPlayers.length
@@ -589,7 +593,15 @@ export class FacrScraper extends AbstractScraper implements IFacrScraper {
             return
         }
 
-        // TODO: Scrape match details
+        const competitionName = matchDetailHtml.querySelector('.container-content h1.h2')?.innerText
+        if (!competitionName) {
+            throw new FACRScraperElementNotFoundError(
+                'competitionName',
+                'matches',
+                '.container-content h1.h2',
+            )
+        }
+
         const homeTeam = matchDetailHtml.querySelector(
             'h2.h2 .row div:nth-child(1) span',
         )?.innerText
@@ -670,6 +682,7 @@ export class FacrScraper extends AbstractScraper implements IFacrScraper {
         )
 
         return {
+            competition: competitionName,
             facrUuid,
             takePlace,
             homeTeamScore,

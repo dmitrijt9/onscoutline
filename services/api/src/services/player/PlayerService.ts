@@ -1,11 +1,9 @@
-import { Club } from '../../entities/Club'
 import { Player } from '../../entities/Player'
 import { ClubRepository } from '../../repositories/club/ClubRepository'
 import { PlayerInClubRepository } from '../../repositories/player/PlayerInClubRepository'
 import { PlayerRepository } from '../../repositories/player/PlayerRepository'
-import { PlayerToUpdate } from './types'
 import { NewPlayerClubNotFound } from './errors'
-import { NewPlayerRequest } from './types'
+import { NewPlayerRequest, PlayerToUpdate } from './types'
 
 export class PlayerService {
     constructor(
@@ -16,7 +14,7 @@ export class PlayerService {
 
     async processNewPlayersOfClub(
         newPlayers: NewPlayerRequest[],
-        clubFacrId: Club['facrId'],
+        clubFacrId: string,
     ): Promise<Player[]> {
         const club = await this.clubRepository.findByFacrId(clubFacrId)
 
