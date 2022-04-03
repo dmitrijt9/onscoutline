@@ -681,6 +681,10 @@ export class FacrScraper extends AbstractScraper implements IFacrScraper {
             '.container-content>table.table tbody tr',
         )
 
+        const goalScorers = this.scrapeGoalscorers(goalscorersRows)
+        const homeTeamGoalscorers = goalScorers.filter((goalscorer) => goalscorer.team === homeTeam)
+        const awayTeamGoalscorers = goalScorers.filter((goalscorer) => goalscorer.team === awayTeam)
+
         return {
             competition: competitionName,
             facrUuid,
@@ -690,10 +694,37 @@ export class FacrScraper extends AbstractScraper implements IFacrScraper {
             homeTeam,
             awayTeam,
             lineups: {
-                home: homeTeamMatchLineup,
-                away: awayTeamMatchLineup,
+                home: homeTeamMatchLineup.map((matchPlayer) => {
+                    return {
+                        ...matchPlayer,
+                        goals: homeTeamGoalscorers
+                            .filter(
+                                (homeGoalscorer) => homeGoalscorer.player === matchPlayer.fullname,
+                            )
+                            .map((goalScorer) => {
+                                return {
+                                    minute: goalScorer.minute,
+                                    type: goalScorer.type,
+                                }
+                            }),
+                    }
+                }),
+                away: awayTeamMatchLineup.map((matchPlayer) => {
+                    return {
+                        ...matchPlayer,
+                        goals: awayTeamGoalscorers
+                            .filter(
+                                (awayGoalscorer) => awayGoalscorer.player === matchPlayer.fullname,
+                            )
+                            .map((goalScorer) => {
+                                return {
+                                    minute: goalScorer.minute,
+                                    type: goalScorer.type,
+                                }
+                            }),
+                    }
+                }),
             },
-            goalScorers: this.scrapeGoalscorers(goalscorersRows),
         }
     }
 
@@ -737,7 +768,8 @@ export class FacrScraper extends AbstractScraper implements IFacrScraper {
             return {
                 shirt: shirt !== '' ? parseInt(shirt) : 0,
                 position,
-                fullname,
+                // * Remove "Captain" flag.
+                fullname: fullname.replace(' [K]', ''),
                 yellowCard: yellowCard !== '' ? true : false,
                 redCard: redCard !== '' ? true : false,
                 substitution,
