@@ -6,15 +6,12 @@ export type NewMatchRequest = {
     awayTeam: string
     homeTeamScore: number | null
     awayTeamScore: number | null
-    goalScorers?: GoalScorerRequest[]
     lineups: LineupsRequest
 }
 
-type GoalScorerRequest = {
-    player: string
+type GoalRequest = {
     minute: number
     type: string
-    team: string
 }
 
 type LineupsRequest = {
@@ -30,4 +27,5 @@ type MatchPlayerRequest = {
     redCard: boolean
     substitution: string
     isInStartingLineup: boolean
+    goals: GoalRequest[]
 }
