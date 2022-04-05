@@ -12,6 +12,7 @@ import { addCompetitionToMatch1647957563531 } from './1647957563531-add-competit
 import { updateUqIndexes1647961286369 } from './1647961286369-update-uq-indexes'
 import { removeSeasonType1648240031232 } from './1648240031232-remove-season-type'
 import { clubFacrIdNullable1648242740268 } from './1648242740268-club-facr-id-nullable'
+import { updatePlayerNullable1649000077201 } from './1649000077201-update-player-nullable'
 
 export const migrations = [
     addCompetition1645357697040,
@@ -28,4 +29,5 @@ export const migrations = [
     updateUqIndexes1647961286369,
     removeSeasonType1648240031232,
     clubFacrIdNullable1648242740268,
+    updatePlayerNullable1649000077201,
 ]

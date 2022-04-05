@@ -10,6 +10,7 @@ import { SeasonRepository } from '../../repositories/season/SeasonRepository'
 import { PlayerGameStatisticRepository } from '../../repositories/statistic/PlayerGameStatisticRepository'
 import { ClubService } from '../../services/club/ClubService'
 import { CompetitionService } from '../../services/competition/CompetitionService'
+import { MatchService } from '../../services/match/MatchService'
 import { PlayerService } from '../../services/player/PlayerService'
 import { FacrScraper } from '../../services/scrapers/FacrScraper'
 import { PuppeteerBrowser } from '../../services/scrapers/PuppeteerBrowser'
@@ -49,6 +50,14 @@ export const createContainer = async (
     const facrScraper = new FacrScraper(appConfig, puppeteerBrowser)
 
     const seasonService = new SeasonService(seasonRepository)
+    const matchService = new MatchService(
+        seasonService,
+        competitionRepository,
+        competitionService,
+        clubRepository,
+        playerRepository,
+        playerService,
+    )
 
     return {
         config: appConfig,
@@ -69,6 +78,7 @@ export const createContainer = async (
         clubService,
         playerService,
         seasonService,
+        matchService,
     }
 }
 
@@ -91,4 +101,5 @@ export interface Container {
     clubService: ClubService
     playerService: PlayerService
     seasonService: SeasonService
+    matchService: MatchService
 }

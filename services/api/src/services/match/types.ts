@@ -19,7 +19,7 @@ type LineupsRequest = {
     away: MatchPlayerRequest[]
 }
 
-type MatchPlayerRequest = {
+export type MatchPlayerRequest = {
     shirt: number
     position: string
     fullname: string

@@ -7,8 +7,8 @@ export class Player {
     @PrimaryGeneratedColumn()
     id: number
 
-    @Column({ unique: true })
-    facrId: string
+    @Column('varchar', { unique: true, nullable: true })
+    facrId: string | null
 
     @Column()
     name: string
@@ -16,8 +16,8 @@ export class Player {
     @Column()
     surname: string
 
-    @Column()
-    yearOfBirth: string
+    @Column('varchar', { nullable: true })
+    yearOfBirth: string | null
 
     @Column('date', { nullable: true })
     facrMemberFrom?: ISO8601_NoTime
