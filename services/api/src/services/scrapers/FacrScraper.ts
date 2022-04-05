@@ -1,6 +1,7 @@
 import { HTMLElement } from 'node-html-parser'
 import { AppConfig } from '../../dependency/config/index'
 import { Club } from '../../entities/Club'
+import { fromFacrDateTime } from '../../utils/conversions'
 import { NewClubRequest } from '../club/types'
 import { NewCompetitionRequest } from '../competition/types'
 import { NewMatchRequest } from '../match/types'
@@ -10,13 +11,7 @@ import readFiles from '../utils/read-files'
 import { AbstractScraper } from './AbstractScraper'
 import { FACRScraperElementNotFoundError, FACRScraperNoHTMLS } from './errors'
 import { PuppeteerBrowser } from './PuppeteerBrowser'
-import {
-    IFacrScraper,
-    ScrapedClub,
-    ScrapedCompetition,
-    ScrapedMatchOverview,
-    ScrapedPlayer,
-} from './types'
+import { IFacrScraper, ScrapedClub, ScrapedCompetition, ScrapedMatchOverview } from './types'
 
 export class FacrScraper extends AbstractScraper implements IFacrScraper {
     private facrCompetitionsUrl: string
@@ -263,7 +258,9 @@ export class FacrScraper extends AbstractScraper implements IFacrScraper {
         return clubScrapedPlayersMap
     }
 
-    private async scrapePlayersWithPuppeteer(clubFacrId: Club['facrId']): Promise<ScrapedPlayer[]> {
+    private async scrapePlayersWithPuppeteer(
+        clubFacrId: Club['facrId'],
+    ): Promise<NewPlayerRequest[]> {
         const timeout = 10 * 1000
         const browser = await this.puppeteerBrowser.launch()
         const page = await browser.newPage()
@@ -401,7 +398,7 @@ export class FacrScraper extends AbstractScraper implements IFacrScraper {
                 }
             }
 
-            const scrapedPlayers: (ScrapedPlayer | undefined)[] = htmlBodiesWithPlayers
+            const scrapedPlayers: (NewPlayerRequest | undefined)[] = htmlBodiesWithPlayers
                 .map((htmlBody) => {
                     const parsedHtmlBody = this.parseHtml(htmlBody)
                     const tableElement = parsedHtmlBody.querySelector(
@@ -502,7 +499,7 @@ export class FacrScraper extends AbstractScraper implements IFacrScraper {
             console.info(
                 `FACR Scraper: Finish scrape players of a club with id ${clubFacrId}. Scraped ${scrapedPlayers.length} players.`,
             )
-            return scrapedPlayers as ScrapedPlayer[]
+            return scrapedPlayers as NewPlayerRequest[]
         } catch (e) {
             throw e
         } finally {
@@ -688,7 +685,7 @@ export class FacrScraper extends AbstractScraper implements IFacrScraper {
         return {
             competition: competitionName,
             facrUuid,
-            takePlace,
+            takePlace: fromFacrDateTime(takePlace),
             homeTeamScore,
             awayTeamScore,
             homeTeam,

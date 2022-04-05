@@ -17,4 +17,14 @@ export class PlayerRepository extends Repository<Player> {
 
         return player ?? null
     }
+
+    async findAllByFullname(fullnames: string[]): Promise<Player[]> {
+        console.log(fullnames)
+
+        return this.createQueryBuilder('player')
+            .where("CONCAT(player.surname, ' ', player.name) IN (:fullnames)", {
+                fullnames,
+            })
+            .getMany()
+    }
 }

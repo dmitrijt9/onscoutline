@@ -1,4 +1,6 @@
+import { Club } from '../../entities/Club'
 import { Player } from '../../entities/Player'
+import { ISO8601_NoTime } from '../../entities/types'
 import { ClubRepository } from '../../repositories/club/ClubRepository'
 import { PlayerInClubRepository } from '../../repositories/player/PlayerInClubRepository'
 import { PlayerRepository } from '../../repositories/player/PlayerRepository'
@@ -25,7 +27,10 @@ export class PlayerService {
         const currentPlayers = await this.playerRepository.find()
         const currentPlayersMap: Map<string, Player> = currentPlayers.reduce(
             (map: Map<string, Player>, player: Player) => {
-                map.set(player.facrId, player)
+                if (player.facrId) {
+                    map.set(player.facrId, player)
+                }
+
                 return map
             },
             new Map(),
@@ -107,5 +112,37 @@ export class PlayerService {
         }
 
         return savedPlayers
+    }
+
+    async resolvePlayersCurrentClubFromMatch(
+        players: Player[],
+        appearedInClub: Club,
+        appearedInClubDate: ISO8601_NoTime,
+    ) {
+        for (const player of players) {
+            const lastPlayerInClubRelation =
+                await this.playerInClubRepository.findLastByPlayerAndClub(player, appearedInClub)
+
+            if (!lastPlayerInClubRelation) {
+                await this.playerInClubRepository.save({
+                    club: appearedInClub,
+                    player,
+                    playingFrom: appearedInClubDate,
+                    isOnLoan: false,
+                })
+                continue
+            }
+
+            if (lastPlayerInClubRelation.club.id === appearedInClub.id) {
+                continue
+            }
+
+            await this.playerInClubRepository.save({
+                club: appearedInClub,
+                player,
+                playingFrom: appearedInClubDate,
+                isOnLoan: true,
+            })
+        }
     }
 }
