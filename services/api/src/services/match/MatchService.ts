@@ -1,13 +1,17 @@
 import { Club } from '../../entities/Club'
+import { Match } from '../../entities/Match'
 import { Player } from '../../entities/Player'
+import { PlayerInMatch } from '../../entities/Relations/PlayerInMatch'
 import { ClubRepository } from '../../repositories/club/ClubRepository'
 import { CompetitionRepository } from '../../repositories/competition/CompetitionRepository'
+import { MatchRepository } from '../../repositories/match/MatchRepository'
+import { PlayerInMatchRepository } from '../../repositories/player/PlayerInMatchRepository'
 import { PlayerRepository } from '../../repositories/player/PlayerRepository'
 import { fromFacrDateTime, toOnscoutlineDateFormat } from '../../utils/conversions'
 import { CompetitionService } from '../competition/CompetitionService'
 import { PlayerService } from '../player/PlayerService'
 import { SeasonService } from '../season/SeasonService'
-import { MatchPlayerRequest, NewMatchRequest } from './types'
+import { MatchPlayerRequest, NewMatchRequest, PlayerWithMatchInfo } from './types'
 
 export class MatchService {
     constructor(
@@ -17,6 +21,8 @@ export class MatchService {
         private readonly clubRepository: ClubRepository,
         private readonly playerRepository: PlayerRepository,
         private readonly playerService: PlayerService,
+        private readonly matchRepository: MatchRepository,
+        private readonly playerInMatchRepository: PlayerInMatchRepository,
     ) {}
 
     async createMatches(newMatchRequest: NewMatchRequest[]) {
@@ -60,7 +66,7 @@ export class MatchService {
         const homePlayers = await this.getMatchPlayers(newMatchRequest.lineups.home)
         const awayPlayers = await this.getMatchPlayers(newMatchRequest.lineups.away)
 
-        // TODO: resolve current club for a players
+        // resolve current club for a players
         await this.playerService.resolvePlayersCurrentClubFromMatch(
             homePlayers,
             homeClub,
@@ -71,6 +77,19 @@ export class MatchService {
             awayClub,
             matchTakePlace,
         )
+
+        const matchToSave: Omit<Match, 'id'> = {
+            awayTeam: awayClub,
+            homeTeam: homeClub,
+            // * some matches does not have results...since I do not care about team results, 0 fallback is not problem for me
+            scoreAway: newMatchRequest.awayTeamScore ?? 0,
+            scoreHome: newMatchRequest.homeTeamScore ?? 0,
+            when: matchTakePlace,
+            competitionSeason: competitionHasSeason,
+        }
+
+        const match = await this.matchRepository.save(matchToSave)
+        await this.savePlayerInMatchRelations([...homePlayers, ...awayPlayers], match)
 
         console.log(competitionHasSeason)
     }
@@ -88,13 +107,30 @@ export class MatchService {
         )
     }
 
-    private async getMatchPlayers(playerRequests: MatchPlayerRequest[]): Promise<Player[]> {
+    private async getMatchPlayers(
+        playerRequests: MatchPlayerRequest[],
+    ): Promise<PlayerWithMatchInfo[]> {
         const foundPlayersInDb = await this.playerRepository.findAllByFullname(
             playerRequests.map((player) => player.fullname),
         )
 
         if (foundPlayersInDb.length === playerRequests.length) {
-            return foundPlayersInDb
+            return foundPlayersInDb.map((player) => {
+                const found = playerRequests.find(
+                    (playerReq) => playerReq.fullname === `${player.surname} ${player.name}`,
+                )
+
+                // should not happen
+                // TODO: add custom error
+                if (!found) {
+                    throw new Error('Unexpected error')
+                }
+
+                return {
+                    ...player,
+                    matchInfo: found,
+                }
+            })
         }
 
         // ! Will not work when two players have the same surname and name...
@@ -119,6 +155,42 @@ export class MatchService {
             }
         })
         const newPlayersWithoutFacrId: Player[] = await this.playerRepository.save(newPlayersToSave)
-        return [...foundPlayersInDb, ...newPlayersWithoutFacrId]
+        return [...foundPlayersInDb, ...newPlayersWithoutFacrId].map((player) => {
+            const found = playerRequests.find(
+                (playerReq) => playerReq.fullname === `${player.surname} ${player.name}`,
+            )
+
+            // should not happen
+            // TODO: add custom error
+            if (!found) {
+                throw new Error('Unexpected error')
+            }
+
+            return {
+                ...player,
+                matchInfo: found,
+            }
+        })
     }
+
+    private async savePlayerInMatchRelations(
+        players: PlayerWithMatchInfo[],
+        match: Match,
+    ): Promise<PlayerInMatch[]> {
+        const relations: Omit<PlayerInMatch, 'id'>[] = players.map((player) => {
+            return {
+                match,
+                playedFromMinute: player.matchInfo.isInStartingLineup
+                    ? 0
+                    : player.matchInfo.substitution
+                    ? parseInt(player.matchInfo.substitution)
+                    : null,
+                player,
+            }
+        })
+
+        return await this.playerInMatchRepository.save(relations)
+    }
+
+    // private sync savePlayerStats
 }

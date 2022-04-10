@@ -1,3 +1,5 @@
+import { Player } from '../../entities/Player'
+
 export type NewMatchRequest = {
     competition: string
     takePlace: string
@@ -25,7 +27,11 @@ export type MatchPlayerRequest = {
     fullname: string
     yellowCard: boolean
     redCard: boolean
-    substitution: string
+    substitution: string | null
     isInStartingLineup: boolean
     goals: GoalRequest[]
+}
+
+export type PlayerWithMatchInfo = Player & {
+    matchInfo: MatchPlayerRequest
 }

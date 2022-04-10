@@ -769,7 +769,7 @@ export class FacrScraper extends AbstractScraper implements IFacrScraper {
                 fullname: fullname.replace(' [K]', ''),
                 yellowCard: yellowCard !== '' ? true : false,
                 redCard: redCard !== '' ? true : false,
-                substitution,
+                substitution: substitution === '' ? null : substitution,
                 isInStartingLineup: true,
             }
         })
