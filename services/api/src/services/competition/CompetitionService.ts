@@ -24,23 +24,24 @@ export class CompetitionService {
 
         const currentCompetitionsMap: Map<string, Competition> = currentCompetitions.reduce(
             (map: Map<string, Competition>, c: Competition) => {
-                map.set(`${c.regionId}:${c.facrId}`, c)
+                map.set(c.facrUuid, c)
                 return map
             },
             new Map(),
         )
 
         const competitionsToInsert = newCompetitions.filter(
-            ({ facrId, regionId }) => !currentCompetitionsMap.get(`${regionId}:${facrId}`),
+            ({ facrUuid }) => !currentCompetitionsMap.get(facrUuid),
         )
 
         const competitionsToUpdate = newCompetitions
-            .filter(({ facrId, regionId }) => currentCompetitionsMap.get(`${regionId}:${facrId}`))
+            .filter(({ facrUuid }) => currentCompetitionsMap.get(facrUuid))
             .map(({ facrId, facrUuid, name, regionId, regionName }) => {
                 return {
-                    ...currentCompetitionsMap.get(`${regionId}:${facrId}`),
-                    facrUuid,
+                    ...currentCompetitionsMap.get(facrUuid),
                     name,
+                    facrId,
+                    regionId,
                     regionName,
                 }
             })
