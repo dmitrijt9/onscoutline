@@ -11,9 +11,9 @@ export const getAppConfig = (unvalidatedEnv: unknown) => {
         httpServerPort: env.HTTP_SERVER_PORT ?? 3000,
         facrScraper: facrScraperConfig(),
         db: databaseConfig(env),
-        // logger: {
-        //     level: env.LOGGER_LEVEL,
-        // },
+        logger: {
+            level: env.LOGGER_LEVEL,
+        },
         // sentry: sentryConfig(env),
     }
 }

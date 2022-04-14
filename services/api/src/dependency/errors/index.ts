@@ -4,8 +4,9 @@ export interface IBaseErrorDescription {
     fingerprint?: string
 }
 
-export abstract class BaseError extends Error {
+export abstract class BaseError<E = string> extends Error {
     name: string
+    type: E
     payload: any
     fingerprint?: string
     constructor({ message, payload, fingerprint }: IBaseErrorDescription) {

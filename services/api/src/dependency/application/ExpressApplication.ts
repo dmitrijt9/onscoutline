@@ -2,6 +2,7 @@ import express, { Express, json, Router, urlencoded } from 'express'
 import helmet from 'helmet'
 import * as http from 'http'
 import { Container, createContainer } from '../container/index'
+import { createCustomErrorHandler } from '../errors/custom-error-handler'
 
 export class ExpressApplication {
     private _httpServer: http.Server | null
@@ -40,15 +41,14 @@ export class ExpressApplication {
         }
     }
 
-    initExpressApp() {
+    initExpressApp(container: Container) {
         // TODO: Add Graphql API
         return express()
             .use(helmet())
             .use(urlencoded({ extended: true }))
             .use(json())
             .use('/', Router())
-        // TODO: custom error handler
-        // .use(customErrorHandler)
+            .use(createCustomErrorHandler(container.logger))
         // .use(Sentry.Handlers.errorHandler())
     }
 
@@ -56,12 +56,10 @@ export class ExpressApplication {
         console.info('SERVER: Begin start process.')
 
         if (!this.container) {
-            console.log('tvorim kontak')
-
             this.container = await createContainer()
         }
 
-        this.expressApp = this.initExpressApp()
+        this.expressApp = this.initExpressApp(this.container)
         const { config } = this.container
         this.httpServer = this.expressApp.listen(config.httpServerPort, () => {
             console.log(`SERVER: Running on port ${config.httpServerPort}`)
