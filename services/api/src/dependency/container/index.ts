@@ -10,6 +10,8 @@ import { SeasonRepository } from '../../repositories/season/SeasonRepository'
 import { PlayerGameStatisticRepository } from '../../repositories/statistic/PlayerGameStatisticRepository'
 import { ClubService } from '../../services/club/ClubService'
 import { CompetitionService } from '../../services/competition/CompetitionService'
+import { ConsoleLogger } from '../../services/logger/ConsoleLogger'
+import { ILogger } from '../../services/logger/ILogger'
 import { MatchService } from '../../services/match/MatchService'
 import { PlayerService } from '../../services/player/PlayerService'
 import { FacrScraper } from '../../services/scrapers/FacrScraper'
@@ -23,6 +25,7 @@ import { bootstrapDbConnection } from './bootstrap/db-connection'
 export const createContainer = async (
     appConfig = getAppConfig(process.env),
 ): Promise<Container> => {
+    const logger = new ConsoleLogger(appConfig)
     const typeormConnection = await bootstrapDbConnection(appConfig.db.typeorm)
 
     const competitionRepository = getCustomRepository(CompetitionRepository)
@@ -35,10 +38,14 @@ export const createContainer = async (
     const seasonRepository = getCustomRepository(SeasonRepository)
     const playerGameStatisticsRepository = getCustomRepository(PlayerGameStatisticRepository)
 
+    const statisticsService = new StatisticsService()
     const playerService = new PlayerService(
         playerRepository,
         playerInClubRepository,
+        playerInMatchRepository,
         clubRepository,
+        statisticsService,
+        playerGameStatisticsRepository,
     )
     const competitionService = new CompetitionService(
         competitionRepository,
@@ -51,7 +58,7 @@ export const createContainer = async (
     const facrScraper = new FacrScraper(appConfig, puppeteerBrowser)
 
     const seasonService = new SeasonService(seasonRepository)
-    const statisticsService = new StatisticsService()
+
     const matchService = new MatchService(
         seasonService,
         competitionRepository,
@@ -60,13 +67,11 @@ export const createContainer = async (
         playerRepository,
         playerService,
         matchRepository,
-        playerInMatchRepository,
-        playerGameStatisticsRepository,
-        statisticsService,
     )
 
     return {
         config: appConfig,
+        logger,
         typeormConnection,
 
         competitionRepository,
@@ -85,11 +90,13 @@ export const createContainer = async (
         playerService,
         seasonService,
         matchService,
+        statisticsService,
     }
 }
 
 export interface Container {
     config: AppConfig
+    logger: ILogger
     typeormConnection: Connection
 
     competitionRepository: CompetitionRepository
@@ -108,4 +115,5 @@ export interface Container {
     playerService: PlayerService
     seasonService: SeasonService
     matchService: MatchService
+    statisticsService: StatisticsService
 }

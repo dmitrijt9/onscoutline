@@ -1,9 +1,16 @@
 import { Club } from '../../entities/Club'
+import { Match } from '../../entities/Match'
 import { Player, PlayerPosition } from '../../entities/Player'
+import { PlayerGameStatistic, StatType } from '../../entities/PlayerGameStatistic'
+import { PlayerInMatch } from '../../entities/Relations/PlayerInMatch'
 import { ISO8601_NoTime } from '../../entities/types'
 import { ClubRepository } from '../../repositories/club/ClubRepository'
 import { PlayerInClubRepository } from '../../repositories/player/PlayerInClubRepository'
+import { PlayerInMatchRepository } from '../../repositories/player/PlayerInMatchRepository'
 import { PlayerRepository } from '../../repositories/player/PlayerRepository'
+import { PlayerGameStatisticRepository } from '../../repositories/statistic/PlayerGameStatisticRepository'
+import { NewMatchRequest, PlayerWithMatchInfo } from '../match/types'
+import { StatisticsService } from '../statistics/StatisticsService'
 import { NewPlayerClubNotFound } from './errors'
 import { NewPlayerRequest, PlayerToUpdate } from './types'
 
@@ -11,7 +18,10 @@ export class PlayerService {
     constructor(
         private readonly playerRepository: PlayerRepository,
         private readonly playerInClubRepository: PlayerInClubRepository,
+        private readonly playerInMatchRepository: PlayerInMatchRepository,
         private readonly clubRepository: ClubRepository,
+        private readonly statisticsService: StatisticsService,
+        private readonly playerGamestatisticRepository: PlayerGameStatisticRepository,
     ) {}
 
     async processNewPlayersOfClub(
@@ -144,6 +154,111 @@ export class PlayerService {
                 isOnLoan: true,
             })
         }
+    }
+
+    /**
+     * Processes player in match specific tasks, e.g. save playerInMatch relation, calculate stats and save them
+     * @param players
+     * @param match
+     * @param matchInfo
+     */
+    async resolvePlayersInMatch(
+        players: PlayerWithMatchInfo[],
+        match: Match,
+        matchInfo: NewMatchRequest,
+    ) {
+        for (const player of players) {
+            const playerSubstitutionMinute = player.matchInfo.substitution
+            const playingFromMinute = player.matchInfo.isInStartingLineup
+                ? 0
+                : playerSubstitutionMinute
+
+            const playerInMatchRelation: Omit<PlayerInMatch, 'id'> = {
+                playedFromMinute: playingFromMinute === null ? null : +playingFromMinute,
+                match,
+                player,
+            }
+
+            const playerStats = this.calculatePlayerStatsFromMatch(player, {
+                awayTeamGoals: matchInfo.awayTeamGoals.map(({ minute }) => minute),
+                homeTeamGoals: matchInfo.homeTeamGoals.map(({ minute }) => minute),
+            })
+
+            // save record about player being in match lineup
+            const savedRelation = await this.playerInMatchRepository.save(playerInMatchRelation)
+
+            // save player's calculated stats from the match
+            await this.playerGamestatisticRepository.save(
+                playerStats.map((stat) => {
+                    return {
+                        ...stat,
+                        playerInMatch: savedRelation,
+                    }
+                }),
+            )
+        }
+    }
+
+    private calculatePlayerStatsFromMatch(
+        player: PlayerWithMatchInfo,
+        matchInfo: {
+            homeTeamGoals: number[]
+            awayTeamGoals: number[]
+        },
+    ): Omit<PlayerGameStatistic, 'id' | 'playerInMatch'>[] {
+        const playerSubstitutionMinute = player.matchInfo.substitution
+        const playingFromMinute = player.matchInfo.isInStartingLineup ? 0 : playerSubstitutionMinute
+
+        if (!playingFromMinute) {
+            return []
+        }
+
+        const stats: Omit<PlayerGameStatistic, 'id' | 'playerInMatch'>[] = []
+
+        // TODO: Enum for player positions
+        const playerPosition = player.matchInfo.position
+        if (playerPosition === 'Brankář') {
+            const concededGoalsMinutes =
+                player.matchInfo.side === 'away' ? matchInfo.homeTeamGoals : matchInfo.awayTeamGoals
+            const concededGoals = concededGoalsMinutes.filter(
+                (concededGoalMinute) => concededGoalMinute >= +playingFromMinute,
+            ).length
+
+            stats.push({
+                minute: null,
+                statType: StatType.ConcededGoals,
+                value: concededGoals,
+            })
+        }
+
+        const goals: Omit<PlayerGameStatistic, 'id' | 'playerInMatch'>[] =
+            player.matchInfo.goals.map(({ minute, type }) => {
+                return {
+                    minute,
+                    statType: this.statisticsService.facrGoalTypeToStatType(type),
+                    value: 1,
+                }
+            })
+
+        stats.push(...goals)
+
+        if (player.matchInfo.yellowCardMinute) {
+            stats.push({
+                minute: player.matchInfo.yellowCardMinute,
+                statType: StatType.YellowCard,
+                value: 1,
+            })
+        }
+
+        if (player.matchInfo.redCardMinute) {
+            stats.push({
+                minute: player.matchInfo.redCardMinute,
+                statType: StatType.RedCard,
+                value: 1,
+            })
+        }
+
+        return stats
     }
 
     /**

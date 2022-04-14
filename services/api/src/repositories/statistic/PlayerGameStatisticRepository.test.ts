@@ -76,7 +76,7 @@ describe('Player Game Statistic Repository', () => {
             {
                 minute: 64,
                 playerInMatch: randomPlayerInMatch,
-                statType: StatType.Goal,
+                statType: StatType.RegularGoal,
                 value: 1,
             },
             {
