@@ -21,4 +21,14 @@ export class Player {
 
     @Column('date', { nullable: true })
     facrMemberFrom?: ISO8601_NoTime
+
+    @Column('json', { nullable: true })
+    position?: Set<PlayerPosition>
+}
+
+export enum PlayerPosition {
+    Goalkeeper = 'Goalkeeper',
+    Defender = 'Defender',
+    Midfielder = 'Midfielder',
+    Forward = 'Forward',
 }

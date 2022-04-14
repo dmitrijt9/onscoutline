@@ -8,6 +8,8 @@ export type NewMatchRequest = {
     awayTeam: string
     homeTeamScore: number | null
     awayTeamScore: number | null
+    homeTeamGoals: GoalRequest[]
+    awayTeamGoals: GoalRequest[]
     lineups: LineupsRequest
 }
 
@@ -25,11 +27,12 @@ export type MatchPlayerRequest = {
     shirt: number
     position: string
     fullname: string
-    yellowCard: boolean
-    redCard: boolean
+    yellowCardMinute: number | null
+    redCardMinute: number | null
     substitution: string | null
     isInStartingLineup: boolean
     goals: GoalRequest[]
+    side: 'home' | 'away'
 }
 
 export type PlayerWithMatchInfo = Player & {

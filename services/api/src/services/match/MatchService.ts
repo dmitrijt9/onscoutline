@@ -1,16 +1,20 @@
 import { Club } from '../../entities/Club'
 import { Match } from '../../entities/Match'
 import { Player } from '../../entities/Player'
+import { PlayerGameStatistic, StatType } from '../../entities/PlayerGameStatistic'
 import { PlayerInMatch } from '../../entities/Relations/PlayerInMatch'
 import { ClubRepository } from '../../repositories/club/ClubRepository'
 import { CompetitionRepository } from '../../repositories/competition/CompetitionRepository'
 import { MatchRepository } from '../../repositories/match/MatchRepository'
 import { PlayerInMatchRepository } from '../../repositories/player/PlayerInMatchRepository'
 import { PlayerRepository } from '../../repositories/player/PlayerRepository'
+import { PlayerGameStatisticRepository } from '../../repositories/statistic/PlayerGameStatisticRepository'
 import { fromFacrDateTime, toOnscoutlineDateFormat } from '../../utils/conversions'
 import { CompetitionService } from '../competition/CompetitionService'
 import { PlayerService } from '../player/PlayerService'
 import { SeasonService } from '../season/SeasonService'
+import { StatisticsService } from '../statistics/StatisticsService'
+import { UnexpectedMatchServiceError } from './errors'
 import { MatchPlayerRequest, NewMatchRequest, PlayerWithMatchInfo } from './types'
 
 export class MatchService {
@@ -23,20 +27,14 @@ export class MatchService {
         private readonly playerService: PlayerService,
         private readonly matchRepository: MatchRepository,
         private readonly playerInMatchRepository: PlayerInMatchRepository,
+        private readonly playerGamestatisticRepository: PlayerGameStatisticRepository,
+        private readonly statisticsService: StatisticsService,
     ) {}
 
     async createMatches(newMatchRequest: NewMatchRequest[]) {
         await Promise.all(
             newMatchRequest.map((newMatchRequest) => this.createMatch(newMatchRequest)),
         )
-        // TODO: business logic
-        // TODO: get competition
-        // TODO: get season
-        // TODO: validate clubs - if exists, if not, create without facrId etc.
-        // TODO: validate players - if exists, if not, create without facrId etc.
-        // TODO: prepare players - set stats, resolve current club etc.
-        // TODO: prepare players stats
-        // TODO: save match, player in match, player stats
     }
 
     private async createMatch(newMatchRequest: NewMatchRequest) {
@@ -48,8 +46,10 @@ export class MatchService {
         const competition = await this.competitionRepository.findByName(newMatchRequest.competition)
 
         if (!competition) {
-            // TODO: Custom error - to pass whole match request payload, so that I can retry to import this match somehow
-            throw new Error('Could not find competition for this match.')
+            throw new UnexpectedMatchServiceError(
+                'Could not find competition for this match.',
+                newMatchRequest,
+            )
         }
 
         const competitionHasSeason = await this.competitionService.getCompetitionHasSeason(
@@ -66,18 +66,6 @@ export class MatchService {
         const homePlayers = await this.getMatchPlayers(newMatchRequest.lineups.home)
         const awayPlayers = await this.getMatchPlayers(newMatchRequest.lineups.away)
 
-        // resolve current club for a players
-        await this.playerService.resolvePlayersCurrentClubFromMatch(
-            homePlayers,
-            homeClub,
-            matchTakePlace,
-        )
-        await this.playerService.resolvePlayersCurrentClubFromMatch(
-            awayPlayers,
-            awayClub,
-            matchTakePlace,
-        )
-
         const matchToSave: Omit<Match, 'id'> = {
             awayTeam: awayClub,
             homeTeam: homeClub,
@@ -89,9 +77,64 @@ export class MatchService {
         }
 
         const match = await this.matchRepository.save(matchToSave)
-        await this.savePlayerInMatchRelations([...homePlayers, ...awayPlayers], match)
 
-        console.log(competitionHasSeason)
+        // resolve current club for a players
+        // TODO: remove after implementing scraping player detail with transfers from FACR database
+        await this.playerService.resolvePlayersCurrentClubFromMatch(
+            homePlayers,
+            homeClub,
+            matchTakePlace,
+        )
+        await this.playerService.resolvePlayersCurrentClubFromMatch(
+            awayPlayers,
+            awayClub,
+            matchTakePlace,
+        )
+
+        await this.resolvePlayersInMatch([...homePlayers, ...awayPlayers], match, newMatchRequest)
+    }
+
+    /**
+     * Processes player in match specific tasks, e.g. save playerInMatch relation, calculate stats and save them
+     * @param players
+     * @param match
+     * @param matchInfo
+     */
+    private async resolvePlayersInMatch(
+        players: PlayerWithMatchInfo[],
+        match: Match,
+        matchInfo: NewMatchRequest,
+    ) {
+        for (const player of players) {
+            const playerSubstitutionMinute = player.matchInfo.substitution
+            const playingFromMinute = player.matchInfo.isInStartingLineup
+                ? 0
+                : playerSubstitutionMinute
+
+            const playerInMatchRelation: Omit<PlayerInMatch, 'id'> = {
+                playedFromMinute: playingFromMinute === null ? null : +playingFromMinute,
+                match,
+                player,
+            }
+
+            const playerStats = this.calculatePlayerStatsFromMatch(player, {
+                awayTeamGoals: matchInfo.awayTeamGoals.map(({ minute }) => minute),
+                homeTeamGoals: matchInfo.homeTeamGoals.map(({ minute }) => minute),
+            })
+
+            // save record about player being in match lineup
+            const savedRelation = await this.playerInMatchRepository.save(playerInMatchRelation)
+
+            // save player's calculated stats from the match
+            await this.playerGamestatisticRepository.save(
+                playerStats.map((stat) => {
+                    return {
+                        ...stat,
+                        playerInMatch: savedRelation,
+                    }
+                }),
+            )
+        }
     }
 
     private async getMatchClub(clubName: string): Promise<Club> {
@@ -121,9 +164,14 @@ export class MatchService {
                 )
 
                 // should not happen
-                // TODO: add custom error
                 if (!found) {
-                    throw new Error('Unexpected error')
+                    throw new UnexpectedMatchServiceError(
+                        'Could not find linked player in a match lineup.',
+                        {
+                            playerFromDb: player,
+                            lineup: playerRequests,
+                        },
+                    )
                 }
 
                 return {
@@ -145,6 +193,7 @@ export class MatchService {
         })
 
         const newPlayersToSave: Omit<Player, 'id'>[] = missingPlayersInDb.map((player) => {
+            const playerPosition = this.playerService.facrPositionToPlayerPosition(player.position)
             return {
                 facrId: null,
                 // * Notice: We set fullname as a name. There is no way to distinguish between name and surname generally.
@@ -152,6 +201,7 @@ export class MatchService {
                 name: player.fullname,
                 surname: '',
                 yearOfBirth: null,
+                position: playerPosition ? new Set([playerPosition]) : undefined,
             }
         })
         const newPlayersWithoutFacrId: Player[] = await this.playerRepository.save(newPlayersToSave)
@@ -161,9 +211,14 @@ export class MatchService {
             )
 
             // should not happen
-            // TODO: add custom error
             if (!found) {
-                throw new Error('Unexpected error')
+                throw new UnexpectedMatchServiceError(
+                    'Could not find linked player in a match lineup.',
+                    {
+                        playerFromDb: player,
+                        lineup: playerRequests,
+                    },
+                )
             }
 
             return {
@@ -173,24 +228,65 @@ export class MatchService {
         })
     }
 
-    private async savePlayerInMatchRelations(
-        players: PlayerWithMatchInfo[],
-        match: Match,
-    ): Promise<PlayerInMatch[]> {
-        const relations: Omit<PlayerInMatch, 'id'>[] = players.map((player) => {
-            return {
-                match,
-                playedFromMinute: player.matchInfo.isInStartingLineup
-                    ? 0
-                    : player.matchInfo.substitution
-                    ? parseInt(player.matchInfo.substitution)
-                    : null,
-                player,
-            }
-        })
+    private calculatePlayerStatsFromMatch(
+        player: PlayerWithMatchInfo,
+        matchInfo: {
+            homeTeamGoals: number[]
+            awayTeamGoals: number[]
+        },
+    ): Omit<PlayerGameStatistic, 'id' | 'playerInMatch'>[] {
+        const playerSubstitutionMinute = player.matchInfo.substitution
+        const playingFromMinute = player.matchInfo.isInStartingLineup ? 0 : playerSubstitutionMinute
 
-        return await this.playerInMatchRepository.save(relations)
+        if (!playingFromMinute) {
+            return []
+        }
+
+        const stats: Omit<PlayerGameStatistic, 'id' | 'playerInMatch'>[] = []
+
+        // TODO: Enum for player positions
+        const playerPosition = player.matchInfo.position
+        if (playerPosition === 'Brankář') {
+            const concededGoalsMinutes =
+                player.matchInfo.side === 'away' ? matchInfo.homeTeamGoals : matchInfo.awayTeamGoals
+            const concededGoals = concededGoalsMinutes.filter(
+                (concededGoalMinute) => concededGoalMinute >= +playingFromMinute,
+            ).length
+
+            stats.push({
+                minute: null,
+                statType: StatType.ConcededGoals,
+                value: concededGoals,
+            })
+        }
+
+        const goals: Omit<PlayerGameStatistic, 'id' | 'playerInMatch'>[] =
+            player.matchInfo.goals.map(({ minute, type }) => {
+                return {
+                    minute,
+                    statType: this.statisticsService.facrGoalTypeToStatType(type),
+                    value: 1,
+                }
+            })
+
+        stats.push(...goals)
+
+        if (player.matchInfo.yellowCardMinute) {
+            stats.push({
+                minute: player.matchInfo.yellowCardMinute,
+                statType: StatType.YellowCard,
+                value: 1,
+            })
+        }
+
+        if (player.matchInfo.redCardMinute) {
+            stats.push({
+                minute: player.matchInfo.redCardMinute,
+                statType: StatType.RedCard,
+                value: 1,
+            })
+        }
+
+        return stats
     }
-
-    // private sync savePlayerStats
 }

@@ -1,5 +1,5 @@
 import { Club } from '../../entities/Club'
-import { Player } from '../../entities/Player'
+import { Player, PlayerPosition } from '../../entities/Player'
 import { ISO8601_NoTime } from '../../entities/types'
 import { ClubRepository } from '../../repositories/club/ClubRepository'
 import { PlayerInClubRepository } from '../../repositories/player/PlayerInClubRepository'
@@ -144,5 +144,23 @@ export class PlayerService {
                 isOnLoan: true,
             })
         }
+    }
+
+    /**
+     * Converts FACR player positions to an app's enum PlayerPosition value
+     *
+     * All unknown position types will be tracked as null
+     * @param facrPosition Positions from FACR database, e.g. Brankar, Obrance etc.
+     * @returns
+     */
+    facrPositionToPlayerPosition(facrPosition: string): PlayerPosition | null {
+        const positionsMap: Map<string, PlayerPosition> = new Map([
+            ['Brankář', PlayerPosition.Goalkeeper],
+            ['Obránce', PlayerPosition.Defender],
+            ['Záložník', PlayerPosition.Midfielder],
+            ['Útočník', PlayerPosition.Forward],
+        ])
+
+        return positionsMap.get(facrPosition) ?? null
     }
 }
