@@ -19,3 +19,10 @@ export abstract class BaseError extends Error {
         this.name = this.constructor.name
     }
 }
+
+/**
+ * This error should be used when the application cannot continue with the current process.
+ */
+export class SevereError extends BaseError {}
+
+export class UnexpectedError extends SevereError {}

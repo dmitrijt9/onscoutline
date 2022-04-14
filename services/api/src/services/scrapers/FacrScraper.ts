@@ -688,6 +688,18 @@ export class FacrScraper extends AbstractScraper implements IFacrScraper {
             takePlace: fromFacrDateTime(takePlace),
             homeTeamScore,
             awayTeamScore,
+            homeTeamGoals: homeTeamGoalscorers.map((goalScorer) => {
+                return {
+                    minute: goalScorer.minute,
+                    type: goalScorer.type,
+                }
+            }),
+            awayTeamGoals: awayTeamGoalscorers.map((goalScorer) => {
+                return {
+                    minute: goalScorer.minute,
+                    type: goalScorer.type,
+                }
+            }),
             homeTeam,
             awayTeam,
             lineups: {
@@ -704,6 +716,7 @@ export class FacrScraper extends AbstractScraper implements IFacrScraper {
                                     type: goalScorer.type,
                                 }
                             }),
+                        side: 'home',
                     }
                 }),
                 away: awayTeamMatchLineup.map((matchPlayer) => {
@@ -719,6 +732,7 @@ export class FacrScraper extends AbstractScraper implements IFacrScraper {
                                     type: goalScorer.type,
                                 }
                             }),
+                        side: 'away',
                     }
                 }),
             },
@@ -767,8 +781,8 @@ export class FacrScraper extends AbstractScraper implements IFacrScraper {
                 position,
                 // * Remove "Captain" flag.
                 fullname: fullname.replace(' [K]', ''),
-                yellowCard: yellowCard !== '' ? true : false,
-                redCard: redCard !== '' ? true : false,
+                yellowCardMinute: yellowCard !== '' ? +yellowCard : null,
+                redCardMinute: redCard !== '' ? +redCard : null,
                 substitution: substitution === '' ? null : substitution,
                 isInStartingLineup: true,
             }
@@ -814,8 +828,8 @@ export class FacrScraper extends AbstractScraper implements IFacrScraper {
                 shirt: shirt !== '' ? parseInt(shirt) : 0,
                 position,
                 fullname,
-                yellowCard: yellowCard !== '' ? true : false,
-                redCard: redCard !== '' ? true : false,
+                yellowCardMinute: yellowCard !== '' ? +yellowCard : null,
+                redCardMinute: redCard !== '' ? +redCard : null,
                 substitution,
                 isInStartingLineup: false,
             }

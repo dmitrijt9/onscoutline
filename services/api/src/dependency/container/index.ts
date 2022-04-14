@@ -16,6 +16,7 @@ import { FacrScraper } from '../../services/scrapers/FacrScraper'
 import { PuppeteerBrowser } from '../../services/scrapers/PuppeteerBrowser'
 import { IFacrScraper } from '../../services/scrapers/types'
 import { SeasonService } from '../../services/season/SeasonService'
+import { StatisticsService } from '../../services/statistics/StatisticsService'
 import { AppConfig, getAppConfig } from '../config/index'
 import { bootstrapDbConnection } from './bootstrap/db-connection'
 
@@ -50,6 +51,7 @@ export const createContainer = async (
     const facrScraper = new FacrScraper(appConfig, puppeteerBrowser)
 
     const seasonService = new SeasonService(seasonRepository)
+    const statisticsService = new StatisticsService()
     const matchService = new MatchService(
         seasonService,
         competitionRepository,
@@ -59,6 +61,8 @@ export const createContainer = async (
         playerService,
         matchRepository,
         playerInMatchRepository,
+        playerGameStatisticsRepository,
+        statisticsService,
     )
 
     return {
