@@ -9,6 +9,7 @@ import { PlayerInClubRepository } from '../../repositories/player/PlayerInClubRe
 import { PlayerInMatchRepository } from '../../repositories/player/PlayerInMatchRepository'
 import { PlayerRepository } from '../../repositories/player/PlayerRepository'
 import { PlayerGameStatisticRepository } from '../../repositories/statistic/PlayerGameStatisticRepository'
+import { isNil } from '../../utils/index'
 import { NewMatchRequest, PlayerWithMatchInfo } from '../match/types'
 import { StatisticsService } from '../statistics/StatisticsService'
 import { NewPlayerClubNotFound } from './errors'
@@ -209,7 +210,7 @@ export class PlayerService {
         const playerSubstitutionMinute = player.matchInfo.substitution
         const playingFromMinute = player.matchInfo.isInStartingLineup ? 0 : playerSubstitutionMinute
 
-        if (!playingFromMinute) {
+        if (isNil(playingFromMinute)) {
             return []
         }
 

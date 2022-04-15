@@ -158,7 +158,6 @@ export class MatchService {
             }
         })
         const newPlayersWithoutFacrId: Player[] = await this.playerRepository.save(newPlayersToSave)
-        console.log(playerRequests)
 
         return [...foundPlayersInDb, ...newPlayersWithoutFacrId].map((player) => {
             const found = playerRequests.find((playerReq) =>
@@ -166,8 +165,6 @@ export class MatchService {
                     ? playerReq.fullname === `${player.surname} ${player.name}`
                     : playerReq.fullname === player.name,
             )
-
-            console.log(player)
 
             // should not happen
             if (!found) {
