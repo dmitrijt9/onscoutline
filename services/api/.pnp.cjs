@@ -35,6 +35,7 @@ function $$SETUP_STATE(hydrateRuntimeState, basePath) {
         [null, {
           "packageLocation": "./",
           "packageDependencies": [
+            ["@faker-js/faker", "npm:6.1.2"],
             ["@types/eslint", "npm:8.4.1"],
             ["@types/express", "npm:4.17.13"],
             ["@types/jest", "npm:27.4.0"],
@@ -920,6 +921,15 @@ function $$SETUP_STATE(hydrateRuntimeState, basePath) {
             ["js-yaml", "npm:4.1.0"],
             ["minimatch", "npm:3.1.1"],
             ["strip-json-comments", "npm:3.1.1"]
+          ],
+          "linkType": "HARD",
+        }]
+      ]],
+      ["@faker-js/faker", [
+        ["npm:6.1.2", {
+          "packageLocation": "./.yarn/cache/@faker-js-faker-npm-6.1.2-67f6ec3cbb-953d0301f7.zip/node_modules/@faker-js/faker/",
+          "packageDependencies": [
+            ["@faker-js/faker", "npm:6.1.2"]
           ],
           "linkType": "HARD",
         }]
@@ -7331,6 +7341,7 @@ function $$SETUP_STATE(hydrateRuntimeState, basePath) {
           "packageLocation": "./",
           "packageDependencies": [
             ["onscoutline-api", "workspace:."],
+            ["@faker-js/faker", "npm:6.1.2"],
             ["@types/eslint", "npm:8.4.1"],
             ["@types/express", "npm:4.17.13"],
             ["@types/jest", "npm:27.4.0"],

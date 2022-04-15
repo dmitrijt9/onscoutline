@@ -83,11 +83,10 @@ export class MatchService {
             matchTakePlace,
         )
 
-        await this.playerService.resolvePlayersInMatch(
-            [...homePlayers, ...awayPlayers],
-            match,
-            newMatchRequest,
-        )
+        await this.playerService.resolvePlayersInMatch([...homePlayers, ...awayPlayers], match, {
+            awayTeamGoals: newMatchRequest.awayTeamGoals.map(({ minute }) => minute),
+            homeTeamGoals: newMatchRequest.homeTeamGoals.map(({ minute }) => minute),
+        })
     }
 
     private async getMatchClub(clubName: string): Promise<Club> {
