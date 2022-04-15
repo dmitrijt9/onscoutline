@@ -7,8 +7,6 @@ import {
 } from '../../../dependency/test-utils/index'
 import { createMatchesValidMock } from './mocks/create-matches-mocks'
 
-jest.setTimeout(100 * 1000)
-
 describe('Match service', () => {
     let testingClient: TestingClient
     let container: Container
