@@ -10,7 +10,7 @@ import { PlayerInMatchRepository } from '../../repositories/player/PlayerInMatch
 import { PlayerRepository } from '../../repositories/player/PlayerRepository'
 import { PlayerGameStatisticRepository } from '../../repositories/statistic/PlayerGameStatisticRepository'
 import { isNil } from '../../utils/index'
-import { NewMatchRequest, PlayerWithMatchInfo } from '../match/types'
+import { PlayerWithMatchInfo } from '../match/types'
 import { StatisticsService } from '../statistics/StatisticsService'
 import { NewPlayerClubNotFound } from './errors'
 import { NewPlayerRequest, PlayerToUpdate } from './types'
@@ -166,7 +166,10 @@ export class PlayerService {
     async resolvePlayersInMatch(
         players: PlayerWithMatchInfo[],
         match: Match,
-        matchInfo: NewMatchRequest,
+        matchInfo: {
+            homeTeamGoals: number[]
+            awayTeamGoals: number[]
+        },
     ) {
         for (const player of players) {
             const playerSubstitutionMinute = player.matchInfo.substitution
@@ -180,10 +183,7 @@ export class PlayerService {
                 player,
             }
 
-            const playerStats = this.calculatePlayerStatsFromMatch(player, {
-                awayTeamGoals: matchInfo.awayTeamGoals.map(({ minute }) => minute),
-                homeTeamGoals: matchInfo.homeTeamGoals.map(({ minute }) => minute),
-            })
+            const playerStats = this.calculatePlayerStatsFromMatch(player, matchInfo)
 
             // save record about player being in match lineup
             const savedRelation = await this.playerInMatchRepository.save(playerInMatchRelation)
