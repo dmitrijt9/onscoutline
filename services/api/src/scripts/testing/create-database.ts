@@ -4,7 +4,7 @@ import { bootstrapDbConnection } from '../../dependency/container/bootstrap/db-c
 
 const createDatabase = async () => {
     const config = getAppConfig(process.env)
-    await bootstrapDbConnection(config.db.typeorm).then(async (connection) => {
+    await bootstrapDbConnection(config.db.typeormTest).then(async (connection) => {
         await connection.query('DROP DATABASE IF EXISTS test')
         await connection.createQueryRunner().query('CREATE DATABASE IF NOT EXISTS test')
         await connection.close()
