@@ -12,9 +12,9 @@ executors:
 jobs:
   install-api:
     executor: docker-with-compose-executor
+    working_directory: ./services/api
     steps:
       - checkout
-      - run: "cd ./services/api"
       - restore_cache:
           name: Restore Yarn Package Cache
           keys:
@@ -80,9 +80,9 @@ workflows:
   api-install-check-test:
     jobs:
       - install-api
-      - code-check-api:
-          requires:
-            - install-api
-      - test-api:
-          requires:
-            - code-check-api
+      # - code-check-api:
+          # requires:
+            # - install-api
+      # - test-api:
+          # requires:
+            # - code-check-api
