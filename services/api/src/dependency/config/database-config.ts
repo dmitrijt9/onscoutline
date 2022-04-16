@@ -32,9 +32,9 @@ export const databaseConfig = (env: AppEnv) => ({
     typeormTest: {
         type: 'mariadb',
         logging: true, // The logging output will only be enabled if the DEBUG env variable is provided. See https://orkhan.gitbook.io/typeorm/docs/logging#changing-default-logger for more info
-        database: 'test',
-        username: env.DB_USER,
-        password: env.DB_PASSWORD,
+        database: env.DB_NAME,
+        username: 'root',
+        password: 'root',
         port: env.DB_PORT ?? 3306,
         host: env.DB_HOST,
         entities: entities,

@@ -10,6 +10,16 @@ module.exports = {
     env: {
         node: true,
     },
+    settings: {
+        'import/parsers': {
+            '@typescript-eslint/parser': ['.ts', '.tsx'],
+        },
+        'import/resolver': {
+            typescript: {
+                project: './tsconfig.json',
+            },
+        },
+    },
     extends: [
         'plugin:@typescript-eslint/recommended',
         'plugin:import/errors',
@@ -17,9 +27,10 @@ module.exports = {
         'plugin:import/typescript',
         'prettier',
         'plugin:prettier/recommended',
+        'plugin:jest/recommended',
     ],
-    ignorePatterns: ['test', 'dist'],
-    settings: {},
+    ignorePatterns: ['test', '**/dist/**'],
+
     rules: {
         '@typescript-eslint/no-explicit-any': 'error',
         '@typescript-eslint/no-unused-vars': ['error', { argsIgnorePattern: '^_' }],
@@ -41,5 +52,5 @@ module.exports = {
         'no-only-tests/no-only-tests': 'error',
         'spaced-comment': ['error', 'always'],
     },
-    plugins: ['import'],
+    plugins: ['import', 'no-only-tests'],
 }

@@ -1,0 +1,85 @@
+# Use the latest 2.1 version of CircleCI pipeline process engine.
+# See: https://circleci.com/docs/2.0/configuration-reference
+version: 2.1
+
+executors:
+  docker-with-compose-executor:
+    machine:
+      image: ubuntu-2004:202111-01
+
+# Define a job to be invoked later in a workflow.
+# See: https://circleci.com/docs/2.0/configuration-reference/#jobs
+jobs:
+  install-api:
+    executor: docker-with-compose-executor
+    steps:
+      - checkout
+      - restore_cache:
+          name: Restore Yarn Package Cache
+          keys:
+            - yarn-packages-{{ checksum "./services/api/yarn.lock" }}
+      - run:
+          name: Install Dependencies
+          command: | 
+            cd ./services/api/
+            yarn install --immutable
+      - save_cache:
+          name: Save Yarn Package Cache
+          key: yarn-packages-{{ checksum "./services/api/yarn.lock" }}
+          paths:
+            - ./services/api/.yarn/cache
+            - ./services/api/.yarn/unplugged
+  code-check-api:
+    executor: docker-with-compose-executor
+    steps:
+      - checkout
+      - restore_cache:
+          name: Restore Yarn Package Cache
+          keys:
+            - yarn-packages-{{ checksum "./services/api/yarn.lock" }}
+      - run:
+          name: Install Dependencies
+          command: | 
+            cd ./services/api/
+            yarn install --immutable
+      - run:
+          name: "Run API code check"
+          command:  |
+            cd ./services/api
+            ./bin/start yarn code:check
+
+  test-api:
+    executor: docker-with-compose-executor
+    steps:
+      - checkout
+      - restore_cache:
+          name: Restore Yarn Package Cache
+          keys:
+            - yarn-packages-{{ checksum "./services/api/yarn.lock" }}
+      - run:
+          name: Install Dependencies
+          command: | 
+            cd ./services/api/
+            yarn install --immutable
+      - run:
+          name: "Run API tests"
+          command: |
+            cd ./services/api
+            ./bin/start yarn test
+
+# Invoke jobs via workflows
+# See: https://circleci.com/docs/2.0/configuration-reference/#workflows
+workflows:
+  api-install-check-test:
+    jobs:
+      - install-api:
+        filters:
+          branches:
+            only:
+              - main
+      - code-check-api:
+          requires:
+            - install-api
+      - test-api:
+          requires:
+            - code-check-api
