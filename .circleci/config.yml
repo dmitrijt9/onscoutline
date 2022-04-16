@@ -41,7 +41,9 @@ jobs:
             - yarn-packages-{{ checksum "./services/api/yarn.lock" }}
       - run:
           name: Install Dependencies
-          command: yarn install --immutable
+          command: | 
+            cd ./services/api/
+            yarn install --immutable
       - run:
           name: "Run API code check"
           command:  |
@@ -58,7 +60,9 @@ jobs:
             - yarn-packages-{{ checksum "./services/api/yarn.lock" }}
       - run:
           name: Install Dependencies
-          command: yarn install --immutable
+          command: | 
+            cd ./services/api/
+            yarn install --immutable
       - run:
           name: "Run API tests"
           command: |
