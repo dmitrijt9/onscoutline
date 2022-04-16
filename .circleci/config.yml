@@ -16,9 +16,7 @@ jobs:
       - checkout
       - run:
           name: "Run API tests"
-          command: | 
-            cd service/api
-            bin/start yarn test
+          command: "pwd" 
             
 
 # Invoke jobs via workflows
