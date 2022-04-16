@@ -80,10 +80,10 @@ jobs:
             cd ./services/api
             ./bin/start yarn test
 
-# Invoke jobs via workflows
-# See: https://circleci.com/docs/2.0/configuration-reference/#workflows
 workflows:
-  when: << pipeline.parameters.GHA_Action >>
+  # This workflow is set to be conditionally triggered, only when
+  # the GitHub Action is triggered.
+  # With no other workflows, normal push events will be ignored currently.
   api-install-check-test:
     jobs:
       - install-api:
