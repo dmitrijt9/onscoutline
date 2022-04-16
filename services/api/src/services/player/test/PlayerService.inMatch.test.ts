@@ -295,7 +295,7 @@ describe('Player service in match resolver', () => {
             expect(awayPlConcededGoalsStat?.value).toBe(2)
         })
 
-        it.skip('should record substitutions correctly', async () => {
+        it('should record substitutions correctly', async () => {
             const { playerInMatchRepository, playerGameStatisticsRepository } = container
             const substituedPlayer = randomPlayersWithmatchInfo[0]
 
@@ -314,7 +314,7 @@ describe('Player service in match resolver', () => {
             })
 
             expect(plSubstitutionStats).not.toBeUndefined()
-            expect(plSubstitutionStats?.value).toBeNull()
+            expect(plSubstitutionStats?.value).toBe(1)
             expect(plSubstitutionStats?.minute).toBe(68)
         })
     })
