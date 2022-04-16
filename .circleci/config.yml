@@ -10,12 +10,28 @@ executors:
 # Define a job to be invoked later in a workflow.
 # See: https://circleci.com/docs/2.0/configuration-reference/#jobs
 jobs:
-  test-api:
+  install-api:
+    executor: docker-with-compose-executor
+    steps:
+      - run:
+          name: "Install API dependencies"
+          command: | 
+            cd ./services/api
+            yarn install
+  code-check-api:
     executor: docker-with-compose-executor
     # Add steps to the job
     # See: https://circleci.com/docs/2.0/configuration-reference/#steps
     steps:
-      - checkout
+      - run:
+          name: "Run API code check"
+          command: | 
+            cd ./services/api
+            yarn install
+            ./bin/start yarn code:check
+  test-api:
+    executor: docker-with-compose-executor
+    steps:
       - run:
           name: "Run API tests"
           command: | 
@@ -27,6 +43,12 @@ jobs:
 # Invoke jobs via workflows
 # See: https://circleci.com/docs/2.0/configuration-reference/#workflows
 workflows:
-  tests-workflow:
+  api-install-check-test:
     jobs:
-      - test-api
+      - install-api
+      - code-check-api:
+          requires:
+            - install-api
+      - test-api:
+          requires:
+            - code-check-api
