@@ -27,18 +27,16 @@ jobs:
           name: Save Yarn Package Cache
           key: yarn-packages-{{ checksum "./services/api/yarn.lock" }}
           paths:
-            - .yarn/cache
-            - .yarn/unplugged
+            - ./services/api/.yarn/cache
+            - ./services/api/.yarn/unplugged
   code-check-api:
     executor: docker-with-compose-executor
     steps:
       - checkout
-      - run: cd ./services/api/
       - restore_cache:
           name: Restore Yarn Package Cache
           keys:
             - yarn-packages-{{ checksum "./services/api/yarn.lock" }}
-      - run: ls -la
       - run:
           name: Install Dependencies
           command: | 
