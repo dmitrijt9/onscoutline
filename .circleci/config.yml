@@ -29,11 +29,8 @@ jobs:
           name: "Run API tests"
           command: | 
             cd ./services/api
-            echo $DB_NAME
             yarn install
-            ./bin/start
-            DB_USER=root DB_PASSWORD=root
-            yarn test
+            ./bin/start yarn test
             
 
 # Invoke jobs via workflows
