@@ -8,54 +8,6 @@ export const createMatchesValidMock: NewMatchRequest[] = [
         facrUuid: '852d404e-687a-4595-867b-ea64b018dc78',
         homeTeam: 'VIKTORIA PLZEŇ - fotbal, z.s.',
         homeTeamScore: 7,
-        homeTeamGoals: [
-            {
-                minute: 4,
-                type: 'Branka',
-            },
-            {
-                minute: 14,
-                type: 'Branka',
-            },
-            {
-                minute: 17,
-                type: 'Branka',
-            },
-            {
-                minute: 7,
-                type: 'Branka',
-            },
-            {
-                minute: 21,
-                type: 'Branka',
-            },
-            {
-                minute: 12,
-                type: 'Branka',
-            },
-            {
-                minute: 23,
-                type: 'Branka',
-            },
-        ],
-        awayTeamGoals: [
-            {
-                minute: 9,
-                type: 'Branka',
-            },
-            {
-                minute: 17,
-                type: 'Branka',
-            },
-            {
-                minute: 26,
-                type: 'Branka',
-            },
-            {
-                minute: 20,
-                type: 'Branka',
-            },
-        ],
         lineups: {
             away: [
                 {
