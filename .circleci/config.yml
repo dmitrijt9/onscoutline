@@ -17,16 +17,23 @@ jobs:
     steps:
       - checkout
       - run: 
-          name: "Set credentials to test DB"
+          name: "Create CI local env file"
           command: |
-            DB_USER=root
-            DB_PASSWORD=root
+            touch .env.local
+            echo "
+              DB_NAME=test
+              DB_USER=root
+              DB_PASSWORD=root
+              " >> .env.local
       - run:
           name: "Run API tests"
           command: | 
             cd ./services/api
+            echo $DB_NAME
             yarn install
-            ./bin/start yarn test 
+            ./bin/start
+            DB_USER=root DB_PASSWORD=root
+            yarn test
             
 
 # Invoke jobs via workflows
