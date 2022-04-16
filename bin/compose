@@ -10,7 +10,11 @@ services=( $(cd $ROOT_DIR/services && echo * | tr ' ' '\n'))
 dockerComposeFiles=""
 for i in "${!services[@]}"
 do
-    dockerComposeFiles="${dockerComposeFiles} -f ${ROOT_DIR}/services/${services[i]}/dev-ops/docker/docker-compose.yml"
+    if [ "$CI" = true ]; then
+        dockerComposeFiles="${dockerComposeFiles} -f ${ROOT_DIR}/services/${services[i]}/dev-ops/docker/docker-compose.ci.yml"
+    else
+        dockerComposeFiles="${dockerComposeFiles} -f ${ROOT_DIR}/services/${services[i]}/dev-ops/docker/docker-compose.yml"
+    fi
 done
 
 export ROOT_DIR="$ROOT_DIR" $($ROOT_DIR/bin/libs/loadEnvs) 
