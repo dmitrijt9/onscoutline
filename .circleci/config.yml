@@ -16,11 +16,11 @@ jobs:
     # See: https://circleci.com/docs/2.0/configuration-reference/#steps
     steps:
       - checkout
-      - run: ls -la
       - run:
           name: "Run API tests"
           command: | 
             cd ./services/api
+            yarn install
             ./bin/start yarn test 
             
 
