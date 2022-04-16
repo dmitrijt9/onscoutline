@@ -1,0 +1,26 @@
+version: "3"
+services:
+  api:
+    image: $API_NODE_IMAGE
+    environment:
+      NODE_ENV: ${NODE_ENV}
+      HOST: ${API_HOST}
+      HTTP_SERVER_PORT: ${HTTP_SERVER_PORT}
+      DB_HOST: ${DB_HOST}
+      DB_PORT: ${DB_PORT}
+      DB_USER: ${DB_USER}
+      DB_PASSWORD: ${DB_PASSWORD}
+      DB_NAME: ${DB_NAME}
+    working_dir: /app
+    command: yarn start:dev
+    volumes:
+      - $ROOT_DIR/services/api:/app
+      #ignore this (performance issue)
+      - /app/dist
+    networks:
+      - api
+      - database
+networks:
+  api:
+  # traefik:
+  #   external: true
