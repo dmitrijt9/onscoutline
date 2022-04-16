@@ -72,7 +72,11 @@ jobs:
 workflows:
   api-install-check-test:
     jobs:
-      - install-api
+      - install-api:
+        filters:
+          branches:
+            only:
+              - main
       - code-check-api:
           requires:
             - install-api
