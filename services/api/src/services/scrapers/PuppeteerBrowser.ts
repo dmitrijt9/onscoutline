@@ -1,3 +1,4 @@
+import { TPuppeteerSelector, TPuppeteerSelectorOptions } from './types'
 import puppeteer, {
     Browser,
     LaunchOptions,
@@ -6,7 +7,6 @@ import puppeteer, {
     Page,
     ElementHandle,
 } from 'puppeteer'
-import { TPuppeteerSelector, TPuppeteerSelectorOptions } from './types'
 
 export class PuppeteerBrowser {
     async launch(
@@ -86,6 +86,7 @@ export class PuppeteerBrowser {
         await this.waitForInViewport(element, timeout)
     }
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     private async waitForFunction(fn: () => Promise<any>, timeout: number) {
         let isActive = true
         setTimeout(() => {

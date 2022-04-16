@@ -1,4 +1,3 @@
-import { HTMLElement } from 'node-html-parser'
 import { AppConfig } from '../../dependency/config/index'
 import { Club } from '../../entities/Club'
 import { fromFacrDateTime } from '../../utils/conversions'
@@ -8,10 +7,13 @@ import { NewMatchRequest } from '../match/types'
 import { NewPlayerRequest } from '../player/types'
 import chunk from '../utils/chunk'
 import readFiles from '../utils/read-files'
+import { sleep } from '../../utils/index'
 import { AbstractScraper } from './AbstractScraper'
 import { FACRScraperElementNotFoundError, FACRScraperNoHTMLS } from './errors'
 import { PuppeteerBrowser } from './PuppeteerBrowser'
 import { IFacrScraper, ScrapedClub, ScrapedCompetition, ScrapedMatchOverview } from './types'
+import { HTMLElement } from 'node-html-parser'
+import { Browser } from 'puppeteer'
 
 export class FacrScraper extends AbstractScraper implements IFacrScraper {
     private facrCompetitionsUrl: string
@@ -231,46 +233,70 @@ export class FacrScraper extends AbstractScraper implements IFacrScraper {
     async scrapePlayersOfClubs(clubs: Club[]): Promise<Map<string, NewPlayerRequest[]>> {
         // I dont want to launch hundreds of browser in parallel...
         // This is why I run this sequentially with for cycle
-        let scrapedPlayersLength = 0
-        const chunks = chunk(clubs, 2)
-        const clubScrapedPlayersMap = new Map<string, NewPlayerRequest[]>()
+        const scrapedPlayersLength = 0
+        const chunks = chunk(clubs, 10)
+        const clubPlayersListHtmlsMap = new Map<string, string[]>()
+        const scrapedPlayersMap = new Map<string, NewPlayerRequest[]>()
 
+        const browser = await this.puppeteerBrowser.launch()
         for (const chunk of chunks) {
+            await sleep(500)
             const results = await Promise.allSettled(
                 chunk.map(async (club) => {
                     if (!club.facrId) {
                         // TODO: custom error
                         throw new Error('Cannot scrape players of the club without facrId.')
                     }
-                    const clubsScrapedPlayers = await this.scrapePlayersWithPuppeteer(club.facrId)
-                    clubScrapedPlayersMap.set(club.facrId, clubsScrapedPlayers)
-                    scrapedPlayersLength += clubsScrapedPlayers.length
+                    console.info(
+                        `FACR Scraper: Start scrape list of players of a club with id ${club.facrId} using browser.`,
+                    )
+
+                    const clubsPlayersListHtmls = await this.scrapeClubsPlayersListWithPuppeteer(
+                        club.facrId,
+                        browser,
+                    )
+
+                    clubPlayersListHtmlsMap.set(club.facrId, clubsPlayersListHtmls)
+
+                    console.info(
+                        `FACR Scraper: Finish scrape list of players of a club with id ${club.facrId}.`,
+                    )
                 }),
             )
 
             const rejected = results.filter((r) => r.status === 'rejected')
             rejected.forEach((r) => console.error(r))
         }
+        await browser.close()
+
+        for (const [clubId, playersListHtmls] of clubPlayersListHtmlsMap.entries()) {
+            console.info('Scrape details of a players of a club: ', clubId)
+            await this.scrapePlayersDetails(playersListHtmls)
+
+            // scrapedPlayersMap.set(clubId, clubsScrapedPlayers)
+            // scrapedPlayersLength += clubsScrapedPlayers.length
+        }
+
         console.info(
             `FACR Scraper: Successfully scraped ${scrapedPlayersLength} players from all clubs.`,
         )
 
-        return clubScrapedPlayersMap
+        return scrapedPlayersMap
     }
 
-    private async scrapePlayersWithPuppeteer(
+    private async scrapeClubsPlayersListWithPuppeteer(
         clubFacrId: Club['facrId'],
-    ): Promise<NewPlayerRequest[]> {
+        launchedBrowser: Browser,
+    ): Promise<string[]> {
         const timeout = 10 * 1000
-        const browser = await this.puppeteerBrowser.launch()
+        const browser = launchedBrowser
         const page = await browser.newPage()
         page.setDefaultTimeout(timeout)
         await page.setViewport({ width: 1705, height: 625 })
-        console.info(`FACR Scraper: Start scrape players of a club with id ${clubFacrId}.`)
         try {
             await Promise.all([
                 page.waitForNavigation(),
-                page.goto(`${this.facrMembersUrl}/clenove/databaze-clenu.aspx`),
+                page.goto(`${this.facrMembersUrl}/hraci/prehled-hracu.aspx`),
             ])
 
             // find right input for club id
@@ -292,6 +318,7 @@ export class FacrScraper extends AbstractScraper implements IFacrScraper {
 
             // write club id to right input field
             await numberOfClubInputElement.focus()
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             await numberOfClubInputElement.evaluate((el: any, value: string) => {
                 el.value = value
                 el.dispatchEvent(new Event('input', { bubbles: true }))
@@ -320,7 +347,7 @@ export class FacrScraper extends AbstractScraper implements IFacrScraper {
 
             // find main button to trigger search
             const searchButtonElement = await this.puppeteerBrowser.waitForSelectors(
-                ['#MainContent_btnSearch > span'],
+                ['#btnSearch'],
                 page,
                 {
                     timeout,
@@ -331,7 +358,7 @@ export class FacrScraper extends AbstractScraper implements IFacrScraper {
                 throw new FACRScraperElementNotFoundError(
                     'searchButtonElement',
                     'players',
-                    '#MainContent_btnSearch > span',
+                    '#btnSearch',
                 )
             }
             await this.puppeteerBrowser.scrollIntoViewIfNeeded(searchButtonElement, timeout)
@@ -341,7 +368,7 @@ export class FacrScraper extends AbstractScraper implements IFacrScraper {
             // Start players mining part...
             const htmlBodiesWithPlayers: string[] = []
             // hardcoded - current settings on is.fotbal.cz web
-            const itemsPerPage = 20
+            const itemsPerPage = 50
             // find element with summary of a current pagination
             const paginationSummaryElement = await this.puppeteerBrowser.waitForSelectors(
                 ['.pages .sumary'],
@@ -364,6 +391,7 @@ export class FacrScraper extends AbstractScraper implements IFacrScraper {
                 .split(' ')
                 .slice(-1)
             const lastPageNumber = Math.ceil(+totalItems / itemsPerPage)
+
             // iterate over players pages for current club
             for (let index = 0; index < lastPageNumber; index++) {
                 const bodyElement = await this.puppeteerBrowser.waitForSelectors(['body'], page, {
@@ -398,113 +426,71 @@ export class FacrScraper extends AbstractScraper implements IFacrScraper {
                 }
             }
 
-            const scrapedPlayers: (NewPlayerRequest | undefined)[] = htmlBodiesWithPlayers
-                .map((htmlBody) => {
-                    const parsedHtmlBody = this.parseHtml(htmlBody)
-                    const tableElement = parsedHtmlBody.querySelector(
-                        '#MainContent_VypisClenu1_gridData',
-                    )
-                    if (!tableElement) {
-                        throw new FACRScraperElementNotFoundError(
-                            'tableElement',
-                            'players',
-                            '#MainContent_VypisClenu1_gridData',
-                        )
-                    }
-
-                    const tableRowElemnts = tableElement.querySelectorAll('tr:not(.first)')
-
-                    if (!tableRowElemnts) {
-                        throw new FACRScraperElementNotFoundError(
-                            'tableRowElemnts',
-                            'players',
-                            'tr:not(.first)',
-                        )
-                    }
-
-                    return tableRowElemnts.map((rowElement) => {
-                        const facrId = rowElement.querySelector('td.first')?.innerText
-                        if (!facrId) {
-                            throw new FACRScraperElementNotFoundError(
-                                'player facrId',
-                                'players',
-                                'td.first',
-                            )
-                        }
-
-                        if (facrId === '&nbsp;') {
-                            return
-                        }
-
-                        const surname = rowElement.querySelector('td:nth-child(2) a')?.innerText
-                        if (!surname) {
-                            throw new FACRScraperElementNotFoundError(
-                                'player surname',
-                                'players',
-                                'td:nth-child(2) a',
-                            )
-                        }
-
-                        const name = rowElement.querySelector('td:nth-child(3) a')?.innerText
-                        if (!name) {
-                            throw new FACRScraperElementNotFoundError(
-                                'player name',
-                                'players',
-                                'td:nth-child(3) a',
-                            )
-                        }
-                        const yearOfBirth = rowElement.querySelector('td:nth-child(4)')?.innerText
-                        if (!yearOfBirth) {
-                            throw new FACRScraperElementNotFoundError(
-                                'player yearOfBirth',
-                                'players',
-                                'td:nth-child(4)',
-                            )
-                        }
-
-                        let playingFrom = rowElement.querySelector('td:nth-child(7)')?.innerText
-                        if (!playingFrom) {
-                            throw new FACRScraperElementNotFoundError(
-                                'player playingFrom',
-                                'players',
-                                'td:nth-child(7)',
-                            )
-                        }
-                        playingFrom = this.toISO8601(playingFrom)
-
-                        let facrMemberFrom = rowElement.querySelector('td:nth-child(8)')?.innerText
-                        if (!facrMemberFrom) {
-                            throw new FACRScraperElementNotFoundError(
-                                'player facrMemberFrom',
-                                'players',
-                                'td:nth-child(8)',
-                            )
-                        }
-                        facrMemberFrom =
-                            facrMemberFrom === '&nbsp;' ? undefined : this.toISO8601(facrMemberFrom)
-
-                        return {
-                            facrId,
-                            surname,
-                            name,
-                            yearOfBirth,
-                            playingFrom,
-                            facrMemberFrom,
-                        }
-                    })
-                })
-                .flat()
-                .filter((p) => p !== undefined)
-
-            console.info(
-                `FACR Scraper: Finish scrape players of a club with id ${clubFacrId}. Scraped ${scrapedPlayers.length} players.`,
-            )
-            return scrapedPlayers as NewPlayerRequest[]
+            return htmlBodiesWithPlayers
         } catch (e) {
             throw e
-        } finally {
-            await browser.close()
         }
+    }
+
+    async scrapePlayersDetails(htmlsWithPlayersList: string[]) {
+        const playersDetailPagesUrls: string[] = htmlsWithPlayersList
+            .map((html) => {
+                const parsedHtmlBody = this.parseHtml(html)
+                const tableElement = parsedHtmlBody.querySelector(
+                    '#MainContent_VypisHracu_gridData',
+                )
+                if (!tableElement) {
+                    throw new FACRScraperElementNotFoundError(
+                        'tableElement',
+                        'players',
+                        '#MainContent_VypisHracu_gridData',
+                    )
+                }
+
+                const playersRows = tableElement.querySelectorAll('tr:not(.first)')
+                if (!playersRows) {
+                    throw new FACRScraperElementNotFoundError(
+                        'playersRows',
+                        'players',
+                        'tr:not(.first)',
+                    )
+                }
+                return playersRows
+                    .filter((row) => {
+                        const isActive =
+                            row.querySelector('td:nth-child(10) img')?.getAttribute('title') ===
+                            'ANO'
+                        return isActive
+                    })
+                    .map((row) => {
+                        return row.querySelector('td:nth-child(4) a')?.getAttribute('href')
+                    })
+                    .filter((url: string): url is string => !!url)
+            })
+            .flat()
+
+        const scrapedPlayers: string[] = []
+        const chunks = chunk(playersDetailPagesUrls, 5)
+        for (const urlsChunk of chunks) {
+            await sleep(1000)
+            const players = await Promise.all(
+                urlsChunk.map(async (detailUrl) => {
+                    const parsedPage = await this.getParsedPage(
+                        `${this.facrMembersUrl}/hraci/${detailUrl}`,
+                    )
+
+                    parsedPage.querySelector('#MainContent_panelBody')
+
+                    return detailUrl
+                }),
+            )
+
+            scrapedPlayers.push(...players)
+        }
+
+        console.log('details to mine', playersDetailPagesUrls.length)
+        console.log('mined players', scrapedPlayers.flat().length)
+        // console.log(scrapedPlayers.length)
     }
 
     async scrapeMatches(htmlsToScrape: string[]): Promise<NewMatchRequest[]> {
@@ -858,8 +844,8 @@ export class FacrScraper extends AbstractScraper implements IFacrScraper {
         return element.innerText.includes('Tabulka neobsahuje žádné údaje')
     }
 
-    private toISO8601(date: string) {
-        const [day, month, year] = date.split('.')
-        return `${year}-${month}-${day}`
-    }
+    // private toISO8601(date: string) {
+    //     const [day, month, year] = date.split('.')
+    //     return `${year}-${month}-${day}`
+    // }
 }
