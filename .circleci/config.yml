@@ -31,14 +31,14 @@ jobs:
             - .yarn/unplugged
   code-check-api:
     executor: docker-with-compose-executor
-    # Add steps to the job
-    # See: https://circleci.com/docs/2.0/configuration-reference/#steps
     steps:
       - checkout
+      - run: cd ./services/api/
       - restore_cache:
           name: Restore Yarn Package Cache
           keys:
             - yarn-packages-{{ checksum "./services/api/yarn.lock" }}
+      - run: ls -la
       - run:
           name: Install Dependencies
           command: | 
