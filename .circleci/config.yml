@@ -16,15 +16,6 @@ jobs:
     # See: https://circleci.com/docs/2.0/configuration-reference/#steps
     steps:
       - checkout
-      - run: 
-          name: "Create CI local env file"
-          command: |
-            touch ./.env.local
-            echo "
-              DB_USER=root
-              DB_PASSWORD=root
-              " >> .env.local
-            cat .env.local
       - run:
           name: "Run API tests"
           command: | 
