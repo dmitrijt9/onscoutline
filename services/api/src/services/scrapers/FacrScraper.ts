@@ -688,18 +688,6 @@ export class FacrScraper extends AbstractScraper implements IFacrScraper {
             takePlace: fromFacrDateTime(takePlace),
             homeTeamScore,
             awayTeamScore,
-            homeTeamGoals: homeTeamGoalscorers.map((goalScorer) => {
-                return {
-                    minute: goalScorer.minute,
-                    type: goalScorer.type,
-                }
-            }),
-            awayTeamGoals: awayTeamGoalscorers.map((goalScorer) => {
-                return {
-                    minute: goalScorer.minute,
-                    type: goalScorer.type,
-                }
-            }),
             homeTeam,
             awayTeam,
             lineups: {

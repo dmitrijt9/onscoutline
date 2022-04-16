@@ -8,8 +8,6 @@ export type NewMatchRequest = {
     awayTeam: string
     homeTeamScore: number | null
     awayTeamScore: number | null
-    homeTeamGoals: GoalRequest[]
-    awayTeamGoals: GoalRequest[]
     lineups: LineupsRequest
 }
 
