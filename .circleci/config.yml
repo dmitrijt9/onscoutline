@@ -29,7 +29,6 @@ jobs:
           name: "Run API code check"
           command: | 
             cd ./services/api
-            yarn install
             ./bin/start yarn code:check
   test-api:
     executor: docker-with-compose-executor
@@ -39,7 +38,6 @@ jobs:
           name: "Run API tests"
           command: | 
             cd ./services/api
-            yarn install
             ./bin/start yarn test
             
 
