@@ -13,6 +13,7 @@ jobs:
   install-api:
     executor: docker-with-compose-executor
     steps:
+      - checkout
       - run:
           name: "Install API dependencies"
           command: | 
@@ -23,6 +24,7 @@ jobs:
     # Add steps to the job
     # See: https://circleci.com/docs/2.0/configuration-reference/#steps
     steps:
+      - checkout
       - run:
           name: "Run API code check"
           command: | 
@@ -32,6 +34,7 @@ jobs:
   test-api:
     executor: docker-with-compose-executor
     steps:
+      - checkout
       - run:
           name: "Run API tests"
           command: | 
