@@ -16,6 +16,11 @@ jobs:
     # See: https://circleci.com/docs/2.0/configuration-reference/#steps
     steps:
       - checkout
+      - run: 
+          name: "Set credentials to test DB"
+          command: |
+            DB_USER=root
+            DB_PASSWORD=root
       - run:
           name: "Run API tests"
           command: | 
