@@ -14,32 +14,65 @@ jobs:
     executor: docker-with-compose-executor
     steps:
       - checkout
+      - run: "cd ./services/api"
+      - restore_cache:
+          name: Restore Yarn Package Cache
+          keys:
+            - yarn-packages-{{ checksum "yarn.lock" }}
       - run:
-          name: "Install API dependencies"
-          command: | 
-            cd ./services/api
-            yarn install
+          name: Install Dependencies
+          command: yarn install --immutable
+      - save_cache:
+          name: Save Yarn Package Cache
+          key: yarn-packages-{{ checksum "yarn.lock" }}
+          paths:
+            - .yarn/cache
+            - .yarn/unplugged
   code-check-api:
     executor: docker-with-compose-executor
     # Add steps to the job
     # See: https://circleci.com/docs/2.0/configuration-reference/#steps
     steps:
       - checkout
+      - run: "cd ./services/api"
+      - restore_cache:
+          name: Restore Yarn Package Cache
+          keys:
+            - yarn-packages-{{ checksum "yarn.lock" }}
+      - run:
+          name: Install Dependencies
+          command: yarn install --immutable
+      - save_cache:
+          name: Save Yarn Package Cache
+          key: yarn-packages-{{ checksum "yarn.lock" }}
+          paths:
+            - .yarn/cache
+            - .yarn/unplugged
       - run:
           name: "Run API code check"
-          command: | 
-            cd ./services/api
-            ./bin/start yarn code:check
+          command: ./bin/start yarn code:check
+
   test-api:
     executor: docker-with-compose-executor
     steps:
       - checkout
+      - run: "cd ./services/api"
+      - restore_cache:
+          name: Restore Yarn Package Cache
+          keys:
+            - yarn-packages-{{ checksum "yarn.lock" }}
+      - run:
+          name: Install Dependencies
+          command: yarn install --immutable
+      - save_cache:
+          name: Save Yarn Package Cache
+          key: yarn-packages-{{ checksum "yarn.lock" }}
+          paths:
+            - .yarn/cache
+            - .yarn/unplugged
       - run:
           name: "Run API tests"
-          command: | 
-            cd ./services/api
-            ./bin/start yarn test
-            
+          command: ./bin/start yarn test
 
 # Invoke jobs via workflows
 # See: https://circleci.com/docs/2.0/configuration-reference/#workflows
