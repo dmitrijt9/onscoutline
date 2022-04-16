@@ -10,6 +10,10 @@ import { addSeasonAndRelation1647526770063 } from './1647526770063-add-season-an
 import { addPlayerGameStat1647781826502 } from './1647781826502-add-player-game-stat'
 import { addCompetitionToMatch1647957563531 } from './1647957563531-add-competition-to-match'
 import { updateUqIndexes1647961286369 } from './1647961286369-update-uq-indexes'
+import { removeSeasonType1648240031232 } from './1648240031232-remove-season-type'
+import { clubFacrIdNullable1648242740268 } from './1648242740268-club-facr-id-nullable'
+import { updatePlayerNullable1649000077201 } from './1649000077201-update-player-nullable'
+import { addPlayerPosition1649940125341 } from './1649940125341-add-player-position'
 
 export const migrations = [
     addCompetition1645357697040,
@@ -24,4 +28,8 @@ export const migrations = [
     addPlayerGameStat1647781826502,
     addCompetitionToMatch1647957563531,
     updateUqIndexes1647961286369,
+    removeSeasonType1648240031232,
+    clubFacrIdNullable1648242740268,
+    updatePlayerNullable1649000077201,
+    addPlayerPosition1649940125341,
 ]

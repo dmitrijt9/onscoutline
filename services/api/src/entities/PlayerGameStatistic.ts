@@ -27,8 +27,12 @@ export class PlayerGameStatistic {
 }
 
 export enum StatType {
-    Goal = 'Goal',
+    RegularGoal = 'RegularGoal',
+    OwnGoal = 'OwnGoal',
+    PenaltyGoal = 'PenaltyGoal',
     Assist = 'Assist',
     YellowCard = 'YellowCard',
     RedCard = 'RedCard',
+    ConcededGoals = 'ConcededGoals', // specific for goalkeepers
+    Substitution = 'Substitution',
 }

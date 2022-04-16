@@ -5,12 +5,12 @@ export class Club {
     @PrimaryGeneratedColumn()
     id: number
 
-    @Column({ unique: true })
-    facrId: string
+    @Column('varchar', { unique: true, nullable: true })
+    facrId: string | null
 
     @Column({ unique: true })
     name: string
 
-    @Column()
-    facrUuid: string
+    @Column('varchar', { nullable: true })
+    facrUuid: string | null
 }

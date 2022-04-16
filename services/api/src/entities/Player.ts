@@ -1,5 +1,5 @@
 import { Column, Entity, PrimaryGeneratedColumn, Unique } from 'typeorm'
-import { ISO8601 } from './types'
+import { ISO8601_NoTime } from './types'
 
 @Entity()
 @Unique('Player_Fullname_UQ_IDX', ['name', 'surname'])
@@ -7,8 +7,8 @@ export class Player {
     @PrimaryGeneratedColumn()
     id: number
 
-    @Column({ unique: true })
-    facrId: string
+    @Column('varchar', { unique: true, nullable: true })
+    facrId: string | null
 
     @Column()
     name: string
@@ -16,9 +16,19 @@ export class Player {
     @Column()
     surname: string
 
-    @Column()
-    yearOfBirth: string
+    @Column('varchar', { nullable: true })
+    yearOfBirth: string | null
 
     @Column('date', { nullable: true })
-    facrMemberFrom?: ISO8601
+    facrMemberFrom?: ISO8601_NoTime
+
+    @Column('json', { nullable: true })
+    position?: Set<PlayerPosition>
+}
+
+export enum PlayerPosition {
+    Goalkeeper = 'Goalkeeper',
+    Defender = 'Defender',
+    Midfielder = 'Midfielder',
+    Forward = 'Forward',
 }

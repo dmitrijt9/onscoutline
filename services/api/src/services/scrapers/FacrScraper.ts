@@ -1,6 +1,7 @@
 import { HTMLElement } from 'node-html-parser'
 import { AppConfig } from '../../dependency/config/index'
 import { Club } from '../../entities/Club'
+import { fromFacrDateTime } from '../../utils/conversions'
 import { NewClubRequest } from '../club/types'
 import { NewCompetitionRequest } from '../competition/types'
 import { NewMatchRequest } from '../match/types'
@@ -10,13 +11,7 @@ import readFiles from '../utils/read-files'
 import { AbstractScraper } from './AbstractScraper'
 import { FACRScraperElementNotFoundError, FACRScraperNoHTMLS } from './errors'
 import { PuppeteerBrowser } from './PuppeteerBrowser'
-import {
-    IFacrScraper,
-    ScrapedClub,
-    ScrapedCompetition,
-    ScrapedMatchOverview,
-    ScrapedPlayer,
-} from './types'
+import { IFacrScraper, ScrapedClub, ScrapedCompetition, ScrapedMatchOverview } from './types'
 
 export class FacrScraper extends AbstractScraper implements IFacrScraper {
     private facrCompetitionsUrl: string
@@ -243,6 +238,10 @@ export class FacrScraper extends AbstractScraper implements IFacrScraper {
         for (const chunk of chunks) {
             const results = await Promise.allSettled(
                 chunk.map(async (club) => {
+                    if (!club.facrId) {
+                        // TODO: custom error
+                        throw new Error('Cannot scrape players of the club without facrId.')
+                    }
                     const clubsScrapedPlayers = await this.scrapePlayersWithPuppeteer(club.facrId)
                     clubScrapedPlayersMap.set(club.facrId, clubsScrapedPlayers)
                     scrapedPlayersLength += clubsScrapedPlayers.length
@@ -259,7 +258,9 @@ export class FacrScraper extends AbstractScraper implements IFacrScraper {
         return clubScrapedPlayersMap
     }
 
-    private async scrapePlayersWithPuppeteer(clubFacrId: Club['facrId']): Promise<ScrapedPlayer[]> {
+    private async scrapePlayersWithPuppeteer(
+        clubFacrId: Club['facrId'],
+    ): Promise<NewPlayerRequest[]> {
         const timeout = 10 * 1000
         const browser = await this.puppeteerBrowser.launch()
         const page = await browser.newPage()
@@ -397,7 +398,7 @@ export class FacrScraper extends AbstractScraper implements IFacrScraper {
                 }
             }
 
-            const scrapedPlayers: (ScrapedPlayer | undefined)[] = htmlBodiesWithPlayers
+            const scrapedPlayers: (NewPlayerRequest | undefined)[] = htmlBodiesWithPlayers
                 .map((htmlBody) => {
                     const parsedHtmlBody = this.parseHtml(htmlBody)
                     const tableElement = parsedHtmlBody.querySelector(
@@ -498,7 +499,7 @@ export class FacrScraper extends AbstractScraper implements IFacrScraper {
             console.info(
                 `FACR Scraper: Finish scrape players of a club with id ${clubFacrId}. Scraped ${scrapedPlayers.length} players.`,
             )
-            return scrapedPlayers as ScrapedPlayer[]
+            return scrapedPlayers as NewPlayerRequest[]
         } catch (e) {
             throw e
         } finally {
@@ -589,7 +590,15 @@ export class FacrScraper extends AbstractScraper implements IFacrScraper {
             return
         }
 
-        // TODO: Scrape match details
+        const competitionName = matchDetailHtml.querySelector('.container-content h1.h2')?.innerText
+        if (!competitionName) {
+            throw new FACRScraperElementNotFoundError(
+                'competitionName',
+                'matches',
+                '.container-content h1.h2',
+            )
+        }
+
         const homeTeam = matchDetailHtml.querySelector(
             'h2.h2 .row div:nth-child(1) span',
         )?.innerText
@@ -669,18 +678,52 @@ export class FacrScraper extends AbstractScraper implements IFacrScraper {
             '.container-content>table.table tbody tr',
         )
 
+        const goalScorers = this.scrapeGoalscorers(goalscorersRows)
+        const homeTeamGoalscorers = goalScorers.filter((goalscorer) => goalscorer.team === homeTeam)
+        const awayTeamGoalscorers = goalScorers.filter((goalscorer) => goalscorer.team === awayTeam)
+
         return {
+            competition: competitionName,
             facrUuid,
-            takePlace,
+            takePlace: fromFacrDateTime(takePlace),
             homeTeamScore,
             awayTeamScore,
             homeTeam,
             awayTeam,
             lineups: {
-                home: homeTeamMatchLineup,
-                away: awayTeamMatchLineup,
+                home: homeTeamMatchLineup.map((matchPlayer) => {
+                    return {
+                        ...matchPlayer,
+                        goals: homeTeamGoalscorers
+                            .filter(
+                                (homeGoalscorer) => homeGoalscorer.player === matchPlayer.fullname,
+                            )
+                            .map((goalScorer) => {
+                                return {
+                                    minute: goalScorer.minute,
+                                    type: goalScorer.type,
+                                }
+                            }),
+                        side: 'home',
+                    }
+                }),
+                away: awayTeamMatchLineup.map((matchPlayer) => {
+                    return {
+                        ...matchPlayer,
+                        goals: awayTeamGoalscorers
+                            .filter(
+                                (awayGoalscorer) => awayGoalscorer.player === matchPlayer.fullname,
+                            )
+                            .map((goalScorer) => {
+                                return {
+                                    minute: goalScorer.minute,
+                                    type: goalScorer.type,
+                                }
+                            }),
+                        side: 'away',
+                    }
+                }),
             },
-            goalScorers: this.scrapeGoalscorers(goalscorersRows),
         }
     }
 
@@ -724,10 +767,11 @@ export class FacrScraper extends AbstractScraper implements IFacrScraper {
             return {
                 shirt: shirt !== '' ? parseInt(shirt) : 0,
                 position,
-                fullname,
-                yellowCard: yellowCard !== '' ? true : false,
-                redCard: redCard !== '' ? true : false,
-                substitution,
+                // * Remove "Captain" flag.
+                fullname: fullname.replace(' [K]', ''),
+                yellowCardMinute: yellowCard !== '' ? +yellowCard : null,
+                redCardMinute: redCard !== '' ? +redCard : null,
+                substitution: substitution === '' ? null : substitution,
                 isInStartingLineup: true,
             }
         })
@@ -772,8 +816,8 @@ export class FacrScraper extends AbstractScraper implements IFacrScraper {
                 shirt: shirt !== '' ? parseInt(shirt) : 0,
                 position,
                 fullname,
-                yellowCard: yellowCard !== '' ? true : false,
-                redCard: redCard !== '' ? true : false,
+                yellowCardMinute: yellowCard !== '' ? +yellowCard : null,
+                redCardMinute: redCard !== '' ? +redCard : null,
                 substitution,
                 isInStartingLineup: false,
             }

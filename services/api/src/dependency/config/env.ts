@@ -9,6 +9,7 @@ export const getValidatedEnvironment = (envs: unknown) =>
         DB_HOST: str(),
         DB_PORT: num(),
         DB_PASSWORD: str(),
+        LOGGER_LEVEL: str({ default: 'debug' }),
     })
 
 export type AppEnv = ReturnType<typeof getValidatedEnvironment>

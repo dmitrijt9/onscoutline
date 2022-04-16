@@ -1,19 +1,19 @@
+import { Player } from '../../entities/Player'
+
 export type NewMatchRequest = {
+    competition: string
     takePlace: string
     facrUuid: string
     homeTeam: string
     awayTeam: string
     homeTeamScore: number | null
     awayTeamScore: number | null
-    goalScorers?: GoalScorerRequest[]
     lineups: LineupsRequest
 }
 
-type GoalScorerRequest = {
-    player: string
+type GoalRequest = {
     minute: number
     type: string
-    team: string
 }
 
 type LineupsRequest = {
@@ -21,12 +21,18 @@ type LineupsRequest = {
     away: MatchPlayerRequest[]
 }
 
-type MatchPlayerRequest = {
+export type MatchPlayerRequest = {
     shirt: number
     position: string
     fullname: string
-    yellowCard: boolean
-    redCard: boolean
-    substitution: string
+    yellowCardMinute: number | null
+    redCardMinute: number | null
+    substitution: string | null
     isInStartingLineup: boolean
+    goals: GoalRequest[]
+    side: 'home' | 'away'
+}
+
+export type PlayerWithMatchInfo = Player & {
+    matchInfo: MatchPlayerRequest
 }

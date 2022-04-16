@@ -61,4 +61,28 @@ describe('FacrScraper', () => {
         expect(savedCompetitions).not.toBeUndefined()
         expect(savedCompetitions?.length).toBe(2)
     })
+
+    it('should scrape matches from html correctly', async () => {
+        const matchDetailHtmlString = readFileSync(__dirname + '/mocks/facr-match-test.html', {
+            encoding: 'utf8',
+            flag: 'r',
+        })
+
+        const matchesTableHtmlString = readFileSync(__dirname + '/mocks/facr-matches-test.html', {
+            encoding: 'utf8',
+            flag: 'r',
+        })
+
+        const getParsedPageMock = jest
+            .spyOn(FacrScraper.prototype, 'getParsedPage')
+            .mockImplementation(async (url: string) => {
+                console.log(url)
+                return parse(matchDetailHtmlString)
+            })
+
+        const scrapedMatch = (await facrScraper.scrapeMatches([matchesTableHtmlString]))[0]
+
+        expect(getParsedPageMock).toHaveBeenCalled()
+        expect(scrapedMatch).toMatchSnapshot()
+    })
 })

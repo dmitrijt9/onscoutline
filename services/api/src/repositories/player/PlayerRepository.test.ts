@@ -39,4 +39,33 @@ describe('Player Repository', () => {
         const { id, ...savedPlayerWithoutId } = savedPlayer
         expect(savedPlayerWithoutId).toMatchSnapshot()
     })
+
+    it('should find a player by his fullname', async () => {
+        const { playerRepository } = container
+
+        const savedPlayer1 = await playerRepository.save({
+            facrId: 'prvni',
+            facrMemberFrom: toOnscoutlineDateFormat(new Date('2005-03-16')),
+            name: 'Kristian',
+            surname: 'Ronaldny',
+            yearOfBirth: '1990',
+        })
+
+        const savedPlayer2 = await playerRepository.save({
+            facrId: 'druhej',
+            facrMemberFrom: toOnscoutlineDateFormat(new Date('2005-03-16')),
+            name: 'Javier Alando',
+            surname: 'Martinez Suarez',
+            yearOfBirth: '1990',
+        })
+
+        const foundPlayer1 = await playerRepository.findByFullname('Ronaldny Kristian')
+        const foundPlayer2 = await playerRepository.findByFullname('Martinez Suarez Javier Alando')
+
+        expect(foundPlayer1).not.toBeNull()
+        expect(foundPlayer2).not.toBeNull()
+
+        expect(foundPlayer1).toEqual(savedPlayer1)
+        expect(foundPlayer2).toEqual(savedPlayer2)
+    })
 })

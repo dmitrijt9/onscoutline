@@ -5,6 +5,7 @@ Object {
   "facrId": "123457",
   "facrMemberFrom": "2005-03-16",
   "name": "Kristian",
+  "position": null,
   "surname": "Ronaldny",
   "yearOfBirth": "1990",
 }
