@@ -186,7 +186,7 @@ export class PlayerService {
                 player,
             }
 
-            const playerStats = this.calculatePlayerStatsFromMatch(player, {
+            const playerStats = this.getPlayerStatsFromMatch(player, {
                 homeTeamGoals: homeTeamGoalsMinutes,
                 awayTeamGoals: awayTeamGoalsMinutes,
             })
@@ -206,7 +206,7 @@ export class PlayerService {
         }
     }
 
-    private calculatePlayerStatsFromMatch(
+    private getPlayerStatsFromMatch(
         player: PlayerWithMatchInfo,
         matchInfo: {
             homeTeamGoals: { type: string; minute: number }[]
@@ -249,7 +249,7 @@ export class PlayerService {
 
         stats.push(...goals)
 
-        if (player.matchInfo.yellowCardMinute) {
+        if (!isNil(player.matchInfo.yellowCardMinute)) {
             stats.push({
                 minute: player.matchInfo.yellowCardMinute,
                 statType: StatType.YellowCard,
@@ -257,10 +257,18 @@ export class PlayerService {
             })
         }
 
-        if (player.matchInfo.redCardMinute) {
+        if (!isNil(player.matchInfo.redCardMinute)) {
             stats.push({
                 minute: player.matchInfo.redCardMinute,
                 statType: StatType.RedCard,
+                value: 1,
+            })
+        }
+
+        if (!isNil(player.matchInfo.substitution)) {
+            stats.push({
+                minute: +player.matchInfo.substitution,
+                statType: StatType.Substitution,
                 value: 1,
             })
         }

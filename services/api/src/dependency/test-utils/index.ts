@@ -51,13 +51,13 @@ export const cleanDb = async (client: TestingClient) => {
     const { typeormConnection } = client.container
 
     const repositories = [
-        typeormConnection.getCustomRepository(CompetitionHasSeasonRepository),
-        typeormConnection.getCustomRepository(SeasonRepository),
-        typeormConnection.getCustomRepository(CompetitionRepository),
         typeormConnection.getCustomRepository(PlayerInClubRepository),
         typeormConnection.getCustomRepository(PlayerGameStatisticRepository),
         typeormConnection.getCustomRepository(PlayerInMatchRepository),
         typeormConnection.getCustomRepository(MatchRepository),
+        typeormConnection.getCustomRepository(CompetitionHasSeasonRepository),
+        typeormConnection.getCustomRepository(SeasonRepository),
+        typeormConnection.getCustomRepository(CompetitionRepository),
         typeormConnection.getCustomRepository(ClubRepository),
         typeormConnection.getCustomRepository(PlayerRepository),
     ]
