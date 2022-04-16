@@ -30,7 +30,7 @@ jobs:
           command: | 
             cd ./services/api
             yarn install
-            ./bin/start yarn test
+            ./bin/start echo $DB_NAME
             
 
 # Invoke jobs via workflows
