@@ -8,7 +8,7 @@ export class Club {
     @Column('varchar', { unique: true, nullable: true })
     facrId: string | null
 
-    @Column({ unique: true })
+    @Column()
     name: string
 
     @Column('varchar', { nullable: true })
