@@ -18,8 +18,8 @@ const scrape = async () => {
 
     const dirname = argv.path ?? defaultDirname
 
-    const { facrScraper, clubService } = await createContainer()
-    const scrapedClubs = await facrScraper.scrapeClubs(dirname)
+    const { facrClubsScraper, clubService } = await createContainer()
+    const scrapedClubs = await facrClubsScraper.scrapeClubs(dirname)
     await clubService.processNewClubss(scrapedClubs)
 }
 

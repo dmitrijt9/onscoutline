@@ -1,11 +1,11 @@
-import yargs from 'yargs'
 import { createContainer } from '../../dependency/container/index'
+import yargs from 'yargs'
 
 const scrape = async () => {
     yargs(process.argv).usage('Scrape FACR competitions')
 
-    const { facrScraper, competitionService } = await createContainer()
-    const scrapedCompetitions = await facrScraper.scrapeCompetitions()
+    const { facrCompetitionsScraper, competitionService } = await createContainer()
+    const scrapedCompetitions = await facrCompetitionsScraper.scrapeCompetitions()
     await competitionService.saveNewCompetitions(scrapedCompetitions)
 }
 

@@ -10,16 +10,7 @@ module.exports = {
     env: {
         node: true,
     },
-    settings: {
-        'import/parsers': {
-            '@typescript-eslint/parser': ['.ts', '.tsx'],
-        },
-        'import/resolver': {
-            typescript: {
-                project: './tsconfig.json',
-            },
-        },
-    },
+    settings: {},
     extends: [
         'plugin:@typescript-eslint/recommended',
         'plugin:import/errors',

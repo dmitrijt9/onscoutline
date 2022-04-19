@@ -1,13 +1,12 @@
 import { AppConfig } from '../../dependency/config/index'
 import { Club } from '../../entities/Club'
-import { toOnscoutlineDateFormat } from '../../utils/conversions'
-import { isNil } from '../../utils/index'
-import { NewPlayerRequest } from '../player/types'
+import { fromFacrDate } from '../../utils/conversions'
+import { isNil, sleep } from '../../utils/index'
 import chunk from '../utils/chunk'
 import { AbstractScraper } from './AbstractScraper'
 import { FACRScraperElementNotFoundError } from './errors'
 import { PuppeteerBrowser } from './PuppeteerBrowser'
-import { ScrapedPlayer } from './types'
+import { ClubPlayersLinks, ClubScrapedPlayers, PlayerLinks, ScrapedPlayer } from './types'
 import { Browser } from 'puppeteer'
 
 export class FacrPlayersScraper extends AbstractScraper {
@@ -20,39 +19,35 @@ export class FacrPlayersScraper extends AbstractScraper {
     /**
      * Scrape players of all clubs using Chrome browser (puppeteer)
      */
-    async scrapePlayersOfClubs(clubs: Club[]): Promise<Map<string, NewPlayerRequest[]>> {
+    async scrapePlayersOfClubs(clubs: Club[]): Promise<ClubScrapedPlayers[]> {
         console.time('FACR Scraper Players')
+        console.info(
+            `FACR Players Scraper: Start to scrape lists of players from clubs (${clubs.length})`,
+        )
         // I dont want to launch hundreds of browser in parallel...
         // This is why I run this sequentially with for cycle
-        const clubsChunks = chunk(clubs, 10)
-        const clubToPlayersLinksMap = new Map<
-            string,
-            { memberInfoPath: string; playerInfoPath: string }[]
-        >()
-        const scrapedPlayersMap = new Map<string, NewPlayerRequest[]>()
+        const clubsChunks = chunk(clubs, 5)
+        const clubPlayersLinks: ClubPlayersLinks[] = []
 
         const browser = await this.puppeteerBrowser.launch()
         for (const clubsChunk of clubsChunks) {
+            await sleep(100)
             const results = await Promise.allSettled(
                 clubsChunk.map(async (club) => {
                     if (!club.facrId) {
                         // TODO: custom error
                         throw new Error('Cannot scrape players of the club without facrId.')
                     }
-                    console.info(
-                        `FACR Scraper: Start scrape list of players of a club with id ${club.facrId} using browser.`,
-                    )
 
                     const playersDetailsLinks = await this.scrapePlayerDetailLinks(
                         club.facrId,
                         browser,
                     )
 
-                    clubToPlayersLinksMap.set(club.facrId, playersDetailsLinks)
-
-                    console.info(
-                        `FACR Scraper: Finish scrape list of players of a club with id ${club.facrId}.`,
-                    )
+                    clubPlayersLinks.push({
+                        club: club.facrId,
+                        playersLinks: playersDetailsLinks,
+                    })
                 }),
             )
 
@@ -62,230 +57,331 @@ export class FacrPlayersScraper extends AbstractScraper {
         }
 
         await browser.close()
+        console.info(
+            `FACR Players Scraper: Finish to scrape lists of players from clubs. Scraped ${clubPlayersLinks.length} clubs.`,
+        )
 
+        console.info('FACR Scraper Players: Start to scrape players details.')
         let scrapedPlayersLength = 0
         let playersToScrapeLength = 0
-        await Promise.all(
-            [...clubToPlayersLinksMap.entries()].map(async ([clubFacrId, playerDetailsPaths]) => {
-                const playersChunks = chunk(playerDetailsPaths, 10)
-                const scrapedPlayers: ScrapedPlayer[] = []
-                for (const playersChunk of playersChunks) {
-                    const results = await Promise.allSettled(
-                        playersChunk.map(async (playerInfoPaths) => {
-                            const scraped = await this.scrapePlayerDetails(playerInfoPaths)
-                            if (scraped) {
-                                scrapedPlayers.push(scraped)
-                            }
-                        }),
-                    )
+        const clubsScrapedPlayers: ClubScrapedPlayers[] = []
+        for (const { club, playersLinks } of clubPlayersLinks) {
+            const scrapedPlayers: ScrapedPlayer[] = []
 
-                    // TODO: retry mechanism
-                    const rejected = results.filter((r) => r.status === 'rejected')
-                    rejected.forEach((r) => console.error(r))
+            for (const playerInfoPaths of playersLinks) {
+                await sleep(200)
+                try {
+                    const scraped = await this.scrapePlayerDetails(playerInfoPaths)
+                    if (scraped) {
+                        scrapedPlayers.push(scraped)
+                    }
+                } catch (e) {
+                    console.log('to retry', {
+                        club,
+                        ...playerInfoPaths,
+                    })
                 }
-                playersToScrapeLength += playerDetailsPaths.length
-                scrapedPlayersLength += scrapedPlayers.length
-                return { club: clubFacrId, scrapedPlayers }
-            }),
-        )
+            }
+            playersToScrapeLength += playersLinks.length
+            scrapedPlayersLength += scrapedPlayers.length
+            clubsScrapedPlayers.push({ club, scrapedPlayers })
+        }
 
         console.timeEnd('FACR Scraper Players')
         console.info(
             `FACR Scraper: Successfully scraped ${scrapedPlayersLength}/${playersToScrapeLength} players from all (${clubs.length}) clubs.`,
         )
 
-        return scrapedPlayersMap
+        return clubsScrapedPlayers
     }
 
     private async scrapePlayerDetails(playerDetailLinks: {
         memberInfoPath: string
         playerInfoPath: string
-    }) {
+    }): Promise<ScrapedPlayer> {
         const memberDetailFullUrl = `${
             this.facrMembersUrl
         }${playerDetailLinks.memberInfoPath.replace('..', '')}`
         const playerDetailFullUrl = `${this.facrMembersUrl}/hraci/${playerDetailLinks.playerInfoPath}`
+        // Start scraping member details
+        const memberDetailHtmlPage = await this.getParsedPage(memberDetailFullUrl)
+        // await Promise.all([page.waitForNavigation(), page.goto(memberDetailFullUrl)])
 
-        try {
-            // Start scraping member details
-            const memberDetailHtmlPage = await this.getParsedPage(memberDetailFullUrl)
-            // await Promise.all([page.waitForNavigation(), page.goto(memberDetailFullUrl)])
+        const facrId = memberDetailHtmlPage
+            .querySelector('#MainContent_txtIDHrac')
+            ?.getAttribute('value')
 
-            const facrId = memberDetailHtmlPage
-                .querySelector('#MainContent_txtIDHrac')
-                ?.getAttribute('value')
+        if (!facrId) {
+            throw new FACRScraperElementNotFoundError(
+                'facrId',
+                'playerDetail',
+                '#MainContent_txtIDHrac',
+                undefined,
+                {
+                    memberDetailFullUrl,
+                },
+            )
+        }
 
-            if (!facrId) {
-                throw new FACRScraperElementNotFoundError(
-                    'facrId',
-                    'playerDetail',
-                    '#MainContent_txtIDHrac',
-                )
-            }
+        const name = memberDetailHtmlPage
+            .querySelector('#MainContent_txtName')
+            ?.getAttribute('value')
 
-            const name = memberDetailHtmlPage
-                .querySelector('#MainContent_txtName')
-                ?.getAttribute('value')
+        if (!name) {
+            throw new FACRScraperElementNotFoundError(
+                'name',
+                'playerDetail',
+                '#MainContent_txtName',
+                undefined,
+                {
+                    memberDetailFullUrl,
+                },
+            )
+        }
+        const surname = memberDetailHtmlPage
+            .querySelector('#MainContent_txtSurname')
+            ?.getAttribute('value')
 
-            if (!name) {
-                throw new FACRScraperElementNotFoundError(
-                    'name',
-                    'playerDetail',
-                    '#MainContent_txtName',
-                )
-            }
-            const surname = memberDetailHtmlPage
-                .querySelector('#MainContent_txtSurname')
-                ?.getAttribute('value')
+        if (!surname) {
+            throw new FACRScraperElementNotFoundError(
+                'surname',
+                'playerDetail',
+                '#MainContent_txtSurname',
+            )
+        }
+        const country = memberDetailHtmlPage
+            .querySelector('#MainContent_txtZeme')
+            ?.getAttribute('value')
 
-            if (!surname) {
-                throw new FACRScraperElementNotFoundError(
-                    'surname',
-                    'playerDetail',
-                    '#MainContent_txtSurname',
-                )
-            }
-            const country = memberDetailHtmlPage
-                .querySelector('#MainContent_txtZeme')
-                ?.getAttribute('value')
+        if (!country) {
+            throw new FACRScraperElementNotFoundError(
+                'country',
+                'playerDetail',
+                '#MainContent_txtZeme',
+            )
+        }
 
-            if (!country) {
-                throw new FACRScraperElementNotFoundError(
-                    'country',
-                    'playerDetail',
-                    '#MainContent_txtZeme',
-                )
-            }
+        const gender = memberDetailHtmlPage
+            .querySelector('#MainContent_txtPohlavi')
+            ?.getAttribute('value')
 
-            const gender = memberDetailHtmlPage
-                .querySelector('#MainContent_txtPohlavi')
-                ?.getAttribute('value')
+        if (!gender) {
+            throw new FACRScraperElementNotFoundError(
+                'gender',
+                'playerDetail',
+                '#MainContent_txtPohlavi',
+            )
+        }
 
-            if (!gender) {
-                throw new FACRScraperElementNotFoundError(
-                    'gender',
-                    'playerDetail',
-                    '#MainContent_txtPohlavi',
-                )
-            }
+        const dateOfBirth = memberDetailHtmlPage
+            .querySelector('#MainContent_txtNarozen')
+            ?.getAttribute('value')
 
-            const dateOfBirth = memberDetailHtmlPage
-                .querySelector('#MainContent_txtNarozen')
-                ?.getAttribute('value')
+        if (!dateOfBirth) {
+            throw new FACRScraperElementNotFoundError(
+                'dateOfBirth',
+                'playerDetail',
+                '#MainContent_txtNarozen',
+            )
+        }
 
-            if (!dateOfBirth) {
-                throw new FACRScraperElementNotFoundError(
-                    'dateOfBirth',
-                    'playerDetail',
-                    '#MainContent_txtNarozen',
-                )
-            }
+        // Start scraping player details
+        const playerDetailHtmlPage = await this.getParsedPage(playerDetailFullUrl)
+        const facrMemberFrom = playerDetailHtmlPage
+            .querySelector('#MainContent_txtRegOd')
+            ?.getAttribute('value')
 
-            // Start scraping player details
-            const playerDetailHtmlPage = await this.getParsedPage(playerDetailFullUrl)
-            const passportRows = playerDetailHtmlPage.querySelectorAll(
+        if (!facrMemberFrom) {
+            throw new FACRScraperElementNotFoundError(
+                'facrMemberFrom',
+                'playerDetail',
+                '#MainContent_txtRegOd',
+            )
+        }
+
+        const parentClubId = playerDetailHtmlPage
+            .querySelector('#MainContent_txtOddilId')
+            ?.getAttribute('value')
+
+        if (!parentClubId) {
+            throw new FACRScraperElementNotFoundError(
+                'parentClubId',
+                'playerDetail',
+                '#MainContent_txtOddilId',
+            )
+        }
+
+        const parentClubFrom = playerDetailHtmlPage
+            .querySelector('#MainContent_txtOd')
+            ?.getAttribute('value')
+
+        if (!parentClubFrom) {
+            throw new FACRScraperElementNotFoundError(
+                'parentClubFrom',
+                'playerDetail',
+                '#MainContent_txtOd',
+            )
+        }
+
+        // * I do not check this as it can be undefined on purpose
+        const loanClubId = playerDetailHtmlPage
+            .querySelector('#MainContent_txtOddilHostId')
+            ?.getAttribute('value')
+
+        const loanFrom = playerDetailHtmlPage
+            .querySelector('#MainContent_txtHostOd')
+            ?.getAttribute('value')
+
+        const loanTo = playerDetailHtmlPage
+            .querySelector('#MainContent_txtHostDo')
+            ?.getAttribute('value')
+
+        const passportRows = playerDetailHtmlPage.querySelectorAll(
+            '#MainContent_panelBody .list.inside table:not(.vypis-zadosti-hrace) tr:not(:first-child)',
+        )
+
+        if (!passportRows) {
+            throw new FACRScraperElementNotFoundError(
+                'passportRows',
+                'playerDetail',
                 '#MainContent_panelBody .list.inside table:not(.vypis-zadosti-hrace) tr:not(:first-child)',
             )
+        }
 
-            if (!passportRows) {
+        const transfers: ScrapedPlayer['transfers'] = []
+
+        for (const row of passportRows) {
+            let from: string | null = null
+            let to: string | null = null
+            let when: string | null = null
+            let event: string | null = null
+            let period: {
+                from: string
+                to: string
+            } | null = null
+
+            const firstCol = await row.querySelector('td:nth-child(1)')?.innerText
+            if (isNil(firstCol)) {
                 throw new FACRScraperElementNotFoundError(
-                    'passportRows',
-                    'playerDetail',
-                    '#MainContent_panelBody .list.inside table:not(.vypis-zadosti-hrace) tr:not(:first-child)',
+                    'firstCol',
+                    'playerDetail passport',
+                    'td:nth-child(1)',
+                    undefined,
+                    {
+                        url: playerDetailFullUrl,
+                    },
                 )
             }
 
-            const transfers: ScrapedPlayer['transfers'] = []
-
-            for (const row of passportRows) {
-                let from: string | null = null
-                let to: string | null = null
-                let when: string | null = null
-                let event: string | null = null
-
-                const firstCol = await row.querySelector('td:nth-child(1)')?.innerText
-                if (isNil(firstCol)) {
+            // its an odd row, with "to" club
+            if (!isNil(row.attributes.id)) {
+                const toClub = row.querySelector('td.oddil_do')?.innerText
+                if (isNil(toClub)) {
                     throw new FACRScraperElementNotFoundError(
-                        'firstCol',
+                        'toClub',
+                        'playerDetail passport',
+                        'td.oddil_do',
+                    )
+                }
+                to = toClub.trim()
+            } else {
+                from = firstCol.trim()
+                const whenEvent = row.querySelector('td:nth-child(4)')?.innerText
+                if (isNil(whenEvent)) {
+                    throw new FACRScraperElementNotFoundError(
+                        'whenEvent',
                         'playerDetail passport',
                         'td:nth-child(1)',
-                        undefined,
-                        {
-                            url: playerDetailFullUrl,
-                        },
+                    )
+                }
+                const eventName = row.querySelector('td.udalost')?.innerText
+                if (isNil(eventName)) {
+                    throw new FACRScraperElementNotFoundError(
+                        'eventName',
+                        'playerDetail passport',
+                        'td.udalost',
                     )
                 }
 
-                // its an odd row, with "to" club
-                if (!isNil(row.attributes.id)) {
-                    const toClub = row.querySelector('td.oddil_do')?.innerText
-                    if (isNil(toClub)) {
-                        throw new FACRScraperElementNotFoundError(
-                            'toClub',
-                            'playerDetail passport',
-                            'td.oddil_do',
-                        )
-                    }
-                    to = toClub.trim()
-                } else {
-                    from = firstCol.trim()
-                    const whenEvent = row.querySelector('td:nth-child(4)')?.innerText
-                    if (isNil(whenEvent)) {
-                        throw new FACRScraperElementNotFoundError(
-                            'whenEvent',
-                            'playerDetail passport',
-                            'td:nth-child(1)',
-                        )
-                    }
-                    const eventName = row.querySelector('td.udalost')?.innerText
-                    if (isNil(eventName)) {
-                        throw new FACRScraperElementNotFoundError(
-                            'eventName',
-                            'playerDetail passport',
-                            'td.udalost',
-                        )
-                    }
-
-                    when = whenEvent.trim()
-                    event = eventName.trim()
+                const periodOfTransfer = row.querySelector('td:nth-child(2)')?.innerText
+                if (isNil(periodOfTransfer)) {
+                    throw new FACRScraperElementNotFoundError(
+                        'periodOfTransfer',
+                        'playerDetail passport',
+                        'td:nth-child(2)',
+                    )
                 }
-                if (from && event && when) {
-                    transfers.push({
-                        when,
-                        event,
-                        from,
-                        to,
-                    })
-                }
-            }
 
-            return {
-                name,
-                surname,
-                dateOfBirth: ((dateOfBirth) => {
-                    const [day, month, year] = dateOfBirth.split('.')
-                    return toOnscoutlineDateFormat(new Date(+year, +month, +day))
-                })(dateOfBirth),
-                facrId,
-                transfers: transfers.map((transfer) => {
-                    const [day, month, year] = transfer.when.split('.')
-                    return {
-                        when: toOnscoutlineDateFormat(new Date(+year, +month, +day)),
-                        event: transfer.event,
-                        from: transfer.from.split(' - ')[1],
-                        to: transfer.to ? transfer.to.split(' - ')[1] : null,
-                    }
-                }),
+                const [periodFrom, periodTo] = periodOfTransfer?.split(' - ')
+                period =
+                    periodFrom !== '' && periodTo !== ''
+                        ? {
+                              from: periodFrom,
+                              to: periodTo,
+                          }
+                        : null
+                when = whenEvent.trim()
+                event = eventName.trim()
             }
-        } catch (e) {
-            console.error(e)
+            if (from && event && when) {
+                transfers.push({
+                    when,
+                    event,
+                    from,
+                    to,
+                    period,
+                })
+            }
+        }
+
+        return {
+            name,
+            surname,
+            dateOfBirth: fromFacrDate(dateOfBirth),
+            facrId,
+            facrMemberFrom: fromFacrDate(facrMemberFrom),
+            parentClub: {
+                clubFacrId: parentClubId,
+                playingFrom: parentClubFrom,
+            },
+            loanClub:
+                !isNil(loanClubId) && !isNil(loanFrom) && !isNil(loanTo)
+                    ? {
+                          clubFacrId: loanClubId,
+                          playingFrom: loanFrom,
+                          playingUntil: loanTo,
+                      }
+                    : null,
+            transfers: transfers.map((transfer) => {
+                return {
+                    when: fromFacrDate(transfer.when),
+                    event: transfer.event,
+                    from: transfer.from.split(' - ')[1],
+                    to: transfer.to ? transfer.to.split(' - ')[1] : null,
+                    period: this.getTransferPeriod(transfer.period),
+                }
+            }),
+        }
+    }
+
+    private getTransferPeriod(period: { from: string; to: string } | null) {
+        if (isNil(period)) {
+            return null
+        }
+
+        const [dayPeriodFrom] = period.from.split('.')
+        const [dayPeriodTo] = period.to.split('.')
+
+        return {
+            from: dayPeriodFrom !== '' ? fromFacrDate(period.from) : '',
+            to: dayPeriodTo !== '' ? fromFacrDate(period.to) : '',
         }
     }
 
     private async scrapePlayerDetailLinks(
         clubFacrId: Club['facrId'],
         launchedBrowser: Browser,
-    ): Promise<{ memberInfoPath: string; playerInfoPath: string }[]> {
+    ): Promise<PlayerLinks[]> {
         const timeout = 10 * 1000
         const browser = launchedBrowser
         const page = await browser.newPage()
@@ -346,6 +442,9 @@ export class FacrPlayersScraper extends AbstractScraper {
         // select only active members
         await page.select('select#listClen', '1')
 
+        // select only players with selected club as a parent club
+        await page.click('input#listTypVypisu_0')
+
         // find main button to trigger search
         const searchButtonElement = await this.puppeteerBrowser.waitForSelectors(
             ['#btnSearch'],
@@ -367,7 +466,7 @@ export class FacrPlayersScraper extends AbstractScraper {
         await searchButtonElement.click()
 
         // Start players mining part...
-        const idToDetailUrlsMap: { memberInfoPath: string; playerInfoPath: string }[] = []
+        const idToDetailUrlsMap: PlayerLinks[] = []
         // hardcoded - current settings on is.fotbal.cz web
         const itemsPerPage = 50
         // find element with summary of a current pagination

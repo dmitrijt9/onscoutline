@@ -1,6 +1,7 @@
 import { Club } from '../../entities/Club'
 import { Competition } from '../../entities/Competition'
 import { NewMatchRequest } from '../match/types'
+import { ISO8601_NoTime } from '../../entities/types'
 import { HTMLElement } from 'node-html-parser'
 
 export interface IScraper {
@@ -27,15 +28,40 @@ export type ScrapedMatchOverview = {
     takePlace: NewMatchRequest['takePlace']
 }
 
+type ScrapedPlayerTransfer = {
+    when: string
+    event: string
+    from: string
+    to: string | null
+    period: {
+        from: string
+        to: string
+    } | null
+}
 export type ScrapedPlayer = {
     name: string
     surname: string
     dateOfBirth: string
     facrId: string
-    transfers: {
-        when: string
-        event: string
-        from: string
-        to: string | null
-    }[]
+    facrMemberFrom: ISO8601_NoTime
+    parentClub: {
+        clubFacrId: string
+        playingFrom: ISO8601_NoTime
+    }
+    loanClub: {
+        clubFacrId: string
+        playingFrom: ISO8601_NoTime
+        playingUntil: ISO8601_NoTime
+    } | null
+    transfers: ScrapedPlayerTransfer[]
+}
+export type PlayerLinks = { memberInfoPath: string; playerInfoPath: string }
+export type ClubPlayersLinks = {
+    club: string
+    playersLinks: PlayerLinks[]
+}
+
+export type ClubScrapedPlayers = {
+    club: string
+    scrapedPlayers: ScrapedPlayer[]
 }

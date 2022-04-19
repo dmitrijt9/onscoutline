@@ -1,5 +1,5 @@
 import { Player } from '../../entities/Player'
-import { ISO8601, ISO8601_NoTime } from '../../entities/types'
+import { ISO8601_NoTime } from '../../entities/types'
 
 export type NewPlayerRequest = {
     facrId: string
@@ -8,13 +8,31 @@ export type NewPlayerRequest = {
 
     surname: string
 
-    yearOfBirth: string
+    dateOfBirth: string
 
     facrMemberFrom?: ISO8601_NoTime
 
-    playingFrom: ISO8601_NoTime
+    parentClub: {
+        clubFacrId: string
+        playingFrom: ISO8601_NoTime
+    }
+
+    loanClub: {
+        clubFacrId: string
+        playingFrom: ISO8601_NoTime
+        playingUntil: ISO8601_NoTime
+    } | null
+
+    transfersRecords: {
+        when: ISO8601_NoTime
+        event: string
+        clubFrom: string
+        clubTo: string | null
+        period: {
+            from: ISO8601_NoTime
+            to: ISO8601_NoTime
+        } | null
+    }[]
 }
 
-export type PlayerToUpdate = Player & {
-    playingFrom: ISO8601
-}
+export type PlayerToUpdate = Player

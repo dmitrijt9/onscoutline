@@ -1,5 +1,5 @@
-import yargs from 'yargs'
 import { createContainer } from '../../dependency/container/index'
+import yargs from 'yargs'
 
 const scrape = async () => {
     const defaultFilePath = 'clubs-url-to-open.txt'

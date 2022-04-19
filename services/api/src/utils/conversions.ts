@@ -43,3 +43,12 @@ export const fromFacrDateTime = (facrDateTime: string): ISO8601 => {
     const dateTime = new Date(`${year}-${cleanMonth}-${cleanDay}T${time}`)
     return toOnscoutlineDateTimeFormat(dateTime)
 }
+
+/**
+ * Converts facr date format to Onscoutline date format, which is ISO based.
+ * @param facrDate Looks like this "26.09.2021"
+ */
+export const fromFacrDate = (facrDate: string): ISO8601_NoTime => {
+    const [day, month, year] = facrDate.split('.')
+    return toOnscoutlineDateFormat(new Date(+year, +month, +day))
+}
