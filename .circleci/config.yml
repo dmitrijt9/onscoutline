@@ -23,6 +23,7 @@ executors:
 # Define a job to be invoked later in a workflow.
 # See: https://circleci.com/docs/2.0/configuration-reference/#jobs
 jobs:
+  when: << pipeline.parameters.GHA_Action >>
   install-api:
     executor: docker-with-compose-executor
     steps:
@@ -87,10 +88,10 @@ workflows:
   api-install-check-test:
     jobs:
       - install-api:
-        filters:
-          branches:
-            only:
-              - master
+          filters:
+            branches:
+              only:
+                - master
       - code-check-api:
           requires:
             - install-api
