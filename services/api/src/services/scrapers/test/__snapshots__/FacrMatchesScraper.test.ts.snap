@@ -1,6 +1,6 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`FacrScraper should scrape matches from html correctly 1`] = `
+exports[`Facr Matches Scraper should scrape matches from html correctly 1`] = `
 Object {
   "awayTeam": "FK Teplice - fotbal, spolek",
   "awayTeamScore": 4,

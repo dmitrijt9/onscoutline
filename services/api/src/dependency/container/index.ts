@@ -1,4 +1,3 @@
-import { Connection, getCustomRepository } from 'typeorm'
 import { ClubRepository } from '../../repositories/club/ClubRepository'
 import { CompetitionHasSeasonRepository } from '../../repositories/competition/CompetitionHasSeasonRepository'
 import { CompetitionRepository } from '../../repositories/competition/CompetitionRepository'
@@ -14,13 +13,16 @@ import { ConsoleLogger } from '../../services/logger/ConsoleLogger'
 import { ILogger } from '../../services/logger/ILogger'
 import { MatchService } from '../../services/match/MatchService'
 import { PlayerService } from '../../services/player/PlayerService'
-import { FacrScraper } from '../../services/scrapers/FacrScraper'
+import { FacrClubsScraper } from '../../services/scrapers/FacrClubsScraper'
+import { FacrCompetitionsScraper } from '../../services/scrapers/FacrCompetitionsScraper'
+import { FacrMatchesScraper } from '../../services/scrapers/FacrMatchesScraper'
+import { FacrPlayersScraper } from '../../services/scrapers/FacrPlayersScraper'
 import { PuppeteerBrowser } from '../../services/scrapers/PuppeteerBrowser'
-import { IFacrScraper } from '../../services/scrapers/types'
 import { SeasonService } from '../../services/season/SeasonService'
 import { StatisticsService } from '../../services/statistics/StatisticsService'
 import { AppConfig, getAppConfig } from '../config/index'
 import { bootstrapDbConnection } from './bootstrap/db-connection'
+import { Connection, getCustomRepository } from 'typeorm'
 
 export const createContainer = async (
     appConfig = getAppConfig(process.env),
@@ -55,7 +57,10 @@ export const createContainer = async (
     const clubService = new ClubService(clubRepository)
 
     const puppeteerBrowser = new PuppeteerBrowser()
-    const facrScraper = new FacrScraper(appConfig, puppeteerBrowser)
+    const facrCompetitionsScraper = new FacrCompetitionsScraper(appConfig)
+    const facrClubsScraper = new FacrClubsScraper()
+    const facrMatchesScraper = new FacrMatchesScraper(appConfig)
+    const facrPlayersScraper = new FacrPlayersScraper(appConfig, puppeteerBrowser)
 
     const seasonService = new SeasonService(seasonRepository)
 
@@ -84,7 +89,10 @@ export const createContainer = async (
         seasonRepository,
         playerGameStatisticsRepository,
 
-        facrScraper: facrScraper,
+        facrCompetitionsScraper,
+        facrClubsScraper,
+        facrMatchesScraper,
+        facrPlayersScraper,
         competitionService,
         clubService,
         playerService,
@@ -109,7 +117,10 @@ export interface Container {
     seasonRepository: SeasonRepository
     playerGameStatisticsRepository: PlayerGameStatisticRepository
 
-    facrScraper: IFacrScraper
+    facrCompetitionsScraper: FacrCompetitionsScraper
+    facrClubsScraper: FacrClubsScraper
+    facrMatchesScraper: FacrMatchesScraper
+    facrPlayersScraper: FacrPlayersScraper
     competitionService: CompetitionService
     clubService: ClubService
     playerService: PlayerService

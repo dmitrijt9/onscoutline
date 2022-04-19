@@ -6,10 +6,12 @@ export class FACRScraperElementNotFoundError extends BaseError {
         subject: string,
         querySelector = '',
         message = `FACR Scraper: Failed to scrape ${subject}`,
+        otherPayload = {},
     ) {
         super({
             message,
             payload: {
+                ...otherPayload,
                 targetElement,
                 querySelector,
             },

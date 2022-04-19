@@ -6,18 +6,15 @@ import {
     stopTestApplication,
     TestingClient,
 } from '../../../dependency/test-utils/index'
-import { FacrScraper } from '../FacrScraper'
-import { IFacrScraper } from '../types'
-
-jest.setTimeout(100 * 1000)
+import { FacrCompetitionsScraper } from '../FacrCompetitionsScraper'
 
 describe('FacrScraper', () => {
     let testingClient: TestingClient
-    let facrScraper: IFacrScraper
+    let facrScraper: FacrCompetitionsScraper
 
     beforeAll(async () => {
         testingClient = await createTestingClient()
-        facrScraper = testingClient.container.facrScraper
+        facrScraper = testingClient.container.facrCompetitionsScraper
     })
 
     afterAll(async () => {
@@ -42,7 +39,7 @@ describe('FacrScraper', () => {
             },
         )
         const getParsedPageMock = jest
-            .spyOn(FacrScraper.prototype, 'getParsedPage')
+            .spyOn(FacrCompetitionsScraper.prototype, 'getParsedPage')
             .mockImplementation(async (url: string) => {
                 if (url.endsWith('/subjekty')) {
                     return parse(regionsTestHtmlString)
@@ -60,29 +57,5 @@ describe('FacrScraper', () => {
         expect(getParsedPageMock).toHaveBeenCalled()
         expect(savedCompetitions).not.toBeUndefined()
         expect(savedCompetitions?.length).toBe(2)
-    })
-
-    it('should scrape matches from html correctly', async () => {
-        const matchDetailHtmlString = readFileSync(__dirname + '/mocks/facr-match-test.html', {
-            encoding: 'utf8',
-            flag: 'r',
-        })
-
-        const matchesTableHtmlString = readFileSync(__dirname + '/mocks/facr-matches-test.html', {
-            encoding: 'utf8',
-            flag: 'r',
-        })
-
-        const getParsedPageMock = jest
-            .spyOn(FacrScraper.prototype, 'getParsedPage')
-            .mockImplementation(async (url: string) => {
-                console.log(url)
-                return parse(matchDetailHtmlString)
-            })
-
-        const scrapedMatch = (await facrScraper.scrapeMatches([matchesTableHtmlString]))[0]
-
-        expect(getParsedPageMock).toHaveBeenCalled()
-        expect(scrapedMatch).toMatchSnapshot()
     })
 })

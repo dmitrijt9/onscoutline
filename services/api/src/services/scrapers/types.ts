@@ -1,20 +1,10 @@
-import { HTMLElement } from 'node-html-parser'
 import { Club } from '../../entities/Club'
 import { Competition } from '../../entities/Competition'
-import { NewClubRequest } from '../club/types'
-import { NewCompetitionRequest } from '../competition/types'
 import { NewMatchRequest } from '../match/types'
-import { NewPlayerRequest } from '../player/types'
+import { HTMLElement } from 'node-html-parser'
 
 export interface IScraper {
     getParsedPage(url: string): Promise<HTMLElement>
-}
-
-export interface IFacrScraper {
-    scrapeCompetitions(): Promise<NewCompetitionRequest[]>
-    scrapeClubs(dirname: string): Promise<NewClubRequest[]>
-    scrapePlayersOfClubs(clubs: Club[]): Promise<Map<string, NewPlayerRequest[]>>
-    scrapeMatches(htmlsToScrape: string[]): Promise<NewMatchRequest[]>
 }
 
 export type ScrapedClub = Omit<Club, 'id' | 'facrId' | 'facrUuid'> & {
@@ -35,4 +25,17 @@ export type TPuppeteerSelectorOptions = {
 export type ScrapedMatchOverview = {
     facrUuid: NewMatchRequest['facrUuid']
     takePlace: NewMatchRequest['takePlace']
+}
+
+export type ScrapedPlayer = {
+    name: string
+    surname: string
+    dateOfBirth: string
+    facrId: string
+    transfers: {
+        when: string
+        event: string
+        from: string
+        to: string | null
+    }[]
 }

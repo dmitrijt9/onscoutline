@@ -22,7 +22,7 @@ services:
       DB_PASSWORD: ${DB_PASSWORD}
       DB_NAME: ${DB_NAME}
     working_dir: /app
-    command: yarn start:dev
+    command: ['apt-get update', 'apt-get install chromium', 'yarn start:dev']
     volumes:
       - $ROOT_DIR/services/api:/app
       #ignore this (performance issue)
