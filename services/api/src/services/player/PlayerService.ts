@@ -13,7 +13,8 @@ import { isNil } from '../../utils/index'
 import { MatchPlayerRequest, PlayerWithMatchInfo } from '../match/types'
 import { StatisticsService } from '../statistics/StatisticsService'
 import { NewPlayerClubNotFound } from './errors'
-import { NewPlayerRequest, PlayerToUpdate } from './types'
+import { NewPlayerRequest } from './types'
+import { In } from 'typeorm'
 
 export class PlayerService {
     constructor(
@@ -35,8 +36,13 @@ export class PlayerService {
             throw new NewPlayerClubNotFound(clubFacrId)
         }
 
-        const currentPlayers = await this.playerRepository.find()
-        const currentPlayersMap: Map<string, Player> = currentPlayers.reduce(
+        const foundPlayers = await this.playerRepository.find({
+            where: {
+                facrId: In(newPlayers.map((np) => np.facrId)),
+            },
+        })
+
+        const foundPlayersMap: Map<string, Player> = foundPlayers.reduce(
             (map: Map<string, Player>, player: Player) => {
                 if (player.facrId) {
                     map.set(player.facrId, player)
@@ -47,18 +53,42 @@ export class PlayerService {
             new Map(),
         )
 
-        const playersToInsert = newPlayers.filter(({ facrId }) => !currentPlayersMap.get(facrId))
-
-        const playersToUpdate: PlayerToUpdate[] = newPlayers
-            .filter(({ facrId }) => currentPlayersMap.get(facrId))
-            .map(({ facrId }) => {
+        const playersToUpdate: Player[] = newPlayers
+            .filter((newPlayer) => {
+                return !!foundPlayersMap.get(newPlayer.facrId)
+            })
+            .map((np) => {
                 return {
-                    ...(currentPlayersMap.get(facrId) as Player),
+                    // should be ok, as I filtered them above
+                    ...(foundPlayersMap.get(np.facrId) as Player),
+                    name: np.name,
+                    surname: np.surname,
+                    dateOfBirth: np.dateOfBirth,
+                    facrMemberFrom: np.facrMemberFrom,
+                    country: np.country,
+                    gender: np.gender,
                 }
             })
 
-        console.log('to insert', playersToInsert.length)
-        console.log('to update', playersToUpdate.length)
+        const playersToSave: Omit<Player, 'id'>[] = newPlayers
+            .filter((newPlayer) => {
+                return foundPlayersMap.get(newPlayer.facrId) ? false : true
+            })
+            .map((newPlayer) => {
+                return {
+                    facrId: newPlayer.facrId,
+                    name: newPlayer.name,
+                    surname: newPlayer.surname,
+                    dateOfBirth: newPlayer.dateOfBirth,
+                    facrMemberFrom: newPlayer.facrMemberFrom,
+                    country: newPlayer.country,
+                    gender: newPlayer.gender,
+                }
+            })
+
+        await this.playerRepository.save([...playersToSave, ...playersToUpdate])
+        console.log('saved players: ', playersToSave.length)
+        console.log('updated players: ', playersToUpdate.length)
 
         // const savedPlayers: Player[] = await this.playerRepository
         //     .save(playersToInsert)
@@ -125,7 +155,7 @@ export class PlayerService {
         return []
     }
 
-    async resolvePlayersCurrentClubFromMatch(
+    async savePlayerInClubRelations(
         players: Player[],
         appearedInClub: Club,
         appearedInClubDate: ISO8601_NoTime,

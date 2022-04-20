@@ -1,7 +1,7 @@
-import { EntityRepository, Repository } from 'typeorm'
 import { Club } from '../../entities/Club'
 import { Player } from '../../entities/Player'
 import { PlayerInClub } from '../../entities/Relations/PlayerInClub'
+import { EntityRepository, Repository } from 'typeorm'
 
 @EntityRepository(PlayerInClub)
 export class PlayerInClubRepository extends Repository<PlayerInClub> {

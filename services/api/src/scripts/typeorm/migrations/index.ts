@@ -15,6 +15,9 @@ import { clubFacrIdNullable1648242740268 } from './1648242740268-club-facr-id-nu
 import { updatePlayerNullable1649000077201 } from './1649000077201-update-player-nullable'
 import { addPlayerPosition1649940125341 } from './1649940125341-add-player-position'
 import { removeUniqueClubName1650185208941 } from './1650185208941-remove-unique-club-name'
+import { addPlayingUntil1650440981640 } from './1650440981640-add-playing-until'
+import { addPlayerCountryGender1650442144910 } from './1650442144910-add-player-country-gender'
+import { removeFullnameUqIx1650442434940 } from './1650442434940-remove-fullname-uq-ix'
 
 export const migrations = [
     addCompetition1645357697040,
@@ -34,4 +37,7 @@ export const migrations = [
     updatePlayerNullable1649000077201,
     addPlayerPosition1649940125341,
     removeUniqueClubName1650185208941,
+    addPlayingUntil1650440981640,
+    addPlayerCountryGender1650442144910,
+    removeFullnameUqIx1650442434940,
 ]

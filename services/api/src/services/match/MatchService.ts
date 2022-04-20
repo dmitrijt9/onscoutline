@@ -72,16 +72,16 @@ export class MatchService {
 
         // resolve current club for a players
         // TODO: remove after implementing scraping player detail with transfers from FACR database
-        await this.playerService.resolvePlayersCurrentClubFromMatch(
-            homePlayers,
-            homeClub,
-            matchTakePlace,
-        )
-        await this.playerService.resolvePlayersCurrentClubFromMatch(
-            awayPlayers,
-            awayClub,
-            matchTakePlace,
-        )
+        // await this.playerService.resolvePlayersCurrentClubFromMatch(
+        //     homePlayers,
+        //     homeClub,
+        //     matchTakePlace,
+        // )
+        // await this.playerService.resolvePlayersCurrentClubFromMatch(
+        //     awayPlayers,
+        //     awayClub,
+        //     matchTakePlace,
+        // )
 
         await this.playerService.resolvePlayersInMatch([...homePlayers, ...awayPlayers], match)
     }
@@ -144,12 +144,10 @@ export class MatchService {
         const newPlayersToSave: Omit<Player, 'id'>[] = missingPlayersInDb.map((player) => {
             const playerPosition = this.playerService.facrPositionToPlayerPosition(player.position)
             return {
-                facrId: null,
                 // * Notice: We set fullname as a name. There is no way to distinguish between name and surname generally.
                 // * Especially when non-czech name appears.
                 name: player.fullname,
                 surname: '',
-                yearOfBirth: null,
                 position: playerPosition ? new Set([playerPosition]) : undefined,
             }
         })

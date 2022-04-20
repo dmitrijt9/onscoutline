@@ -1,13 +1,17 @@
 import { createContainer } from '../../dependency/container/index'
 import { toNewPlayerRequest } from '../../services/player/mappings/create-player-mappings'
 import yargs from 'yargs'
+import { In } from 'typeorm'
 
 const scrape = async () => {
     yargs(process.argv).usage('Scrape FACR players')
 
     const { facrPlayersScraper, clubRepository, playerService } = await createContainer()
+    const clubToScrape = ['1060231', '1060221', '1060201', '1070041', '10A0091'] // dukla + sparta + slavia - '1060231', '1060221', '1060201', '1070041', '10A0091'
     const allClubs = await clubRepository.find({
-        take: 2,
+        where: {
+            facrId: In(clubToScrape),
+        },
     })
     if (!allClubs.length) {
         throw new Error(

@@ -3,6 +3,7 @@ import { Club } from '../../entities/Club'
 import { fromFacrDate } from '../../utils/conversions'
 import { isNil, sleep } from '../../utils/index'
 import chunk from '../utils/chunk'
+import { Gender } from '../../entities/Player'
 import { AbstractScraper } from './AbstractScraper'
 import { FACRScraperElementNotFoundError } from './errors'
 import { PuppeteerBrowser } from './PuppeteerBrowser'
@@ -344,6 +345,8 @@ export class FacrPlayersScraper extends AbstractScraper {
                 clubFacrId: parentClubId,
                 playingFrom: parentClubFrom,
             },
+            gender: gender === 'Z' ? Gender.Female : Gender.Male,
+            country,
             loanClub:
                 !isNil(loanClubId) && !isNil(loanFrom) && !isNil(loanTo)
                     ? {

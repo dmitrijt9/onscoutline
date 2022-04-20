@@ -1,4 +1,4 @@
-import { Player } from '../../entities/Player'
+import { Gender, Player } from '../../entities/Player'
 import { ISO8601_NoTime } from '../../entities/types'
 
 export type NewPlayerRequest = {
@@ -11,6 +11,10 @@ export type NewPlayerRequest = {
     dateOfBirth: string
 
     facrMemberFrom?: ISO8601_NoTime
+
+    gender: Gender
+
+    country: string
 
     parentClub: {
         clubFacrId: string

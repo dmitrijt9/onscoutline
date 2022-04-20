@@ -2,6 +2,7 @@ import { Club } from '../../entities/Club'
 import { Competition } from '../../entities/Competition'
 import { NewMatchRequest } from '../match/types'
 import { ISO8601_NoTime } from '../../entities/types'
+import { Gender } from '../../entities/Player'
 import { HTMLElement } from 'node-html-parser'
 
 export interface IScraper {
@@ -44,6 +45,8 @@ export type ScrapedPlayer = {
     dateOfBirth: string
     facrId: string
     facrMemberFrom: ISO8601_NoTime
+    gender: Gender
+    country: string
     parentClub: {
         clubFacrId: string
         playingFrom: ISO8601_NoTime

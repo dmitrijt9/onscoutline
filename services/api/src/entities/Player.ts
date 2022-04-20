@@ -1,14 +1,13 @@
-import { Column, Entity, PrimaryGeneratedColumn, Unique } from 'typeorm'
 import { ISO8601_NoTime } from './types'
+import { Column, Entity, PrimaryGeneratedColumn } from 'typeorm'
 
 @Entity()
-@Unique('Player_Fullname_UQ_IDX', ['name', 'surname'])
 export class Player {
     @PrimaryGeneratedColumn()
     id: number
 
     @Column('varchar', { unique: true, nullable: true })
-    facrId: string | null
+    facrId?: string
 
     @Column()
     name: string
@@ -17,11 +16,18 @@ export class Player {
     surname: string
 
     @Column('varchar', { nullable: true })
-    yearOfBirth: string | null
+    gender?: Gender
+
+    @Column({ nullable: true })
+    country?: string
+
+    @Column('varchar', { nullable: true })
+    dateOfBirth?: ISO8601_NoTime
 
     @Column('date', { nullable: true })
     facrMemberFrom?: ISO8601_NoTime
 
+    // TODO: transform value
     @Column('json', { nullable: true })
     position?: Set<PlayerPosition>
 }
@@ -31,4 +37,9 @@ export enum PlayerPosition {
     Defender = 'Defender',
     Midfielder = 'Midfielder',
     Forward = 'Forward',
+}
+
+export enum Gender {
+    Male = 'Male',
+    Female = 'Female',
 }
