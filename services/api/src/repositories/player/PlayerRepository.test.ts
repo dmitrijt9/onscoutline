@@ -5,6 +5,7 @@ import {
     stopTestApplication,
     TestingClient,
 } from '../../dependency/test-utils/index'
+import { Gender } from '../../entities/Player'
 import { toOnscoutlineDateFormat } from '../../utils/conversions'
 
 describe('Player Repository', () => {
@@ -32,7 +33,9 @@ describe('Player Repository', () => {
             facrMemberFrom: toOnscoutlineDateFormat(new Date('2005-03-16')),
             name: 'Kristian',
             surname: 'Ronaldny',
-            yearOfBirth: '1990',
+            gender: Gender.Male,
+            country: 'Portugalsko',
+            dateOfBirth: toOnscoutlineDateFormat(new Date('1990-03-16')),
         })
 
         expect(savedPlayer).not.toBeNull()
@@ -48,7 +51,9 @@ describe('Player Repository', () => {
             facrMemberFrom: toOnscoutlineDateFormat(new Date('2005-03-16')),
             name: 'Kristian',
             surname: 'Ronaldny',
-            yearOfBirth: '1990',
+            gender: Gender.Male,
+            country: 'Portugalsko',
+            dateOfBirth: toOnscoutlineDateFormat(new Date('1990-03-16')),
         })
 
         const savedPlayer2 = await playerRepository.save({
@@ -56,7 +61,9 @@ describe('Player Repository', () => {
             facrMemberFrom: toOnscoutlineDateFormat(new Date('2005-03-16')),
             name: 'Javier Alando',
             surname: 'Martinez Suarez',
-            yearOfBirth: '1990',
+            gender: Gender.Male,
+            country: 'Portugalsko',
+            dateOfBirth: toOnscoutlineDateFormat(new Date('1990-03-16')),
         })
 
         const foundPlayer1 = await playerRepository.findByFullname('Ronaldny Kristian')

@@ -1,4 +1,3 @@
-import { Club } from '../../entities/Club'
 import { Gender, Player, Transfer } from '../../entities/Player'
 import { PlayerInClub } from '../../entities/Relations/PlayerInClub'
 import { ISO8601_NoTime } from '../../entities/types'
