@@ -1,6 +1,6 @@
+import { IScraper } from './types'
 import axios from 'axios'
 import parse, { HTMLElement } from 'node-html-parser'
-import { IScraper } from './types'
 
 export abstract class AbstractScraper implements IScraper {
     async getParsedPage(url: string): Promise<HTMLElement> {

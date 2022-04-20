@@ -1,6 +1,6 @@
-import yargs from 'yargs'
 import { createContainer } from '../../dependency/container/index'
 import readFiles from '../../services/utils/read-files'
+import yargs from 'yargs'
 
 const scrape = async () => {
     yargs(process.argv).usage('Scrape FACR players')
@@ -21,7 +21,7 @@ const scrape = async () => {
     const dirname = argv.path ?? defaultDirname
 
     const container = await createContainer()
-    let htmlsToScrape: string[] = []
+    const htmlsToScrape: string[] = []
     try {
         readFiles(dirname, (_, content) => {
             htmlsToScrape.push(content)
@@ -30,7 +30,7 @@ const scrape = async () => {
         console.error('Error while reading html files.')
         throw e
     }
-    await container.facrScraper.scrapeMatches(htmlsToScrape)
+    await container.facrMatchesScraper.scrapeMatches(htmlsToScrape)
 }
 
 scrape()

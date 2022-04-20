@@ -2,11 +2,14 @@
 
 exports[`Player Repository should save a player without problems 1`] = `
 Object {
+  "country": "Portugalsko",
+  "dateOfBirth": "1990-03-16",
   "facrId": "123457",
   "facrMemberFrom": "2005-03-16",
+  "gender": "Male",
   "name": "Kristian",
   "position": null,
   "surname": "Ronaldny",
-  "yearOfBirth": "1990",
+  "transferRecords": null,
 }
 `;

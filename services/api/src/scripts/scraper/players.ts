@@ -1,20 +1,28 @@
-import yargs from 'yargs'
 import { createContainer } from '../../dependency/container/index'
+import { toNewPlayerRequest } from '../../services/player/mappings/create-player-mappings'
+import yargs from 'yargs'
+import { In } from 'typeorm'
 
 const scrape = async () => {
     yargs(process.argv).usage('Scrape FACR players')
 
-    const { facrScraper, clubRepository, playerService } = await createContainer()
-    const allClubs = await clubRepository.find()
+    const { facrPlayersScraper, clubRepository, playerService } = await createContainer()
+    const clubToScrape = ['1060231'] // dukla + sparta + slavia - '1060231', '1060221', '1060201', '1070041', '10A0091'
+    const allClubs = await clubRepository.find({
+        where: {
+            facrId: In(clubToScrape),
+        },
+    })
     if (!allClubs.length) {
         throw new Error(
             'Players script: No clubs to scrape players from found. Scrape clubs first.',
         )
     }
 
-    const scrapedPlayersMap = await facrScraper.scrapePlayersOfClubs(allClubs)
-    for (const [key, value] of Object.entries(scrapedPlayersMap)) {
-        await playerService.processNewPlayersOfClub(value, key)
+    const clubsScrapedPlayers = await facrPlayersScraper.scrapePlayersOfClubs(allClubs)
+
+    for (const { club, scrapedPlayers } of clubsScrapedPlayers) {
+        await playerService.processNewPlayersOfClub(scrapedPlayers.map(toNewPlayerRequest), club)
     }
 }
 

@@ -1,14 +1,14 @@
-import { Column, Entity, PrimaryGeneratedColumn, Unique } from 'typeorm'
+import { jsonTransformer } from '../utils/typeorm/jsonTransformer'
 import { ISO8601_NoTime } from './types'
+import { Column, Entity, PrimaryGeneratedColumn } from 'typeorm'
 
 @Entity()
-@Unique('Player_Fullname_UQ_IDX', ['name', 'surname'])
 export class Player {
     @PrimaryGeneratedColumn()
     id: number
 
     @Column('varchar', { unique: true, nullable: true })
-    facrId: string | null
+    facrId?: string
 
     @Column()
     name: string
@@ -17,13 +17,23 @@ export class Player {
     surname: string
 
     @Column('varchar', { nullable: true })
-    yearOfBirth: string | null
+    gender?: Gender
+
+    @Column({ nullable: true })
+    country?: string
+
+    @Column('varchar', { nullable: true })
+    dateOfBirth?: ISO8601_NoTime
 
     @Column('date', { nullable: true })
     facrMemberFrom?: ISO8601_NoTime
 
-    @Column('json', { nullable: true })
+    // TODO: transform value
+    @Column('longtext', { nullable: true, transformer: jsonTransformer('position') })
     position?: Set<PlayerPosition>
+
+    @Column('longtext', { nullable: true, transformer: jsonTransformer('transferRecords') })
+    transferRecords?: Transfer[]
 }
 
 export enum PlayerPosition {
@@ -31,4 +41,20 @@ export enum PlayerPosition {
     Defender = 'Defender',
     Midfielder = 'Midfielder',
     Forward = 'Forward',
+}
+
+export enum Gender {
+    Male = 'Male',
+    Female = 'Female',
+}
+
+export type Transfer = {
+    when: ISO8601_NoTime
+    event: string
+    clubFrom: string
+    clubTo: string | null
+    period: {
+        from: ISO8601_NoTime
+        to: ISO8601_NoTime
+    } | null
 }

@@ -5,6 +5,7 @@ import {
     stopTestApplication,
     TestingClient,
 } from '../../dependency/test-utils/index'
+import { Gender } from '../../entities/Player'
 import { toOnscoutlineDateFormat } from '../../utils/conversions'
 
 describe('Player In Club Repository', () => {
@@ -38,7 +39,9 @@ describe('Player In Club Repository', () => {
                 facrMemberFrom: toOnscoutlineDateFormat(new Date('2005-03-16')),
                 name: 'Kristian',
                 surname: 'Ronaldny',
-                yearOfBirth: '1990',
+                gender: Gender.Male,
+                country: 'Portugalsko',
+                dateOfBirth: toOnscoutlineDateFormat(new Date('1990-03-16')),
             },
             playingFrom: toOnscoutlineDateFormat(new Date('2005-06-01')),
         })

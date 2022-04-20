@@ -10,30 +10,22 @@ module.exports = {
     env: {
         node: true,
     },
-    settings: {
-        'import/parsers': {
-            '@typescript-eslint/parser': ['.ts', '.tsx'],
-        },
-        'import/resolver': {
-            typescript: {
-                project: './tsconfig.json',
-            },
-        },
-    },
+    settings: {},
     extends: [
         'plugin:@typescript-eslint/recommended',
         'plugin:import/errors',
         'plugin:import/warnings',
         'plugin:import/typescript',
-        'prettier',
-        'plugin:prettier/recommended',
-        'plugin:jest/recommended',
+        // 'prettier',
+        // 'plugin:prettier/recommended',
+        // 'plugin:jest/recommended',
     ],
     ignorePatterns: ['test', '**/dist/**'],
 
     rules: {
         '@typescript-eslint/no-explicit-any': 'error',
-        '@typescript-eslint/no-unused-vars': ['error', { argsIgnorePattern: '^_' }],
+        'no-unused-vars': 'off',
+        '@typescript-eslint/no-unused-vars': ['warn', { argsIgnorePattern: '_' }],
         '@typescript-eslint/explicit-function-return-type': 'off',
         '@typescript-eslint/explicit-module-boundary-types': 'off',
         '@typescript-eslint/no-var-requires': 'off',

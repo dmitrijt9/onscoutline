@@ -1,5 +1,5 @@
-import yargs from 'yargs'
 import { createContainer } from '../../dependency/container/index'
+import yargs from 'yargs'
 
 const scrape = async () => {
     const defaultDirname = 'src/scripts/scraper/club-lists-htmls/'
@@ -18,8 +18,8 @@ const scrape = async () => {
 
     const dirname = argv.path ?? defaultDirname
 
-    const { facrScraper, clubService } = await createContainer()
-    const scrapedClubs = await facrScraper.scrapeClubs(dirname)
+    const { facrClubsScraper, clubService } = await createContainer()
+    const scrapedClubs = await facrClubsScraper.scrapeClubs(dirname)
     await clubService.processNewClubss(scrapedClubs)
 }
 

@@ -1,20 +1,12 @@
-import { HTMLElement } from 'node-html-parser'
 import { Club } from '../../entities/Club'
 import { Competition } from '../../entities/Competition'
-import { NewClubRequest } from '../club/types'
-import { NewCompetitionRequest } from '../competition/types'
 import { NewMatchRequest } from '../match/types'
-import { NewPlayerRequest } from '../player/types'
+import { ISO8601_NoTime } from '../../entities/types'
+import { Gender } from '../../entities/Player'
+import { HTMLElement } from 'node-html-parser'
 
 export interface IScraper {
     getParsedPage(url: string): Promise<HTMLElement>
-}
-
-export interface IFacrScraper {
-    scrapeCompetitions(): Promise<NewCompetitionRequest[]>
-    scrapeClubs(dirname: string): Promise<NewClubRequest[]>
-    scrapePlayersOfClubs(clubs: Club[]): Promise<Map<string, NewPlayerRequest[]>>
-    scrapeMatches(htmlsToScrape: string[]): Promise<NewMatchRequest[]>
 }
 
 export type ScrapedClub = Omit<Club, 'id' | 'facrId' | 'facrUuid'> & {
@@ -35,4 +27,46 @@ export type TPuppeteerSelectorOptions = {
 export type ScrapedMatchOverview = {
     facrUuid: NewMatchRequest['facrUuid']
     takePlace: NewMatchRequest['takePlace']
+}
+
+type ScrapedPlayerTransfer = {
+    when: string
+    event: string
+    from: string
+    to: string | null
+    period: {
+        from: string
+        to: string
+    } | null
+}
+export type ScrapedPlayer = {
+    name: string
+    surname: string
+    dateOfBirth: string
+    facrId: string
+    facrMemberFrom: ISO8601_NoTime
+    gender: Gender
+    country: string
+    parentClub: {
+        clubFacrId: string
+        clubName: string
+        playingFrom: ISO8601_NoTime
+    }
+    loanClub: {
+        clubFacrId: string
+        clubName: string
+        playingFrom: ISO8601_NoTime
+        playingUntil: ISO8601_NoTime
+    } | null
+    transfers: ScrapedPlayerTransfer[]
+}
+export type PlayerLinks = { memberInfoPath: string; playerInfoPath: string }
+export type ClubPlayersLinks = {
+    club: string
+    playersLinks: PlayerLinks[]
+}
+
+export type ClubScrapedPlayers = {
+    club: string
+    scrapedPlayers: ScrapedPlayer[]
 }
