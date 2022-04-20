@@ -87,11 +87,7 @@ workflows:
   # With no other workflows, normal push events will be ignored currently.
   api-install-check-test:
     jobs:
-      - install-api:
-          filters:
-            branches:
-              only:
-                - master
+      - install-api
       - code-check-api:
           requires:
             - install-api
