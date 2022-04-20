@@ -1,9 +1,7 @@
-import { Club } from '../../entities/Club'
 import { Match } from '../../entities/Match'
 import { Player, PlayerPosition } from '../../entities/Player'
 import { PlayerGameStatistic, StatType } from '../../entities/PlayerGameStatistic'
 import { PlayerInMatch } from '../../entities/Relations/PlayerInMatch'
-import { ISO8601_NoTime } from '../../entities/types'
 import { ClubRepository } from '../../repositories/club/ClubRepository'
 import { PlayerInClubRepository } from '../../repositories/player/PlayerInClubRepository'
 import { PlayerInMatchRepository } from '../../repositories/player/PlayerInMatchRepository'
@@ -13,7 +11,7 @@ import { isNil } from '../../utils/index'
 import { MatchPlayerRequest, PlayerWithMatchInfo } from '../match/types'
 import { StatisticsService } from '../statistics/StatisticsService'
 import { NewPlayerClubNotFound } from './errors'
-import { NewPlayerRequest } from './types'
+import { NewPlayerRequest, PlayerInClubRequest, PlayerInClubToSave } from './types'
 import { In } from 'typeorm'
 
 export class PlayerService {
@@ -53,7 +51,7 @@ export class PlayerService {
             new Map(),
         )
 
-        const playersToUpdate: Player[] = newPlayers
+        const playersToUpdate: PlayerInClubRequest[] = newPlayers
             .filter((newPlayer) => {
                 return !!foundPlayersMap.get(newPlayer.facrId)
             })
@@ -67,10 +65,12 @@ export class PlayerService {
                     facrMemberFrom: np.facrMemberFrom,
                     country: np.country,
                     gender: np.gender,
+                    parentClub: np.parentClub,
+                    loanClub: np.loanClub,
                 }
             })
 
-        const playersToSave: Omit<Player, 'id'>[] = newPlayers
+        const playersToSave: Omit<PlayerInClubRequest, 'id'>[] = newPlayers
             .filter((newPlayer) => {
                 return foundPlayersMap.get(newPlayer.facrId) ? false : true
             })
@@ -83,107 +83,92 @@ export class PlayerService {
                     facrMemberFrom: newPlayer.facrMemberFrom,
                     country: newPlayer.country,
                     gender: newPlayer.gender,
+                    transferRecords: newPlayer.transfersRecords,
+                    parentClub: newPlayer.parentClub,
+                    loanClub: newPlayer.loanClub,
                 }
             })
 
-        await this.playerRepository.save([...playersToSave, ...playersToUpdate])
+        const savedPlayers = await this.playerRepository.save([
+            ...playersToSave,
+            ...playersToUpdate,
+        ])
+        await this.savePlayerInClubRelations(savedPlayers)
         console.log('saved players: ', playersToSave.length)
         console.log('updated players: ', playersToUpdate.length)
 
-        // const savedPlayers: Player[] = await this.playerRepository
-        //     .save(playersToInsert)
-        //     .finally(() => {
-        //         console.log(
-        //             `Player Service: Successfully saved ${playersToInsert.length} new players.`,
-        //         )
-        //     })
-
-        // await this.playerInClubRepository.save(
-        //     savedPlayers.map((player) => {
-        //         return {
-        //             player: {
-        //                 id: player.id,
-        //             },
-        //             club: {
-        //                 id: club.id,
-        //             },
-        //         }
-        //     }),
-        // )
-
-        // // check for existing players club changes
-        // for (const player of playersToUpdate) {
-        //     const relations = await this.playerInClubRepository.find({
-        //         where: {
-        //             club: {
-        //                 id: club.id,
-        //             },
-        //             player: {
-        //                 id: player.id,
-        //             },
-        //         },
-        //     })
-
-        //     if (!relations.length) {
-        //         await this.playerInClubRepository.save({
-        //             player: {
-        //                 id: player.id,
-        //             },
-        //             club: {
-        //                 id: club.id,
-        //             },
-        //         })
-        //     } else {
-        //         // const sortedRalations = relations.sort(
-        //         //     (a, b) => new Date(a.playingFrom).getTime() - new Date(b.playingFrom).getTime(),
-        //         // )
-        //         // if (sortedRalations[0].playingFrom < player.playingFrom) {
-        //         //     await this.playerInClubRepository.save({
-        //         //         player: {
-        //         //             id: player.id,
-        //         //         },
-        //         //         club: {
-        //         //             id: club.id,
-        //         //         },
-        //         //         playingFrom: player.playingFrom,
-        //         //     })
-        //         // }
-        //     }
-        // }
-
-        // return savedPlayers
         return []
     }
 
-    async savePlayerInClubRelations(
-        players: Player[],
-        appearedInClub: Club,
-        appearedInClubDate: ISO8601_NoTime,
-    ) {
+    private async getClubByFacrId(facrId: string, name: string) {
+        const club = await this.clubRepository.findOne({
+            where: {
+                facrId,
+            },
+        })
+
+        return (
+            club ??
+            (await this.clubRepository.save({
+                facrId,
+                name,
+            }))
+        )
+    }
+
+    async savePlayerInClubRelations(players: PlayerInClubRequest[]) {
         for (const player of players) {
-            const lastPlayerInClubRelation =
-                await this.playerInClubRepository.findLastByPlayerAndClub(player, appearedInClub)
+            const parentClubReq = player.parentClub
+            const loanClubReq = player.loanClub
 
-            if (!lastPlayerInClubRelation) {
-                await this.playerInClubRepository.save({
-                    club: appearedInClub,
+            const parentClub = await this.getClubByFacrId(
+                parentClubReq.clubFacrId,
+                parentClubReq.clubName,
+            )
+
+            const relationsToSave: PlayerInClubToSave[] = []
+            const existingParentClubRelation = await this.playerInClubRepository.findOne({
+                where: {
                     player,
-                    playingFrom: appearedInClubDate,
-                    isOnLoan: false,
-                })
-                continue
-            }
-
-            if (lastPlayerInClubRelation.club.id === appearedInClub.id) {
-                continue
-            }
-
-            await this.playerInClubRepository.save({
-                club: appearedInClub,
-                player,
-                playingFrom: appearedInClubDate,
-                isOnLoan: true,
+                    club: parentClub,
+                },
             })
+
+            if (!existingParentClubRelation) {
+                relationsToSave.push({
+                    club: parentClub,
+                    player,
+                    isOnLoan: false,
+                    playingFrom: parentClubReq.playingFrom,
+                })
+            }
+
+            if (loanClubReq) {
+                const loanClub = await this.getClubByFacrId(
+                    loanClubReq.clubFacrId,
+                    loanClubReq.clubName,
+                )
+                const existingLoanClubRelation = await this.playerInClubRepository.findOne({
+                    where: {
+                        player,
+                        club: loanClub,
+                        playingFrom: loanClubReq.playingFrom,
+                        isOnLoan: true,
+                    },
+                })
+
+                if (!existingLoanClubRelation) {
+                    relationsToSave.push({
+                        player,
+                        club: loanClub,
+                        isOnLoan: true,
+                        playingFrom: loanClubReq.playingFrom,
+                        playingUntil: loanClubReq.playingUntil,
+                    })
+                }
+            }
+
+            await this.playerInClubRepository.save(relationsToSave)
         }
     }
 

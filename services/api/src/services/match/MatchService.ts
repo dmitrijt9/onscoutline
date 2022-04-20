@@ -92,8 +92,6 @@ export class MatchService {
         return (
             clubInDb ??
             (await this.clubRepository.save({
-                facrId: null,
-                facrUuid: null,
                 name: clubName,
             }))
         )

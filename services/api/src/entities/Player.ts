@@ -1,3 +1,4 @@
+import { jsonTransformer } from '../utils/typeorm/jsonTransformer'
 import { ISO8601_NoTime } from './types'
 import { Column, Entity, PrimaryGeneratedColumn } from 'typeorm'
 
@@ -28,8 +29,11 @@ export class Player {
     facrMemberFrom?: ISO8601_NoTime
 
     // TODO: transform value
-    @Column('json', { nullable: true })
+    @Column('longtext', { nullable: true, transformer: jsonTransformer('position') })
     position?: Set<PlayerPosition>
+
+    @Column('longtext', { nullable: true, transformer: jsonTransformer('transferRecords') })
+    transferRecords?: Transfer[]
 }
 
 export enum PlayerPosition {
@@ -42,4 +46,15 @@ export enum PlayerPosition {
 export enum Gender {
     Male = 'Male',
     Female = 'Female',
+}
+
+export type Transfer = {
+    when: ISO8601_NoTime
+    event: string
+    clubFrom: string
+    clubTo: string | null
+    period: {
+        from: ISO8601_NoTime
+        to: ISO8601_NoTime
+    } | null
 }

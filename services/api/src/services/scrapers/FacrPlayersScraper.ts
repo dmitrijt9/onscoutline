@@ -212,6 +212,18 @@ export class FacrPlayersScraper extends AbstractScraper {
             )
         }
 
+        const parentClubName = playerDetailHtmlPage
+            .querySelector('#MainContent_txtOddilNazev')
+            ?.getAttribute('value')
+
+        if (!parentClubName) {
+            throw new FACRScraperElementNotFoundError(
+                'parentClubName',
+                'playerDetail',
+                '#MainContent_txtOddilNazev',
+            )
+        }
+
         const parentClubFrom = playerDetailHtmlPage
             .querySelector('#MainContent_txtOd')
             ?.getAttribute('value')
@@ -227,6 +239,10 @@ export class FacrPlayersScraper extends AbstractScraper {
         // * I do not check this as it can be undefined on purpose
         const loanClubId = playerDetailHtmlPage
             .querySelector('#MainContent_txtOddilHostId')
+            ?.getAttribute('value')
+
+        const loanClubName = playerDetailHtmlPage
+            .querySelector('#MainContent_txtOddilHostNazev')
             ?.getAttribute('value')
 
         const loanFrom = playerDetailHtmlPage
@@ -343,16 +359,18 @@ export class FacrPlayersScraper extends AbstractScraper {
             facrMemberFrom: fromFacrDate(facrMemberFrom),
             parentClub: {
                 clubFacrId: parentClubId,
-                playingFrom: parentClubFrom,
+                clubName: parentClubName,
+                playingFrom: fromFacrDate(parentClubFrom),
             },
             gender: gender === 'Z' ? Gender.Female : Gender.Male,
             country,
             loanClub:
-                !isNil(loanClubId) && !isNil(loanFrom) && !isNil(loanTo)
+                !isNil(loanClubId) && !isNil(loanFrom) && !isNil(loanTo) && !isNil(loanClubName)
                     ? {
                           clubFacrId: loanClubId,
-                          playingFrom: loanFrom,
-                          playingUntil: loanTo,
+                          clubName: loanClubName,
+                          playingFrom: fromFacrDate(loanFrom),
+                          playingUntil: fromFacrDate(loanTo),
                       }
                     : null,
             transfers: transfers.map((transfer) => {
@@ -382,7 +400,7 @@ export class FacrPlayersScraper extends AbstractScraper {
     }
 
     private async scrapePlayerDetailLinks(
-        clubFacrId: Club['facrId'],
+        clubFacrId: string,
         launchedBrowser: Browser,
     ): Promise<PlayerLinks[]> {
         const timeout = 10 * 1000

@@ -49,10 +49,12 @@ export type ScrapedPlayer = {
     country: string
     parentClub: {
         clubFacrId: string
+        clubName: string
         playingFrom: ISO8601_NoTime
     }
     loanClub: {
         clubFacrId: string
+        clubName: string
         playingFrom: ISO8601_NoTime
         playingUntil: ISO8601_NoTime
     } | null

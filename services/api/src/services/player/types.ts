@@ -1,4 +1,6 @@
-import { Gender, Player } from '../../entities/Player'
+import { Club } from '../../entities/Club'
+import { Gender, Player, Transfer } from '../../entities/Player'
+import { PlayerInClub } from '../../entities/Relations/PlayerInClub'
 import { ISO8601_NoTime } from '../../entities/types'
 
 export type NewPlayerRequest = {
@@ -18,25 +20,25 @@ export type NewPlayerRequest = {
 
     parentClub: {
         clubFacrId: string
+        clubName: string
         playingFrom: ISO8601_NoTime
     }
 
     loanClub: {
         clubFacrId: string
+        clubName: string
         playingFrom: ISO8601_NoTime
         playingUntil: ISO8601_NoTime
     } | null
 
-    transfersRecords: {
-        when: ISO8601_NoTime
-        event: string
-        clubFrom: string
-        clubTo: string | null
-        period: {
-            from: ISO8601_NoTime
-            to: ISO8601_NoTime
-        } | null
-    }[]
+    transfersRecords: Transfer[]
 }
 
 export type PlayerToUpdate = Player
+
+export type PlayerInClubToSave = Omit<PlayerInClub, 'id'>
+
+export type PlayerInClubRequest = Player & {
+    parentClub: NewPlayerRequest['parentClub']
+    loanClub: NewPlayerRequest['loanClub']
+}

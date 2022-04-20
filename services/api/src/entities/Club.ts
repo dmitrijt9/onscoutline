@@ -6,11 +6,11 @@ export class Club {
     id: number
 
     @Column('varchar', { unique: true, nullable: true })
-    facrId: string | null
+    facrId?: string
 
     @Column()
     name: string
 
     @Column('varchar', { nullable: true })
-    facrUuid: string | null
+    facrUuid?: string
 }
