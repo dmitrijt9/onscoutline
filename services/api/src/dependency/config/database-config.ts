@@ -1,7 +1,7 @@
-import { MysqlConnectionOptions } from 'typeorm/driver/mysql/MysqlConnectionOptions'
 import { entities } from '../../entities/index'
 import { migrations } from '../../scripts/typeorm/migrations/index'
 import { AppEnv } from './env'
+import { MysqlConnectionOptions } from 'typeorm/driver/mysql/MysqlConnectionOptions'
 
 export const databaseConfig = (env: AppEnv) => ({
     typeorm: {
@@ -32,7 +32,7 @@ export const databaseConfig = (env: AppEnv) => ({
     typeormTest: {
         type: 'mariadb',
         logging: true, // The logging output will only be enabled if the DEBUG env variable is provided. See https://orkhan.gitbook.io/typeorm/docs/logging#changing-default-logger for more info
-        database: env.DB_NAME,
+        database: 'test',
         username: 'root',
         password: 'root',
         port: env.DB_PORT ?? 3306,

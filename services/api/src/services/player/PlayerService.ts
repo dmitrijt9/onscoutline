@@ -10,7 +10,6 @@ import { PlayerGameStatisticRepository } from '../../repositories/statistic/Play
 import { isNil } from '../../utils/index'
 import { MatchPlayerRequest, PlayerWithMatchInfo } from '../match/types'
 import { StatisticsService } from '../statistics/StatisticsService'
-import { NewPlayerClubNotFound } from './errors'
 import { NewPlayerRequest, PlayerInClubRequest, PlayerInClubToSave } from './types'
 import { In } from 'typeorm'
 
@@ -24,16 +23,7 @@ export class PlayerService {
         private readonly playerGamestatisticRepository: PlayerGameStatisticRepository,
     ) {}
 
-    async processNewPlayersOfClub(
-        newPlayers: NewPlayerRequest[],
-        clubFacrId: string,
-    ): Promise<Player[]> {
-        const club = await this.clubRepository.findByFacrId(clubFacrId)
-
-        if (!club) {
-            throw new NewPlayerClubNotFound(clubFacrId)
-        }
-
+    async processNewPlayersOfClub(newPlayers: NewPlayerRequest[]): Promise<Player[]> {
         const foundPlayers = await this.playerRepository.find({
             where: {
                 facrId: In(newPlayers.map((np) => np.facrId)),
@@ -93,11 +83,13 @@ export class PlayerService {
             ...playersToSave,
             ...playersToUpdate,
         ])
+
+        // save relation of each player with his parent or loan club
         await this.savePlayerInClubRelations(savedPlayers)
         console.log('saved players: ', playersToSave.length)
         console.log('updated players: ', playersToUpdate.length)
 
-        return []
+        return savedPlayers
     }
 
     private async getClubByFacrId(facrId: string, name: string) {
@@ -116,7 +108,7 @@ export class PlayerService {
         )
     }
 
-    async savePlayerInClubRelations(players: PlayerInClubRequest[]) {
+    private async savePlayerInClubRelations(players: PlayerInClubRequest[]) {
         for (const player of players) {
             const parentClubReq = player.parentClub
             const loanClubReq = player.loanClub

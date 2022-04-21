@@ -21,8 +21,8 @@ const scrape = async () => {
 
     const clubsScrapedPlayers = await facrPlayersScraper.scrapePlayersOfClubs(allClubs)
 
-    for (const { club, scrapedPlayers } of clubsScrapedPlayers) {
-        await playerService.processNewPlayersOfClub(scrapedPlayers.map(toNewPlayerRequest), club)
+    for (const { scrapedPlayers } of clubsScrapedPlayers) {
+        await playerService.processNewPlayersOfClub(scrapedPlayers.map(toNewPlayerRequest))
     }
 }
 
