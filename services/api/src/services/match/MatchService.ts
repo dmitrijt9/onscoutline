@@ -29,45 +29,40 @@ export class MatchService {
     ) {}
 
     async createMatches(
-        newMatchRequest: NewMatchRequest[],
-    ): Promise<PromiseSettledResult<Match>[]> {
-        const results = await Promise.allSettled(
-            newMatchRequest.map(async (newMatchRequest) => {
-                try {
-                    return await this.createMatch(newMatchRequest)
-                } catch (e) {
-                    if (e instanceof MatchClubNotFound) {
-                        await this.failedNewMatchRequestRepository.save({
-                            status: FailedNewMatchRequestStatus.UnprocessedClub,
-                            requestJson: newMatchRequest,
-                            matchFacrUuid: newMatchRequest.facrUuid,
-                        })
-                    } else if (e.errno !== 1062) {
-                        await this.failedNewMatchRequestRepository.save({
-                            status: FailedNewMatchRequestStatus.Unprocessed,
-                            requestJson: newMatchRequest,
-                            matchFacrUuid: newMatchRequest.facrUuid,
-                        })
-                    }
-
-                    throw e
+        newMatchRequests: NewMatchRequest[],
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    ): Promise<{ matches: Match[]; errors: any[] }> {
+        const newMatches: Match[] = []
+        const errors: Error[] = []
+        for (const newMatchRequest of newMatchRequests) {
+            try {
+                const match = await this.createMatch(newMatchRequest)
+                newMatches.push(match)
+            } catch (e) {
+                if (e instanceof MatchClubNotFound) {
+                    await this.failedNewMatchRequestRepository.save({
+                        status: FailedNewMatchRequestStatus.UnprocessedClub,
+                        requestJson: newMatchRequest,
+                        matchFacrUuid: newMatchRequest.facrUuid,
+                    })
+                } else if (e.errno !== 1062) {
+                    await this.failedNewMatchRequestRepository.save({
+                        status: FailedNewMatchRequestStatus.Unprocessed,
+                        requestJson: newMatchRequest,
+                        matchFacrUuid: newMatchRequest.facrUuid,
+                    })
                 }
-            }),
-        )
 
-        results.forEach((result) => {
-            if (result.status === 'rejected') {
-                this.logger.warn(result.reason)
+                errors.push(e)
+                continue
             }
-        })
-
-        const fullfilledResults = results.filter(({ status }) => status === 'fulfilled')
+        }
 
         this.logger.info(
-            `Successfully created ${fullfilledResults.length}/${newMatchRequest.length} new matches.`,
+            `Successfully created ${newMatches.length}/${newMatchRequests.length} new matches.`,
         )
 
-        return results
+        return { matches: newMatches, errors }
     }
 
     private async createMatch(newMatchRequest: NewMatchRequest): Promise<Match> {

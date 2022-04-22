@@ -210,6 +210,18 @@ export class PlayerService {
                     }
                 }),
             )
+
+            // update player`s shirt number and positions
+            const playerPosition = this.facrPositionToPlayerPosition(player.matchInfo.position)
+            const playersCurrentPositionsSet = new Set(player.positions)
+            if (!isNil(playerPosition)) {
+                playersCurrentPositionsSet.add(playerPosition)
+            }
+            const playerShirt = player.matchInfo.shirt
+            await this.playerRepository.update(player.id, {
+                positions: [...playersCurrentPositionsSet],
+                shirtNumber: playerShirt,
+            })
         }
     }
 

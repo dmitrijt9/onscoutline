@@ -1,16 +1,13 @@
 import { NewMatchRequest } from '../services/match/types'
 import { jsonTransformer } from '../utils/typeorm/jsonTransformer'
-import { Column, CreateDateColumn, Entity, PrimaryGeneratedColumn, UpdateDateColumn } from 'typeorm'
+import { Column, CreateDateColumn, Entity, PrimaryColumn, UpdateDateColumn } from 'typeorm'
 
 @Entity({})
 export class FailedNewMatchRequest {
-    @PrimaryGeneratedColumn('uuid')
-    id: string
-
-    @Column()
+    @PrimaryColumn()
     matchFacrUuid: string
 
-    @Column('varchar')
+    @PrimaryColumn('varchar')
     status: FailedNewMatchRequestStatus
 
     @Column('longtext', { transformer: jsonTransformer('requestJson') })

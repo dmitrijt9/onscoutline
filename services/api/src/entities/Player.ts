@@ -28,9 +28,11 @@ export class Player {
     @Column('date', { nullable: true })
     facrMemberFrom?: ISO8601_NoTime
 
-    // TODO: transform value
+    @Column({ nullable: true })
+    shirtNumber?: number
+
     @Column('longtext', { nullable: true, transformer: jsonTransformer('position') })
-    position?: Set<PlayerPosition>
+    positions?: PlayerPosition[]
 
     @Column('longtext', { nullable: true, transformer: jsonTransformer('transferRecords') })
     transferRecords?: Transfer[]

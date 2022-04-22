@@ -37,12 +37,11 @@ describe('Match service', () => {
                 facrUuid: 'huiheude',
                 regionName: 'FAČR Ženy',
             })
-            const results = await matchService.createMatches(createMatchesValidMock)
+            const { matches, errors } = await matchService.createMatches(createMatchesValidMock)
 
-            expect(results[0].status).toBe('rejected')
-            if (results[0].status === 'rejected') {
-                expect(results[0].reason).toBeInstanceOf(MatchClubNotFound)
-            }
+            expect(matches.length).toBe(0)
+            expect(errors.length).toBe(1)
+            expect(errors[0]).toBeInstanceOf(MatchClubNotFound)
         })
     })
 })
