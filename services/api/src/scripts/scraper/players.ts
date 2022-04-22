@@ -7,7 +7,7 @@ const scrape = async () => {
     yargs(process.argv).usage('Scrape FACR players')
 
     const { facrPlayersScraper, clubRepository, playerService } = await createContainer()
-    const clubToScrape = ['1060231'] // dukla + sparta + slavia - '1060231', '1060221', '1060201', '1070041', '10A0091'
+    const clubToScrape = ['20B0641'] // dukla + sparta + slavia - '1060231', '1060221', '1060201', '1070041', '10A0091', '1070061'
     const allClubs = await clubRepository.find({
         where: {
             facrId: In(clubToScrape),

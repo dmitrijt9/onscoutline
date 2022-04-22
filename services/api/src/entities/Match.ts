@@ -1,12 +1,16 @@
-import { Column, Entity, ManyToOne, PrimaryGeneratedColumn } from 'typeorm'
 import { Club } from './Club'
 import { CompetitionHasSeason } from './Relations/CompetitionHasSeason'
 import { ISO8601 } from './types'
+import { Column, Entity, ManyToOne, PrimaryGeneratedColumn, Unique } from 'typeorm'
 
 @Entity()
+@Unique('Match_Dedup_key', ['when', 'homeTeam', 'awayTeam', 'competitionSeason'])
 export class Match {
     @PrimaryGeneratedColumn()
     id: number
+
+    @Column()
+    facrUuid: string
 
     @Column('datetime')
     when: ISO8601

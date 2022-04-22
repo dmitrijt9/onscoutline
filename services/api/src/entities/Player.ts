@@ -7,8 +7,8 @@ export class Player {
     @PrimaryGeneratedColumn()
     id: number
 
-    @Column('varchar', { unique: true, nullable: true })
-    facrId?: string
+    @Column('varchar', { unique: true })
+    facrId: string
 
     @Column()
     name: string

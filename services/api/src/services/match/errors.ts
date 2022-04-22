@@ -21,15 +21,3 @@ export class MatchClubNotFound extends BaseError {
         })
     }
 }
-
-export class MatchPlayerNotFound extends BaseError {
-    constructor(
-        message = `Player who appeared in a match, was not found.`,
-        payload?: Record<string, unknown>,
-    ) {
-        super({
-            message,
-            payload,
-        })
-    }
-}

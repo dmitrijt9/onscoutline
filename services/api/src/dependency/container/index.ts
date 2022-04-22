@@ -71,7 +71,7 @@ export const createContainer = async (
         competitionRepository,
         competitionService,
         clubRepository,
-        playerRepository,
+        playerInClubRepository,
         playerService,
         matchRepository,
         failedNewMatchRequestRepository,

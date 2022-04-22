@@ -18,4 +18,17 @@ export class PlayerInClubRepository extends Repository<PlayerInClub> {
 
         return playerInClub ?? null
     }
+
+    async findAllByPlayerFullnameAndClub(fullnames: string[], club: Club): Promise<PlayerInClub[]> {
+        return await this.createQueryBuilder('pIc')
+            .leftJoinAndSelect('pIc.player', 'p')
+            .leftJoin('pIc.club', 'c')
+            .where("CONCAT(p.surname, ' ', p.name) IN (:fullnames)", {
+                fullnames,
+            })
+            .andWhere('c.id = :clubId', {
+                clubId: club.id,
+            })
+            .getMany()
+    }
 }

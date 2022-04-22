@@ -160,19 +160,19 @@ export class FacrMatchesScraper extends AbstractScraper {
         }
 
         const homeTeamLineupRows = matchDetailHtml.querySelectorAll(
-            '.container-content div:nth-child(5) div:nth-child(1) table.table tbody:nth-child(2) tr',
+            '.container-content > div.row:last-of-type div:nth-child(1) table.table tbody:nth-child(2) tr',
         )
 
         const homeTeamSubstitutesRows = matchDetailHtml.querySelectorAll(
-            '.container-content div:nth-child(5) div:nth-child(1) table.table tbody:nth-child(4) tr',
+            '.container-content > div.row:last-of-type div:nth-child(1) table.table tbody:nth-child(4) tr',
         )
 
         const awayTeamLineupRows = matchDetailHtml.querySelectorAll(
-            '.container-content div:nth-child(5) div:nth-child(2) table.table tbody:nth-child(2) tr',
+            '.container-content > div.row:last-of-type div:nth-child(2) table.table tbody:nth-child(2) tr',
         )
 
         const awayTeamSubstitutesRows = matchDetailHtml.querySelectorAll(
-            '.container-content div:nth-child(5) div:nth-child(2) table.table tbody:nth-child(4) tr',
+            '.container-content > div.row:last-of-type div:nth-child(2) table.table tbody:nth-child(4) tr',
         )
 
         const homeTeamMatchLineup = this.scrapeMatchTeamLineup(

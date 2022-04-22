@@ -7,6 +7,9 @@ export class FailedNewMatchRequest {
     @PrimaryGeneratedColumn('uuid')
     id: string
 
+    @Column()
+    matchFacrUuid: string
+
     @Column('varchar')
     status: FailedNewMatchRequestStatus
 

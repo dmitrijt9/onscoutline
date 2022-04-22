@@ -1,17 +1,18 @@
+import { Club } from '../../entities/Club'
 import { FailedNewMatchRequestStatus } from '../../entities/FailedNewMatchRequest'
 import { Match } from '../../entities/Match'
 import { ClubRepository } from '../../repositories/club/ClubRepository'
 import { CompetitionRepository } from '../../repositories/competition/CompetitionRepository'
 import { FailedNewMatchRequestRepository } from '../../repositories/match/FailedNewMatchRequestRepository'
 import { MatchRepository } from '../../repositories/match/MatchRepository'
-import { PlayerRepository } from '../../repositories/player/PlayerRepository'
-import { fromFacrDateTime, toOnscoutlineDateFormat } from '../../utils/conversions'
+import { PlayerInClubRepository } from '../../repositories/player/PlayerInClubRepository'
+import { toOnscoutlineDateFormat } from '../../utils/conversions'
 import { isNil } from '../../utils/index'
 import { CompetitionService } from '../competition/CompetitionService'
 import { ILogger } from '../logger/ILogger'
 import { PlayerService } from '../player/PlayerService'
 import { SeasonService } from '../season/SeasonService'
-import { MatchClubNotFound, MatchPlayerNotFound, UnexpectedMatchServiceError } from './errors'
+import { MatchClubNotFound, UnexpectedMatchServiceError } from './errors'
 import { MatchPlayerRequest, NewMatchRequest, PlayerWithMatchInfo } from './types'
 
 export class MatchService {
@@ -20,7 +21,7 @@ export class MatchService {
         private readonly competitionRepository: CompetitionRepository,
         private readonly competitionService: CompetitionService,
         private readonly clubRepository: ClubRepository,
-        private readonly playerRepository: PlayerRepository,
+        private readonly playerInClubRepository: PlayerInClubRepository,
         private readonly playerService: PlayerService,
         private readonly matchRepository: MatchRepository,
         private readonly failedNewMatchRequestRepository: FailedNewMatchRequestRepository,
@@ -39,16 +40,13 @@ export class MatchService {
                         await this.failedNewMatchRequestRepository.save({
                             status: FailedNewMatchRequestStatus.UnprocessedClub,
                             requestJson: newMatchRequest,
+                            matchFacrUuid: newMatchRequest.facrUuid,
                         })
-                    } else if (e instanceof MatchPlayerNotFound) {
-                        await this.failedNewMatchRequestRepository.save({
-                            status: FailedNewMatchRequestStatus.UnprocessedPlayer,
-                            requestJson: newMatchRequest,
-                        })
-                    } else {
+                    } else if (e.errno !== 1062) {
                         await this.failedNewMatchRequestRepository.save({
                             status: FailedNewMatchRequestStatus.Unprocessed,
                             requestJson: newMatchRequest,
+                            matchFacrUuid: newMatchRequest.facrUuid,
                         })
                     }
 
@@ -73,9 +71,8 @@ export class MatchService {
     }
 
     private async createMatch(newMatchRequest: NewMatchRequest): Promise<Match> {
-        const matchTakePlace = fromFacrDateTime(newMatchRequest.takePlace)
         const matchSeason = await this.seasonService.getSeasonByDate(
-            toOnscoutlineDateFormat(new Date(fromFacrDateTime(newMatchRequest.takePlace))),
+            toOnscoutlineDateFormat(new Date(newMatchRequest.takePlace)),
         )
 
         const competition = await this.competitionRepository.findByName(newMatchRequest.competition)
@@ -108,21 +105,41 @@ export class MatchService {
             throw new MatchClubNotFound(awayClubName, undefined, newMatchRequest)
         }
 
-        const homePlayers = await this.getMatchPlayers(newMatchRequest.lineups.home)
-        const awayPlayers = await this.getMatchPlayers(newMatchRequest.lineups.away)
-
         const matchToSave: Omit<Match, 'id'> = {
             awayTeam: awayClub,
             homeTeam: homeClub,
             // * some matches does not have results...since I do not care about team results, 0 fallback is not problem for me
             scoreAway: newMatchRequest.awayTeamScore ?? 0,
             scoreHome: newMatchRequest.homeTeamScore ?? 0,
-            when: matchTakePlace,
+            when: newMatchRequest.takePlace,
             competitionSeason: competitionHasSeason,
+            facrUuid: newMatchRequest.facrUuid,
         }
 
+        // fails on duplicate match save
         const match = await this.matchRepository.save(matchToSave)
 
+        const homePlayers = await this.getMatchPlayers(newMatchRequest.lineups.home, homeClub)
+        const awayPlayers = await this.getMatchPlayers(newMatchRequest.lineups.away, awayClub)
+
+        const missingPlayers = [...newMatchRequest.lineups.home, ...newMatchRequest.lineups.away]
+            .map((pr) => pr.fullname)
+            .filter(
+                (pr) =>
+                    ![...homePlayers, ...awayPlayers]
+                        .map((player) => `${player.surname} ${player.name}`)
+                        .includes(pr),
+            )
+
+        if (missingPlayers.length > 0) {
+            await this.failedNewMatchRequestRepository.save({
+                status: FailedNewMatchRequestStatus.UnprocessedPlayer,
+                requestJson: newMatchRequest,
+                matchFacrUuid: newMatchRequest.facrUuid,
+            })
+        }
+
+        // do not resolves player in match if save of a match above fails
         await this.playerService.resolvePlayersInMatch([...homePlayers, ...awayPlayers], match)
 
         return match
@@ -130,6 +147,7 @@ export class MatchService {
 
     private async getMatchPlayers(
         playerRequests: MatchPlayerRequest[],
+        clubOfPlayers: Club,
     ): Promise<PlayerWithMatchInfo[]> {
         const playerRequestByFullnameMap: Map<string, MatchPlayerRequest> = playerRequests.reduce(
             (map, playerReq) => {
@@ -139,15 +157,12 @@ export class MatchService {
             },
             new Map(),
         )
-        const foundPlayersInDb = await this.playerRepository.findAllByFullname(
+        const foundPlayersInDb = await this.playerInClubRepository.findAllByPlayerFullnameAndClub(
             playerRequests.map((player) => player.fullname),
+            clubOfPlayers,
         )
 
-        if (foundPlayersInDb.length !== playerRequests.length) {
-            throw new MatchPlayerNotFound(undefined, { playerRequests, foundPlayersInDb })
-        }
-
-        return foundPlayersInDb.map((player) => {
+        return foundPlayersInDb.map(({ player }) => {
             const found = playerRequestByFullnameMap.get(`${player.surname} ${player.name}`)
 
             // should not happen
