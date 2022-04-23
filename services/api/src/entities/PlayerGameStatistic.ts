@@ -1,7 +1,8 @@
 import { PlayerInMatch } from './Relations/PlayerInMatch'
-import { Column, Entity, ManyToOne, PrimaryGeneratedColumn } from 'typeorm'
+import { Column, Entity, ManyToOne, PrimaryGeneratedColumn, Unique } from 'typeorm'
 
 @Entity()
+@Unique('PlayerGameStatistic_UQ_IDX', ['statType', 'playerInMatch', 'minute'])
 export class PlayerGameStatistic {
     @PrimaryGeneratedColumn('uuid')
     id: string

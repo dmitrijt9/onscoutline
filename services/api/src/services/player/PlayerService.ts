@@ -8,6 +8,7 @@ import { PlayerInMatchRepository } from '../../repositories/player/PlayerInMatch
 import { PlayerRepository } from '../../repositories/player/PlayerRepository'
 import { PlayerGameStatisticRepository } from '../../repositories/statistic/PlayerGameStatisticRepository'
 import { isNil } from '../../utils/index'
+import { ILogger } from '../logger/ILogger'
 import { MatchPlayerRequest, PlayerWithMatchInfo } from '../match/types'
 import { StatisticsService } from '../statistics/StatisticsService'
 import { NewPlayerRequest, PlayerInClubRequest, PlayerInClubToSave } from './types'
@@ -21,6 +22,7 @@ export class PlayerService {
         private readonly clubRepository: ClubRepository,
         private readonly statisticsService: StatisticsService,
         private readonly playerGamestatisticRepository: PlayerGameStatisticRepository,
+        private readonly logger: ILogger,
     ) {}
 
     async processNewPlayersOfClub(newPlayers: NewPlayerRequest[]): Promise<Player[]> {
@@ -57,6 +59,7 @@ export class PlayerService {
                     gender: np.gender,
                     parentClub: np.parentClub,
                     loanClub: np.loanClub,
+                    transferRecords: np.transfersRecords,
                 }
             })
 
@@ -123,6 +126,8 @@ export class PlayerService {
                 where: {
                     player,
                     club: parentClub,
+                    isOnLoan: false,
+                    playingFrom: parentClubReq.playingFrom,
                 },
             })
 
@@ -157,6 +162,57 @@ export class PlayerService {
                         playingFrom: loanClubReq.playingFrom,
                         playingUntil: loanClubReq.playingUntil,
                     })
+                }
+            }
+
+            if (!isNil(player.transferRecords)) {
+                for (const record of player.transferRecords) {
+                    const clubFromFacrId = record.clubFrom.split(' - ').shift()
+                    const clubFrom = await this.clubRepository.findOne({
+                        where: {
+                            facrId: clubFromFacrId,
+                        },
+                    })
+
+                    if (isNil(clubFrom)) {
+                        this.logger.warn(
+                            `FACR Players Scraper: Failed to find a club ${record.clubFrom}`,
+                        )
+                        continue
+                    }
+
+                    const clubToFacrId = record.clubTo ? record.clubTo.split(' - ').shift() : null
+                    const clubTo = clubToFacrId
+                        ? await this.clubRepository.findOne({
+                              where: {
+                                  facrId: clubToFacrId,
+                              },
+                          })
+                        : null
+
+                    const isOnLoan = record.event.includes('Hostování')
+                    const playingFrom = record.period ? record.period.from : record.when
+                    const playingUntil = record.period?.to
+
+                    const existingRelation = await this.playerInClubRepository.findOne({
+                        where: {
+                            player,
+                            club: isOnLoan && clubTo ? clubTo : clubFrom,
+                            playingFrom,
+                            playingUntil,
+                            isOnLoan,
+                        },
+                    })
+
+                    if (isNil(existingRelation)) {
+                        relationsToSave.push({
+                            player,
+                            club: isOnLoan && clubTo ? clubTo : clubFrom,
+                            playingFrom,
+                            playingUntil,
+                            isOnLoan,
+                        })
+                    }
                 }
             }
 
@@ -268,12 +324,14 @@ export class PlayerService {
 
         stats.push(...goals)
 
-        if (!isNil(player.matchInfo.yellowCardMinute)) {
-            stats.push({
-                minute: player.matchInfo.yellowCardMinute,
-                statType: StatType.YellowCard,
-                value: 1,
-            })
+        if (!isNil(player.matchInfo.yellowCardMinutes)) {
+            for (const yellowCardMinute of player.matchInfo.yellowCardMinutes) {
+                stats.push({
+                    minute: yellowCardMinute,
+                    statType: StatType.YellowCard,
+                    value: 1,
+                })
+            }
         }
 
         if (!isNil(player.matchInfo.redCardMinute)) {

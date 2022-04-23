@@ -77,6 +77,7 @@ export class FacrPlayersScraper extends AbstractScraper {
                         scrapedPlayers.push(scraped)
                     }
                 } catch (e) {
+                    // TODO: save to db failed scrape record, to make retry mechanism (similat to failed match request)
                     console.log('to retry', {
                         club,
                         ...playerInfoPaths,
@@ -266,10 +267,8 @@ export class FacrPlayersScraper extends AbstractScraper {
         }
 
         const transfers: ScrapedPlayer['transfers'] = []
-
         for (const row of passportRows) {
-            let from: string | null = null
-            let to: string | null = null
+            let fromClub: string | null = null
             let when: string | null = null
             let event: string | null = null
             let period: {
@@ -290,19 +289,25 @@ export class FacrPlayersScraper extends AbstractScraper {
                 )
             }
 
-            // its an odd row, with "to" club
-            if (!isNil(row.attributes.id)) {
-                const toClub = row.querySelector('td.oddil_do')?.innerText
-                if (isNil(toClub)) {
+            // if "to" club is defined, then modify last item of an array (previous saved transfer has "to" club defined)
+            if (!isNil(row.getAttribute('id'))) {
+                const toClubEl = row.querySelector('td.oddil_do')?.innerText
+                if (isNil(toClubEl)) {
                     throw new FACRScraperElementNotFoundError(
-                        'toClub',
+                        'toClubEl',
                         'playerDetail passport',
                         'td.oddil_do',
                     )
                 }
-                to = toClub.trim()
+
+                const lastTransfer = transfers[transfers.length - 1]
+                // should not happen, but just to be sure unexpected error won't throw
+                if (isNil(lastTransfer)) {
+                    continue
+                }
+                lastTransfer.to = toClubEl.trim()
             } else {
-                from = firstCol.trim()
+                fromClub = firstCol.trim()
                 const whenEvent = row.querySelector('td:nth-child(4)')?.innerText
                 if (isNil(whenEvent)) {
                     throw new FACRScraperElementNotFoundError(
@@ -340,12 +345,12 @@ export class FacrPlayersScraper extends AbstractScraper {
                 when = whenEvent.trim()
                 event = eventName.trim()
             }
-            if (from && event && when) {
+            if (fromClub && event && when) {
                 transfers.push({
                     when,
                     event,
-                    from,
-                    to,
+                    from: fromClub,
+                    to: null,
                     period,
                 })
             }
@@ -377,8 +382,8 @@ export class FacrPlayersScraper extends AbstractScraper {
                 return {
                     when: fromFacrDate(transfer.when),
                     event: transfer.event,
-                    from: transfer.from.split(' - ')[1],
-                    to: transfer.to ? transfer.to.split(' - ')[1] : null,
+                    from: transfer.from,
+                    to: transfer.to ?? null,
                     period: this.getTransferPeriod(transfer.period),
                 }
             }),

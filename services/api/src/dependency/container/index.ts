@@ -50,6 +50,7 @@ export const createContainer = async (
         clubRepository,
         statisticsService,
         playerGameStatisticsRepository,
+        logger,
     )
     const competitionService = new CompetitionService(
         competitionRepository,

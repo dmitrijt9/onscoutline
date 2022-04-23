@@ -25,7 +25,7 @@ export type MatchPlayerRequest = {
     shirt: number
     position: string
     fullname: string
-    yellowCardMinute: number | null
+    yellowCardMinutes: number[] | null
     redCardMinute: number | null
     substitution: string | null
     isInStartingLineup: boolean

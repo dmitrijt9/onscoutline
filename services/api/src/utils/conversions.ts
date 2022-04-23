@@ -50,5 +50,5 @@ export const fromFacrDateTime = (facrDateTime: string): ISO8601 => {
  */
 export const fromFacrDate = (facrDate: string): ISO8601_NoTime => {
     const [day, month, year] = facrDate.split('.')
-    return toOnscoutlineDateFormat(new Date(+year, +month, +day))
+    return toOnscoutlineDateFormat(new Date(+year, +month - 1, +day))
 }

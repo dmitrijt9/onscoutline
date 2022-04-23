@@ -275,12 +275,16 @@ export class FacrMatchesScraper extends AbstractScraper {
                 )
             }
 
+            const yellowCardParsed = yellowCard.split(', ')
             return {
                 shirt: shirt !== '' ? parseInt(shirt) : 0,
                 position,
                 // * Remove "Captain" flag.
                 fullname: fullname.replace(' [K]', ''),
-                yellowCardMinute: yellowCard !== '' ? +yellowCard : null,
+                yellowCardMinutes:
+                    yellowCardParsed.length === 1 && yellowCardParsed[0] === ''
+                        ? null
+                        : yellowCardParsed.map((yc) => +yc),
                 redCardMinute: redCard !== '' ? +redCard : null,
                 substitution: substitution === '' ? null : substitution,
                 isInStartingLineup: true,
@@ -323,11 +327,15 @@ export class FacrMatchesScraper extends AbstractScraper {
                 )
             }
 
+            const yellowCardParsed = yellowCard.split(', ')
             return {
                 shirt: shirt !== '' ? parseInt(shirt) : 0,
                 position,
                 fullname,
-                yellowCardMinute: yellowCard !== '' ? +yellowCard : null,
+                yellowCardMinutes:
+                    yellowCardParsed.length === 1 && yellowCardParsed[0] === ''
+                        ? null
+                        : yellowCardParsed.map((yc) => +yc),
                 redCardMinute: redCard !== '' ? +redCard : null,
                 substitution,
                 isInStartingLineup: false,

@@ -5,6 +5,7 @@ import { addMatchFacrUuid1650554984867 } from './1650554984867-add-match-facr-uu
 import { removeFacridNullable1650618450921 } from './1650618450921-remove-facrid-nullable'
 import { addPlayerShirtPositions1650620674939 } from './1650620674939-add-player-shirt-positions'
 import { addFailedMatchesComposite1650626688142 } from './1650626688142-add-failed-matches-composite'
+import { addPlayerGameStatisticsUqIdx1650750305767 } from './1650750305767-add-player-game-statistics-uq-idx'
 
 export const migrations = [
     initDb1650462161746,
@@ -14,4 +15,5 @@ export const migrations = [
     removeFacridNullable1650618450921,
     addPlayerShirtPositions1650620674939,
     addFailedMatchesComposite1650626688142,
+    addPlayerGameStatisticsUqIdx1650750305767,
 ]
