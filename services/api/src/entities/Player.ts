@@ -7,8 +7,8 @@ export class Player {
     @PrimaryGeneratedColumn()
     id: number
 
-    @Column('varchar', { unique: true, nullable: true })
-    facrId?: string
+    @Column('varchar', { unique: true })
+    facrId: string
 
     @Column()
     name: string
@@ -28,9 +28,11 @@ export class Player {
     @Column('date', { nullable: true })
     facrMemberFrom?: ISO8601_NoTime
 
-    // TODO: transform value
+    @Column({ nullable: true })
+    shirtNumber?: number
+
     @Column('longtext', { nullable: true, transformer: jsonTransformer('position') })
-    position?: Set<PlayerPosition>
+    positions?: PlayerPosition[]
 
     @Column('longtext', { nullable: true, transformer: jsonTransformer('transferRecords') })
     transferRecords?: Transfer[]

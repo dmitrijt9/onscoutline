@@ -19,7 +19,7 @@ Object {
         "shirt": 30,
         "side": "away",
         "substitution": null,
-        "yellowCardMinute": null,
+        "yellowCardMinutes": null,
       },
       Object {
         "fullname": "Lišková Barbora",
@@ -39,7 +39,7 @@ Object {
         "shirt": 17,
         "side": "away",
         "substitution": null,
-        "yellowCardMinute": null,
+        "yellowCardMinutes": null,
       },
       Object {
         "fullname": "Milíčková Michaela",
@@ -50,7 +50,7 @@ Object {
         "shirt": 18,
         "side": "away",
         "substitution": null,
-        "yellowCardMinute": null,
+        "yellowCardMinutes": null,
       },
       Object {
         "fullname": "Redlichová Zdenička",
@@ -66,7 +66,7 @@ Object {
         "shirt": 2,
         "side": "away",
         "substitution": null,
-        "yellowCardMinute": null,
+        "yellowCardMinutes": null,
       },
       Object {
         "fullname": "Šandová Marie",
@@ -77,7 +77,7 @@ Object {
         "shirt": 22,
         "side": "away",
         "substitution": null,
-        "yellowCardMinute": null,
+        "yellowCardMinutes": null,
       },
       Object {
         "fullname": "Špaková Nikola",
@@ -93,7 +93,7 @@ Object {
         "shirt": 12,
         "side": "away",
         "substitution": null,
-        "yellowCardMinute": null,
+        "yellowCardMinutes": null,
       },
       Object {
         "fullname": "Novotná Ema",
@@ -104,7 +104,7 @@ Object {
         "shirt": 10,
         "side": "away",
         "substitution": null,
-        "yellowCardMinute": null,
+        "yellowCardMinutes": null,
       },
       Object {
         "fullname": "Vacínová Aneta Klára",
@@ -115,7 +115,7 @@ Object {
         "shirt": 11,
         "side": "away",
         "substitution": null,
-        "yellowCardMinute": null,
+        "yellowCardMinutes": null,
       },
     ],
     "home": Array [
@@ -128,7 +128,7 @@ Object {
         "shirt": 32,
         "side": "home",
         "substitution": null,
-        "yellowCardMinute": null,
+        "yellowCardMinutes": null,
       },
       Object {
         "fullname": "Beranová Sára",
@@ -139,7 +139,7 @@ Object {
         "shirt": 8,
         "side": "home",
         "substitution": null,
-        "yellowCardMinute": null,
+        "yellowCardMinutes": null,
       },
       Object {
         "fullname": "Šandová Sofie",
@@ -150,7 +150,7 @@ Object {
         "shirt": 12,
         "side": "home",
         "substitution": null,
-        "yellowCardMinute": null,
+        "yellowCardMinutes": null,
       },
       Object {
         "fullname": "Kováříková Ema",
@@ -161,7 +161,7 @@ Object {
         "shirt": 15,
         "side": "home",
         "substitution": null,
-        "yellowCardMinute": null,
+        "yellowCardMinutes": null,
       },
       Object {
         "fullname": "Pohořalá Monika",
@@ -185,7 +185,7 @@ Object {
         "shirt": 18,
         "side": "home",
         "substitution": null,
-        "yellowCardMinute": null,
+        "yellowCardMinutes": null,
       },
       Object {
         "fullname": "Štrosová Natálie",
@@ -196,7 +196,7 @@ Object {
         "shirt": 19,
         "side": "home",
         "substitution": null,
-        "yellowCardMinute": null,
+        "yellowCardMinutes": null,
       },
       Object {
         "fullname": "Dragounová Adéla",
@@ -216,7 +216,7 @@ Object {
         "shirt": 25,
         "side": "home",
         "substitution": null,
-        "yellowCardMinute": null,
+        "yellowCardMinutes": null,
       },
       Object {
         "fullname": "Valtrová Elena",
@@ -227,7 +227,7 @@ Object {
         "shirt": 6,
         "side": "home",
         "substitution": null,
-        "yellowCardMinute": null,
+        "yellowCardMinutes": null,
       },
       Object {
         "fullname": "Procházková Eliška",
@@ -238,7 +238,7 @@ Object {
         "shirt": 20,
         "side": "home",
         "substitution": null,
-        "yellowCardMinute": null,
+        "yellowCardMinutes": null,
       },
       Object {
         "fullname": "Vacíková Nela",
@@ -254,7 +254,7 @@ Object {
         "shirt": 17,
         "side": "home",
         "substitution": null,
-        "yellowCardMinute": null,
+        "yellowCardMinutes": null,
       },
       Object {
         "fullname": "Marešová Petra",
@@ -270,7 +270,7 @@ Object {
         "shirt": 21,
         "side": "home",
         "substitution": null,
-        "yellowCardMinute": null,
+        "yellowCardMinutes": null,
       },
     ],
   },

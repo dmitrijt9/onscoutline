@@ -1,5 +1,6 @@
 import { Club } from './Club'
 import { Competition } from './Competition'
+import { FailedNewMatchRequest } from './FailedNewMatchRequest'
 import { Match } from './Match'
 import { Player } from './Player'
 import { PlayerGameStatistic } from './PlayerGameStatistic'
@@ -18,4 +19,5 @@ export const entities = [
     Season,
     CompetitionHasSeason,
     PlayerGameStatistic,
+    FailedNewMatchRequest,
 ]

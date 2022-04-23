@@ -1,5 +1,5 @@
-import { EntityRepository, Repository } from 'typeorm'
 import { Player } from '../../entities/Player'
+import { EntityRepository, Repository } from 'typeorm'
 
 @EntityRepository(Player)
 export class PlayerRepository extends Repository<Player> {
@@ -16,13 +16,5 @@ export class PlayerRepository extends Repository<Player> {
             .getOne()
 
         return player ?? null
-    }
-
-    async findAllByFullname(fullnames: string[]): Promise<Player[]> {
-        return this.createQueryBuilder('player')
-            .where("CONCAT(player.surname, ' ', player.name) IN (:fullnames)", {
-                fullnames,
-            })
-            .getMany()
     }
 }

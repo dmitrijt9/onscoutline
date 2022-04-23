@@ -49,6 +49,7 @@ describe('Player In Match Repository', () => {
             scoreAway: 2,
             when: new Date('2022-03-16').toUTCString(),
             where: 'Some place',
+            facrUuid: 'hj1234jh',
         })
 
         // save ranom player

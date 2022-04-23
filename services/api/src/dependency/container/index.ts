@@ -21,6 +21,7 @@ import { PuppeteerBrowser } from '../../services/scrapers/PuppeteerBrowser'
 import { SeasonService } from '../../services/season/SeasonService'
 import { StatisticsService } from '../../services/statistics/StatisticsService'
 import { AppConfig, getAppConfig } from '../config/index'
+import { FailedNewMatchRequestRepository } from '../../repositories/match/FailedNewMatchRequestRepository'
 import { bootstrapDbConnection } from './bootstrap/db-connection'
 import { Connection, getCustomRepository } from 'typeorm'
 
@@ -39,6 +40,7 @@ export const createContainer = async (
     const matchRepository = getCustomRepository(MatchRepository)
     const seasonRepository = getCustomRepository(SeasonRepository)
     const playerGameStatisticsRepository = getCustomRepository(PlayerGameStatisticRepository)
+    const failedNewMatchRequestRepository = getCustomRepository(FailedNewMatchRequestRepository)
 
     const statisticsService = new StatisticsService()
     const playerService = new PlayerService(
@@ -48,6 +50,7 @@ export const createContainer = async (
         clubRepository,
         statisticsService,
         playerGameStatisticsRepository,
+        logger,
     )
     const competitionService = new CompetitionService(
         competitionRepository,
@@ -69,9 +72,11 @@ export const createContainer = async (
         competitionRepository,
         competitionService,
         clubRepository,
-        playerRepository,
+        playerInClubRepository,
         playerService,
         matchRepository,
+        failedNewMatchRequestRepository,
+        logger,
     )
 
     return {
@@ -88,6 +93,7 @@ export const createContainer = async (
         matchRepository,
         seasonRepository,
         playerGameStatisticsRepository,
+        failedNewMatchRequestRepository,
 
         facrCompetitionsScraper,
         facrClubsScraper,
@@ -116,6 +122,7 @@ export interface Container {
     matchRepository: MatchRepository
     seasonRepository: SeasonRepository
     playerGameStatisticsRepository: PlayerGameStatisticRepository
+    failedNewMatchRequestRepository: FailedNewMatchRequestRepository
 
     facrCompetitionsScraper: FacrCompetitionsScraper
     facrClubsScraper: FacrClubsScraper

@@ -84,6 +84,7 @@ describe('Player service in match resolver', () => {
             scoreAway: 2,
             scoreHome: 2,
             when: '2022-02-02T15:00:00Z',
+            facrUuid: 'deiojdi',
         })
 
         randomPlayersWithmatchInfo = [
@@ -98,7 +99,7 @@ describe('Player service in match resolver', () => {
                     side: 'home',
                     substitution: '68',
                     redCardMinute: null,
-                    yellowCardMinute: null,
+                    yellowCardMinutes: null,
                 },
             },
             {
@@ -112,7 +113,7 @@ describe('Player service in match resolver', () => {
                     side: 'home',
                     substitution: '45',
                     redCardMinute: null,
-                    yellowCardMinute: null,
+                    yellowCardMinutes: null,
                 },
             },
             {
@@ -126,7 +127,7 @@ describe('Player service in match resolver', () => {
                     side: 'home',
                     substitution: '45',
                     redCardMinute: null,
-                    yellowCardMinute: 67,
+                    yellowCardMinutes: [67],
                 },
             },
             {
@@ -140,7 +141,7 @@ describe('Player service in match resolver', () => {
                     side: 'away',
                     substitution: null,
                     redCardMinute: null,
-                    yellowCardMinute: null,
+                    yellowCardMinutes: null,
                 },
             },
             {
@@ -154,7 +155,7 @@ describe('Player service in match resolver', () => {
                     side: 'away',
                     substitution: null,
                     redCardMinute: null,
-                    yellowCardMinute: null,
+                    yellowCardMinutes: null,
                 },
             },
             {
@@ -168,7 +169,7 @@ describe('Player service in match resolver', () => {
                     side: 'away',
                     substitution: null,
                     redCardMinute: null,
-                    yellowCardMinute: null,
+                    yellowCardMinutes: null,
                 },
             },
         ]

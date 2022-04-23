@@ -1,6 +1,7 @@
 import { Season } from '../../entities/Season'
 import { ISO8601_NoTime } from '../../entities/types'
 import { SeasonRepository } from '../../repositories/season/SeasonRepository'
+import { isNil } from '../../utils/index'
 
 export class SeasonService {
     constructor(private readonly seasonRepository: SeasonRepository) {}
@@ -16,7 +17,7 @@ export class SeasonService {
             const seasonName = `${year1}/${year2}`
             const season = await this.seasonRepository.findByName(seasonName)
 
-            if (!season) {
+            if (isNil(season)) {
                 return await this.seasonRepository.save({
                     name: seasonName,
                     year1,
@@ -32,7 +33,7 @@ export class SeasonService {
         const seasonName = `${year1}/${year2}`
         const season = await this.seasonRepository.findByName(seasonName)
 
-        if (!season) {
+        if (isNil(season)) {
             return await this.seasonRepository.save({
                 name: seasonName,
                 year1,
