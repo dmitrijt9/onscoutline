@@ -71,6 +71,7 @@ describe('Match Repository', () => {
             when: new Date('2022-03-16').toUTCString(),
             where: 'Some place',
             competition: randomCompetitionSeason,
+            facrUuid: 'dheiuhdoiu',
         })
 
         expect(savedMatch).not.toBeNull()

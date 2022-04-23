@@ -1,6 +1,6 @@
-import { Column, Entity, ManyToOne, PrimaryGeneratedColumn, Unique } from 'typeorm'
 import { Match } from '../Match'
 import { Player } from '../Player'
+import { Column, Entity, ManyToOne, PrimaryGeneratedColumn, Unique } from 'typeorm'
 
 @Entity()
 @Unique('PlayerPlaysMatch_UQ_IDX', ['player', 'match'])

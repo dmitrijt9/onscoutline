@@ -55,6 +55,7 @@ describe('Player Game Statistic Repository', () => {
             scoreAway: 2,
             when: new Date('2022-03-16').toUTCString(),
             where: 'Some place',
+            facrUuid: 'deiojdi',
         })
 
         // save ranom player
