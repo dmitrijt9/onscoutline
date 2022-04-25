@@ -70,6 +70,10 @@ export class PlayerGameStatisticRepository extends Repository<PlayerGameStatisti
                     resObj.ownGoals += +resSql.sum
                 }
 
+                if (resSql.statType === StatType.Hattrick) {
+                    resObj.hattricks += +resSql.sum
+                }
+
                 return resObj
             },
             {
@@ -79,6 +83,7 @@ export class PlayerGameStatisticRepository extends Repository<PlayerGameStatisti
                 regularGoals: 0,
                 penaltyGoals: 0,
                 ownGoals: 0,
+                hattricks: 0,
             },
         )
     }
@@ -91,4 +96,5 @@ type AllStatTypesSums = {
     regularGoals: number
     penaltyGoals: number
     ownGoals: number
+    hattricks: number
 }

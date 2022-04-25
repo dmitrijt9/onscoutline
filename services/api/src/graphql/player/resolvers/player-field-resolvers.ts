@@ -70,8 +70,15 @@ export class PlayerFieldResolvers {
             season,
         )
 
-        const { yellowCards, redCards, concededGoals, ownGoals, penaltyGoals, regularGoals } =
-            await container.playerGameStatisticsRepository.findAllStatTypesSum(player.id, season)
+        const {
+            yellowCards,
+            redCards,
+            concededGoals,
+            ownGoals,
+            penaltyGoals,
+            regularGoals,
+            hattricks,
+        } = await container.playerGameStatisticsRepository.findAllStatTypesSum(player.id, season)
 
         const cleanSheetsCount =
             await container.playerGameStatisticsRepository.findCleanSheetsCount(player.id, season)
@@ -90,6 +97,7 @@ export class PlayerFieldResolvers {
             goalsPerGameRatio,
             yellowCardsSum: yellowCards,
             redCardsSum: redCards,
+            hattricksTotal: hattricks,
         }
     }
 }

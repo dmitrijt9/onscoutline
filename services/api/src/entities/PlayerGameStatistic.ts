@@ -36,4 +36,5 @@ export enum StatType {
     RedCard = 'RedCard',
     ConcededGoals = 'ConcededGoals', // specific for goalkeepers
     Substitution = 'Substitution',
+    Hattrick = 'Hattrick',
 }

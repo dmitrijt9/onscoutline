@@ -40,4 +40,9 @@ export class PlayerStats {
 
     @Field(() => Int)
     redCardsSum: number
+
+    @Field(() => Int, {
+        description: 'How many times the player scored 3 or more goals in a single match',
+    })
+    hattricksTotal: number
 }
