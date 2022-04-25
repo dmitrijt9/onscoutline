@@ -1,8 +1,12 @@
-import express, { Express, json, Router, urlencoded } from 'express'
-import helmet from 'helmet'
 import * as http from 'http'
 import { Container, createContainer } from '../container/index'
 import { createCustomErrorHandler } from '../errors/custom-error-handler'
+import { GraphqlContext } from '../../graphql/types'
+import { buildGqlSchema } from '../../graphql/index'
+import helmet from 'helmet'
+import express, { Express, json, Router, urlencoded } from 'express'
+import { ApolloServer, ExpressContext } from 'apollo-server-express'
+import { ContextFunction } from 'apollo-server-core'
 
 export class ExpressApplication {
     private _httpServer: http.Server | null
@@ -10,6 +14,8 @@ export class ExpressApplication {
     private _expressApp: Express
 
     private _container: Container
+
+    private _apolloContext: GraphqlContext | ContextFunction<ExpressContext>
 
     private static readonly DEFAULT_SHUTDOWN_TIMEOUT_MS = 10 * 1000
 
@@ -35,21 +41,67 @@ export class ExpressApplication {
         this._expressApp = value
     }
 
+    get apolloContext(): GraphqlContext | ContextFunction<ExpressContext> {
+        return this._apolloContext
+    }
+
+    set apolloContext(value: GraphqlContext | ContextFunction<ExpressContext>) {
+        this._apolloContext = value
+    }
+
     constructor(container?: Container) {
         if (container) {
             this.container = container
         }
     }
 
-    initExpressApp(container: Container) {
-        // TODO: Add Graphql API
+    async initExpressApp(container: Container) {
+        const expressRouter = await this.initExpressRouter()
+        const { config } = container
+        const isDevelopment = config.environment === 'development'
         return express()
-            .use(helmet())
+            .use(
+                helmet({
+                    crossOriginEmbedderPolicy: !isDevelopment,
+                    contentSecurityPolicy: !isDevelopment,
+                }),
+            )
             .use(urlencoded({ extended: true }))
             .use(json())
-            .use('/', Router())
+            .use('/', expressRouter)
             .use(createCustomErrorHandler(container.logger))
         // .use(Sentry.Handlers.errorHandler())
+    }
+
+    async initExpressRouter() {
+        const router = Router()
+        // TODO: move elsewhere
+        router.get('/status', (req, res) => {
+            res.status(200).send('ok')
+        })
+
+        const apolloServer = await this.startApolloServer()
+        router.use('/graphql', apolloServer.getMiddleware({ path: '/' }))
+        return router
+    }
+
+    async startApolloServer() {
+        if (!this.apolloContext) {
+            this.apolloContext = (expressCtx: ExpressContext): Required<GraphqlContext> => {
+                return {
+                    container: this.container,
+                    express: expressCtx,
+                }
+            }
+        }
+
+        const schema = await buildGqlSchema()
+        const apolloServer = new ApolloServer({
+            schema,
+            context: this.apolloContext,
+        })
+        await apolloServer.start()
+        return apolloServer
     }
 
     async start(): Promise<this> {
@@ -59,7 +111,7 @@ export class ExpressApplication {
             this.container = await createContainer()
         }
 
-        this.expressApp = this.initExpressApp(this.container)
+        this.expressApp = await this.initExpressApp(this.container)
         const { config } = this.container
         this.httpServer = this.expressApp.listen(config.httpServerPort, () => {
             console.log(`SERVER: Running on port ${config.httpServerPort}`)

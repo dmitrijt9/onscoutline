@@ -1,6 +1,7 @@
 import { Club } from '../../entities/Club'
 import { Player } from '../../entities/Player'
 import { PlayerInClub } from '../../entities/Relations/PlayerInClub'
+import { ISO8601_NoTime } from '../../entities/types'
 import { EntityRepository, Repository } from 'typeorm'
 
 @EntityRepository(PlayerInClub)
@@ -19,7 +20,11 @@ export class PlayerInClubRepository extends Repository<PlayerInClub> {
         return playerInClub ?? null
     }
 
-    async findAllByPlayerFullnameAndClub(fullnames: string[], club: Club): Promise<PlayerInClub[]> {
+    async findAllByPlayerFullnameAndClub(
+        fullnames: string[],
+        club: Club,
+        matchTime: ISO8601_NoTime,
+    ): Promise<PlayerInClub[]> {
         return await this.createQueryBuilder('pIc')
             .leftJoinAndSelect('pIc.player', 'p')
             .leftJoin('pIc.club', 'c')
@@ -29,6 +34,10 @@ export class PlayerInClubRepository extends Repository<PlayerInClub> {
             .andWhere('c.id = :clubId', {
                 clubId: club.id,
             })
+            .andWhere(':matchTime >= pic.playingFrom', {
+                matchTime,
+            })
+            .orderBy('pIc.playingFrom', 'DESC')
             .getMany()
     }
 }

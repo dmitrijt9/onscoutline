@@ -114,8 +114,16 @@ export class MatchService {
         // fails on duplicate match save
         const match = await this.matchRepository.save(matchToSave)
 
-        const homePlayers = await this.getMatchPlayers(newMatchRequest.lineups.home, homeClub)
-        const awayPlayers = await this.getMatchPlayers(newMatchRequest.lineups.away, awayClub)
+        const homePlayers = await this.getMatchPlayers(
+            newMatchRequest.lineups.home,
+            homeClub,
+            match,
+        )
+        const awayPlayers = await this.getMatchPlayers(
+            newMatchRequest.lineups.away,
+            awayClub,
+            match,
+        )
 
         const missingPlayers = [...newMatchRequest.lineups.home, ...newMatchRequest.lineups.away]
             .map((pr) => pr.fullname)
@@ -143,6 +151,7 @@ export class MatchService {
     private async getMatchPlayers(
         playerRequests: MatchPlayerRequest[],
         clubOfPlayers: Club,
+        match: Match,
     ): Promise<PlayerWithMatchInfo[]> {
         const playerRequestByFullnameMap: Map<string, MatchPlayerRequest> = playerRequests.reduce(
             (map, playerReq) => {
@@ -155,6 +164,7 @@ export class MatchService {
         const foundPlayersInDb = await this.playerInClubRepository.findAllByPlayerFullnameAndClub(
             playerRequests.map((player) => player.fullname),
             clubOfPlayers,
+            toOnscoutlineDateFormat(new Date(match.when)),
         )
 
         return foundPlayersInDb.map(({ player }) => {

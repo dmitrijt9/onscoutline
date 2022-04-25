@@ -324,6 +324,18 @@ export class PlayerService {
 
         stats.push(...goals)
 
+        const notOwnGoals = goals.filter(
+            (g) => g.statType === StatType.RegularGoal || g.statType === StatType.PenaltyGoal,
+        )
+
+        if (notOwnGoals.length >= 3) {
+            stats.push({
+                minute: null,
+                statType: StatType.Hattrick,
+                value: 1,
+            })
+        }
+
         if (!isNil(player.matchInfo.yellowCardMinutes)) {
             for (const yellowCardMinute of player.matchInfo.yellowCardMinutes) {
                 stats.push({

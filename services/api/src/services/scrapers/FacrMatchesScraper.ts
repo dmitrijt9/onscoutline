@@ -337,7 +337,7 @@ export class FacrMatchesScraper extends AbstractScraper {
                         ? null
                         : yellowCardParsed.map((yc) => +yc),
                 redCardMinute: redCard !== '' ? +redCard : null,
-                substitution,
+                substitution: substitution === '' ? null : substitution,
                 isInStartingLineup: false,
             }
         })
