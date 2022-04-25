@@ -1,14 +1,16 @@
 import { GraphqlContext } from '../types'
+import { toClubResponse } from './mappings/to-club-response'
+import { ClubResponse } from './object-types/club-response'
 import { Ctx, Query, Resolver } from 'type-graphql'
 
 @Resolver()
 export class ClubResolver {
-    @Query(() => String)
+    @Query(() => [ClubResponse])
     async clubs(
         @Ctx()
         { container }: GraphqlContext,
-    ): Promise<string> {
-        const allClubsCount = await container.clubRepository.createQueryBuilder('club').getCount()
-        return `Number of clubs in DB: ${allClubsCount}`
+    ): Promise<ClubResponse[]> {
+        const allClubs = await container.clubRepository.find()
+        return allClubs.map((club) => toClubResponse(club, container.config))
     }
 }
