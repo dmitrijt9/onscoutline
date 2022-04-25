@@ -47,6 +47,7 @@ function $$SETUP_STATE(hydrateRuntimeState, basePath) {
             ["apollo-server-core", "virtual:036c6c461b467c8f51885000960c513f225e91a0a2515f2e1deb6791ac64f10883778cd1ca7f469e8b56ba255ced602bb51bbf51e9dd9e52f8df92d123fe4e42#npm:3.6.7"],
             ["apollo-server-express", "virtual:036c6c461b467c8f51885000960c513f225e91a0a2515f2e1deb6791ac64f10883778cd1ca7f469e8b56ba255ced602bb51bbf51e9dd9e52f8df92d123fe4e42#npm:3.6.7"],
             ["axios", "npm:0.26.0"],
+            ["class-validator", "npm:0.13.2"],
             ["cockatiel", "npm:2.0.2"],
             ["envalid", "npm:7.2.2"],
             ["eslint", "npm:8.9.0"],
@@ -3216,6 +3217,17 @@ function $$SETUP_STATE(hydrateRuntimeState, basePath) {
           "packageLocation": "./.yarn/cache/cjs-module-lexer-npm-1.2.2-473ce063ea-977f3f042b.zip/node_modules/cjs-module-lexer/",
           "packageDependencies": [
             ["cjs-module-lexer", "npm:1.2.2"]
+          ],
+          "linkType": "HARD",
+        }]
+      ]],
+      ["class-validator", [
+        ["npm:0.13.2", {
+          "packageLocation": "./.yarn/cache/class-validator-npm-0.13.2-915206252c-0deb4c29fa.zip/node_modules/class-validator/",
+          "packageDependencies": [
+            ["class-validator", "npm:0.13.2"],
+            ["libphonenumber-js", "npm:1.9.52"],
+            ["validator", "npm:13.7.0"]
           ],
           "linkType": "HARD",
         }]
@@ -6696,6 +6708,15 @@ function $$SETUP_STATE(hydrateRuntimeState, basePath) {
           "linkType": "HARD",
         }]
       ]],
+      ["libphonenumber-js", [
+        ["npm:1.9.52", {
+          "packageLocation": "./.yarn/cache/libphonenumber-js-npm-1.9.52-0e269476dc-d7856fd674.zip/node_modules/libphonenumber-js/",
+          "packageDependencies": [
+            ["libphonenumber-js", "npm:1.9.52"]
+          ],
+          "linkType": "HARD",
+        }]
+      ]],
       ["lines-and-columns", [
         ["npm:1.2.4", {
           "packageLocation": "./.yarn/cache/lines-and-columns-npm-1.2.4-d6c7cc5799-0c37f9f7fa.zip/node_modules/lines-and-columns/",
@@ -7458,6 +7479,7 @@ function $$SETUP_STATE(hydrateRuntimeState, basePath) {
             ["apollo-server-core", "virtual:036c6c461b467c8f51885000960c513f225e91a0a2515f2e1deb6791ac64f10883778cd1ca7f469e8b56ba255ced602bb51bbf51e9dd9e52f8df92d123fe4e42#npm:3.6.7"],
             ["apollo-server-express", "virtual:036c6c461b467c8f51885000960c513f225e91a0a2515f2e1deb6791ac64f10883778cd1ca7f469e8b56ba255ced602bb51bbf51e9dd9e52f8df92d123fe4e42#npm:3.6.7"],
             ["axios", "npm:0.26.0"],
+            ["class-validator", "npm:0.13.2"],
             ["cockatiel", "npm:2.0.2"],
             ["envalid", "npm:7.2.2"],
             ["eslint", "npm:8.9.0"],
@@ -9167,7 +9189,7 @@ function $$SETUP_STATE(hydrateRuntimeState, basePath) {
             ["@types/graphql", null],
             ["@types/node", "npm:17.0.18"],
             ["@types/semver", "npm:7.3.9"],
-            ["class-validator", null],
+            ["class-validator", "npm:0.13.2"],
             ["glob", "npm:7.2.0"],
             ["graphql", "npm:15.8.0"],
             ["graphql-query-complexity", "virtual:b3b64c9fb817a58e0f04effd2e15be42d19e6c54e2ecd65f45584b3db098a685082845408a918a2fe6240137751c21bff2933f4680450916864442517272a730#npm:0.7.2"],
@@ -9486,6 +9508,15 @@ function $$SETUP_STATE(hydrateRuntimeState, basePath) {
             ["@types/istanbul-lib-coverage", "npm:2.0.4"],
             ["convert-source-map", "npm:1.8.0"],
             ["source-map", "npm:0.7.3"]
+          ],
+          "linkType": "HARD",
+        }]
+      ]],
+      ["validator", [
+        ["npm:13.7.0", {
+          "packageLocation": "./.yarn/cache/validator-npm-13.7.0-624277e841-2b83283de1.zip/node_modules/validator/",
+          "packageDependencies": [
+            ["validator", "npm:13.7.0"]
           ],
           "linkType": "HARD",
         }]

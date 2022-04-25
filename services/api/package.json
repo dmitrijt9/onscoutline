@@ -52,6 +52,7 @@
         "apollo-server-core": "^3.6.7",
         "apollo-server-express": "^3.6.7",
         "axios": "^0.26.0",
+        "class-validator": "^0.13.2",
         "cockatiel": "^2.0.2",
         "envalid": "^7.2.2",
         "express": "^4.17.2",
