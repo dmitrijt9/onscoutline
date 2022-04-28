@@ -1,7 +1,7 @@
 import { isNil } from '../../../utils/index'
 import { toClubResponse } from '../../club/mappings/to-club-response'
 import { ClubResponse } from '../../club/object-types/club-response'
-import { PlayerStats } from '../../playerStats/object-types/player-stats'
+import { PlayerStats } from '../../stats/object-types/player-stats'
 import { GraphqlContext } from '../../types'
 import { PlayerStatsArgs } from '../input-types/player-stats'
 import { Player } from '../object-types/player'
@@ -83,7 +83,8 @@ export class PlayerFieldResolvers {
         const cleanSheetsCount =
             await container.playerGameStatisticsRepository.findCleanSheetsCount(player.id, season)
 
-        const gpg = (penaltyGoals + regularGoals) / playedMatchesCount
+        const gpg =
+            playedMatchesCount === 0 ? 0 : (penaltyGoals + regularGoals) / playedMatchesCount
         const goalsPerGameRatio = Math.round((gpg + Number.EPSILON) * 100) / 100
 
         return {

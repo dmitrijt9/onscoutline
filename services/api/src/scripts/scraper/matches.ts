@@ -32,8 +32,7 @@ const scrape = async () => {
     }
     const scrapedMatches = await container.facrMatchesScraper.scrapeMatches(htmlsToScrape)
     const { errors } = await container.matchService.createMatches(scrapedMatches)
-    const unprocessedErrors = errors.filter((e) => e.errno !== 1062)
-    console.error(unprocessedErrors)
+    console.error(errors)
 }
 
 scrape()

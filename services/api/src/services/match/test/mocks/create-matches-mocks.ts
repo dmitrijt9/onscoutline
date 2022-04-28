@@ -18,7 +18,7 @@ export const createMatchesValidMock: NewMatchRequest[] = [
                     redCardMinute: null,
                     shirt: 30,
                     substitution: '',
-                    yellowCardMinute: null,
+                    yellowCardMinutes: null,
                     side: 'away',
                 },
                 {
@@ -38,7 +38,7 @@ export const createMatchesValidMock: NewMatchRequest[] = [
                     redCardMinute: null,
                     shirt: 17,
                     substitution: '',
-                    yellowCardMinute: null,
+                    yellowCardMinutes: null,
                     side: 'away',
                 },
                 {
@@ -49,7 +49,7 @@ export const createMatchesValidMock: NewMatchRequest[] = [
                     redCardMinute: null,
                     shirt: 18,
                     substitution: '',
-                    yellowCardMinute: null,
+                    yellowCardMinutes: null,
                     side: 'away',
                 },
                 {
@@ -65,7 +65,7 @@ export const createMatchesValidMock: NewMatchRequest[] = [
                     redCardMinute: null,
                     shirt: 2,
                     substitution: '',
-                    yellowCardMinute: null,
+                    yellowCardMinutes: null,
                     side: 'away',
                 },
                 {
@@ -76,7 +76,7 @@ export const createMatchesValidMock: NewMatchRequest[] = [
                     redCardMinute: null,
                     shirt: 22,
                     substitution: '',
-                    yellowCardMinute: null,
+                    yellowCardMinutes: null,
                     side: 'away',
                 },
                 {
@@ -92,7 +92,7 @@ export const createMatchesValidMock: NewMatchRequest[] = [
                     redCardMinute: null,
                     shirt: 12,
                     substitution: '',
-                    yellowCardMinute: null,
+                    yellowCardMinutes: null,
                     side: 'away',
                 },
                 {
@@ -103,7 +103,7 @@ export const createMatchesValidMock: NewMatchRequest[] = [
                     redCardMinute: null,
                     shirt: 10,
                     substitution: '',
-                    yellowCardMinute: null,
+                    yellowCardMinutes: null,
                     side: 'away',
                 },
                 {
@@ -114,7 +114,7 @@ export const createMatchesValidMock: NewMatchRequest[] = [
                     redCardMinute: null,
                     shirt: 11,
                     substitution: '',
-                    yellowCardMinute: null,
+                    yellowCardMinutes: null,
                     side: 'away',
                 },
             ],
@@ -127,7 +127,7 @@ export const createMatchesValidMock: NewMatchRequest[] = [
                     redCardMinute: null,
                     shirt: 32,
                     substitution: '',
-                    yellowCardMinute: null,
+                    yellowCardMinutes: null,
                     side: 'home',
                 },
                 {
@@ -138,7 +138,7 @@ export const createMatchesValidMock: NewMatchRequest[] = [
                     redCardMinute: null,
                     shirt: 8,
                     substitution: '',
-                    yellowCardMinute: null,
+                    yellowCardMinutes: null,
                     side: 'home',
                 },
                 {
@@ -149,7 +149,7 @@ export const createMatchesValidMock: NewMatchRequest[] = [
                     redCardMinute: null,
                     shirt: 12,
                     substitution: '',
-                    yellowCardMinute: null,
+                    yellowCardMinutes: null,
                     side: 'home',
                 },
                 {
@@ -160,7 +160,7 @@ export const createMatchesValidMock: NewMatchRequest[] = [
                     redCardMinute: null,
                     shirt: 15,
                     substitution: '',
-                    yellowCardMinute: null,
+                    yellowCardMinutes: null,
                     side: 'home',
                 },
                 {
@@ -184,7 +184,7 @@ export const createMatchesValidMock: NewMatchRequest[] = [
                     redCardMinute: null,
                     shirt: 18,
                     substitution: '',
-                    yellowCardMinute: null,
+                    yellowCardMinutes: null,
                     side: 'home',
                 },
                 {
@@ -195,7 +195,7 @@ export const createMatchesValidMock: NewMatchRequest[] = [
                     redCardMinute: null,
                     shirt: 19,
                     substitution: '',
-                    yellowCardMinute: null,
+                    yellowCardMinutes: null,
                     side: 'home',
                 },
                 {
@@ -215,7 +215,7 @@ export const createMatchesValidMock: NewMatchRequest[] = [
                     redCardMinute: null,
                     shirt: 25,
                     substitution: '',
-                    yellowCardMinute: null,
+                    yellowCardMinutes: null,
                     side: 'home',
                 },
                 {
@@ -226,7 +226,7 @@ export const createMatchesValidMock: NewMatchRequest[] = [
                     redCardMinute: null,
                     shirt: 6,
                     substitution: '',
-                    yellowCardMinute: null,
+                    yellowCardMinutes: null,
                     side: 'home',
                 },
                 {
@@ -237,7 +237,7 @@ export const createMatchesValidMock: NewMatchRequest[] = [
                     redCardMinute: null,
                     shirt: 20,
                     substitution: '',
-                    yellowCardMinute: null,
+                    yellowCardMinutes: null,
                     side: 'home',
                 },
                 {
@@ -253,7 +253,7 @@ export const createMatchesValidMock: NewMatchRequest[] = [
                     redCardMinute: null,
                     shirt: 17,
                     substitution: '',
-                    yellowCardMinute: null,
+                    yellowCardMinutes: null,
                     side: 'home',
                 },
                 {
@@ -269,7 +269,7 @@ export const createMatchesValidMock: NewMatchRequest[] = [
                     redCardMinute: null,
                     shirt: 21,
                     substitution: '',
-                    yellowCardMinute: null,
+                    yellowCardMinutes: null,
                     side: 'home',
                 },
             ],

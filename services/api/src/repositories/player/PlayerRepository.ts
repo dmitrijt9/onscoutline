@@ -17,4 +17,19 @@ export class PlayerRepository extends Repository<Player> {
 
         return player ?? null
     }
+
+    async findByQuery(query: string): Promise<Player[]> {
+        return await this.createQueryBuilder('player')
+            .where(
+                `player.name LIKE :query OR 
+                player.surname LIKE :query OR 
+                CONCAT(player.name, " ", player.surname) LIKE :query OR 
+                CONCAT(player.surname, " ", player.name) LIKE :query
+                `,
+                {
+                    query: `%${query}%`,
+                },
+            )
+            .getMany()
+    }
 }
