@@ -24,6 +24,33 @@ export class PlayerGameStatisticRepository extends Repository<PlayerGameStatisti
         return qb.getCount()
     }
 
+    async findCleanSheetsCountGroupedBySeason(
+        playerId: Player['id'],
+    ): Promise<{ count: number; season: string }[]> {
+        const qb = this.createQueryBuilder('pgs')
+            .select('COUNT(pgs.id) as count')
+            .addSelect('chs.seasonName as season')
+            .innerJoin('pgs.playerInMatch', 'pim')
+            .innerJoin('pim.player', 'p')
+            .innerJoin('pim.match', 'm')
+            .innerJoin('m.competitionSeason', 'chs')
+            .andWhere('p.id = :playerId', { playerId })
+            .andWhere(`pgs.statType = '${StatType.ConcededGoals}'`)
+            .andWhere('pgs.value = 0')
+
+        const result = await qb.getRawMany()
+        console.log(result)
+
+        return result
+            .filter((r) => r.season !== null)
+            .map((r) => {
+                return {
+                    count: r.count,
+                    season: r.season,
+                }
+            })
+    }
+
     async findAllStatTypesSum(
         playerId: Player['id'],
         season?: Season['name'],
@@ -99,8 +126,14 @@ export class PlayerGameStatisticRepository extends Repository<PlayerGameStatisti
             .innerJoin('pim.match', 'm')
             .innerJoin('m.competitionSeason', 'chs')
             .where('p.id = :playerId', { playerId })
-            .andWhere('pgs.statType = :statType', { statType })
-            .groupBy('chs.season')
+            .andWhere('pgs.value > 0')
+
+        if (statType === StatType.ScoredGoals) {
+            qb.andWhere(`pgs.statType IN ('${StatType.RegularGoal}', '${StatType.PenaltyGoal}')`)
+        } else {
+            qb.andWhere('pgs.statType = :statType', { statType })
+        }
+        qb.groupBy('chs.season')
 
         const result = await qb.getRawMany()
 

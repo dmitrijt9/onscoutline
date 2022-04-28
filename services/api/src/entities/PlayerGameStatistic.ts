@@ -37,4 +37,5 @@ export enum StatType {
     ConcededGoals = 'ConcededGoals', // specific for goalkeepers
     Substitution = 'Substitution',
     Hattrick = 'Hattrick',
+    ScoredGoals = 'ScoredGoals',
 }

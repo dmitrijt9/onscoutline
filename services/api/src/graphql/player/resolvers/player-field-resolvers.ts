@@ -65,7 +65,7 @@ export class PlayerFieldResolvers {
             season,
         )
 
-        const playedMatchesCount = await container.playerInMatchRepository.findPlayedMatchesCount(
+        const playedMatches = await container.playerInMatchRepository.findPlayedMatchesCount(
             player.id,
             season,
         )
@@ -80,25 +80,27 @@ export class PlayerFieldResolvers {
             hattricks,
         } = await container.playerGameStatisticsRepository.findAllStatTypesSum(player.id, season)
 
-        const cleanSheetsCount =
-            await container.playerGameStatisticsRepository.findCleanSheetsCount(player.id, season)
+        const cleanSheets = await container.playerGameStatisticsRepository.findCleanSheetsCount(
+            player.id,
+            season,
+        )
 
-        const gpg =
-            playedMatchesCount === 0 ? 0 : (penaltyGoals + regularGoals) / playedMatchesCount
+        const scoredGoals = penaltyGoals + regularGoals
+        const gpg = playedMatches === 0 ? 0 : scoredGoals / playedMatches
         const goalsPerGameRatio = Math.round((gpg + Number.EPSILON) * 100) / 100
 
         return {
-            startingElevenCount: startingEleven,
-            scoredGoalsSum: regularGoals + penaltyGoals,
-            ownGoalsSum: ownGoals,
-            penaltyGoalsSum: penaltyGoals,
-            concededGoalsSum: concededGoals,
-            cleanSheetsCount,
-            playedMatchesCount,
+            startingEleven,
+            scoredGoals,
+            ownGoals,
+            penaltyGoals,
+            concededGoals,
+            cleanSheets,
+            playedMatches,
             goalsPerGameRatio,
-            yellowCardsSum: yellowCards,
-            redCardsSum: redCards,
-            hattricksTotal: hattricks,
+            yellowCards,
+            redCards,
+            hattricks,
         }
     }
 }

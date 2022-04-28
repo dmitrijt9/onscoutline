@@ -23,6 +23,28 @@ export class PlayerInMatchRepository extends Repository<PlayerInMatch> {
         return await qb.getCount()
     }
 
+    async findStartingElevenCountGroupedBySeasons(
+        playerId: Player['id'],
+    ): Promise<{ count: number; season: string }[]> {
+        const qb = this.createQueryBuilder('pim')
+            .select('COUNT(pim.id) as count')
+            .addSelect('chs.seasonName as season')
+            .innerJoin('pim.player', 'p')
+            .innerJoin('pim.match', 'm')
+            .innerJoin('m.competitionSeason', 'chs')
+            .andWhere('p.id = :playerId', { playerId })
+            .andWhere('pim.playedFromMinute = 0')
+            .groupBy('chs.seasonName')
+        const result = await qb.getRawMany()
+
+        return result.map((r) => {
+            return {
+                count: r.count,
+                season: r.season,
+            }
+        })
+    }
+
     async findPlayedMatchesCount(playerId: Player['id'], season?: Season['name']): Promise<number> {
         const qb = this.createQueryBuilder('pim').innerJoin('pim.player', 'p')
 
@@ -35,5 +57,27 @@ export class PlayerInMatchRepository extends Repository<PlayerInMatch> {
         qb.andWhere('p.id = :playerId', { playerId }).andWhere('pim.playedFromMinute is not null')
 
         return await qb.getCount()
+    }
+
+    async findPlayedMatchesCountGroupedBySeasons(
+        playerId: Player['id'],
+    ): Promise<{ count: number; season: string }[]> {
+        const qb = this.createQueryBuilder('pim')
+            .select('COUNT(pim.id) as count')
+            .addSelect('chs.seasonName as season')
+            .innerJoin('pim.player', 'p')
+            .innerJoin('pim.match', 'm')
+            .innerJoin('m.competitionSeason', 'chs')
+            .andWhere('p.id = :playerId', { playerId })
+            .andWhere('pim.playedFromMinute is not null')
+            .groupBy('chs.seasonName')
+        const result = await qb.getRawMany()
+
+        return result.map((r) => {
+            return {
+                count: r.count,
+                season: r.season,
+            }
+        })
     }
 }

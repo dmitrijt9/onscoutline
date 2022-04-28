@@ -6,43 +6,43 @@ export class PlayerStats {
         description:
             'How many times player started in "starting eleven" from beginning of the match',
     })
-    startingElevenCount: number
+    startingEleven: number
 
     @Field(() => Int, {
         description: 'Sum of penalty and regular types of goals',
     })
-    scoredGoalsSum: number
+    scoredGoals: number
 
     @Field(() => Int, {
         description: 'Sum of own goals',
     })
-    ownGoalsSum: number
+    ownGoals: number
 
     @Field(() => Int, {
         description: 'Sum of penalty goals',
     })
-    penaltyGoalsSum: number
+    penaltyGoals: number
 
     @Field(() => Int, { description: 'How many goals the player conceded as a goalkeeper' })
-    concededGoalsSum: number
+    concededGoals: number
 
     @Field(() => Int, { description: 'How many clean sheets the goalkeeper has' })
-    cleanSheetsCount: number
+    cleanSheets: number
 
     @Field(() => Int, { description: 'Total matches played' })
-    playedMatchesCount: number
+    playedMatches: number
 
     @Field(() => Float, { description: 'GPG - Goals per game ratio' })
     goalsPerGameRatio: number
 
     @Field(() => Int)
-    yellowCardsSum: number
+    yellowCards: number
 
     @Field(() => Int)
-    redCardsSum: number
+    redCards: number
 
     @Field(() => Int, {
         description: 'How many times the player scored 3 or more goals in a single match',
     })
-    hattricksTotal: number
+    hattricks: number
 }
