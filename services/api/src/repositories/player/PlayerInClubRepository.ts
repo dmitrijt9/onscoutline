@@ -34,7 +34,7 @@ export class PlayerInClubRepository extends Repository<PlayerInClub> {
             .andWhere('c.id = :clubId', {
                 clubId: club.id,
             })
-            .andWhere(':matchTime >= pic.playingFrom', {
+            .andWhere(':matchTime >= pIc.playingFrom', {
                 matchTime,
             })
             .getMany()

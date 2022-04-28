@@ -114,6 +114,9 @@ export class MatchService {
         // fails on duplicate match save
         const match = await this.matchRepository.save(matchToSave)
 
+        if (newMatchRequest.lineups.away.length <= 0 || newMatchRequest.lineups.home.length <= 0) {
+            return match
+        }
         const homePlayers = await this.getMatchPlayers(
             newMatchRequest.lineups.home,
             homeClub,
