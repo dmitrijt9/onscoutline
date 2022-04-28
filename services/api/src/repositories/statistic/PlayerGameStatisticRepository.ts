@@ -43,7 +43,6 @@ export class PlayerGameStatisticRepository extends Repository<PlayerGameStatisti
         qb.andWhere('p.id = :playerId', { playerId }).groupBy('pgs.statType')
 
         const result = await qb.getRawMany()
-
         return result.reduce(
             (resObj, resSql) => {
                 if (resSql.statType === StatType.YellowCard) {
@@ -86,6 +85,31 @@ export class PlayerGameStatisticRepository extends Repository<PlayerGameStatisti
                 hattricks: 0,
             },
         )
+    }
+
+    async findStatSumForAllSeasons(
+        playerId: Player['id'],
+        statType: StatType,
+    ): Promise<{ season: string; value: number }[]> {
+        const qb = this.createQueryBuilder('pgs')
+            .select('sum(pgs.value) as sum')
+            .addSelect('chs.season as season')
+            .innerJoin('pgs.playerInMatch', 'pim')
+            .innerJoin('pim.player', 'p')
+            .innerJoin('pim.match', 'm')
+            .innerJoin('m.competitionSeason', 'chs')
+            .where('p.id = :playerId', { playerId })
+            .andWhere('pgs.statType = :statType', { statType })
+            .groupBy('chs.season')
+
+        const result = await qb.getRawMany()
+
+        return result.map((r) => {
+            return {
+                season: r.season,
+                value: r.sum,
+            }
+        })
     }
 }
 
