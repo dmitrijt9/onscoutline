@@ -254,18 +254,23 @@ export class PlayerService {
                 awayTeamGoals: awayTeamGoalsMinutes,
             })
 
-            // save record about player being in match lineup
-            const savedRelation = await this.playerInMatchRepository.save(playerInMatchRelation)
-
-            // save player's calculated stats from the match
-            await this.playerGamestatisticRepository.save(
-                playerStats.map((stat) => {
-                    return {
-                        ...stat,
-                        playerInMatch: savedRelation,
-                    }
-                }),
-            )
+            try {
+                // save record about player being in match lineup
+                const savedRelation = await this.playerInMatchRepository.save(playerInMatchRelation)
+                // save player's calculated stats from the match
+                await this.playerGamestatisticRepository.save(
+                    playerStats.map((stat) => {
+                        return {
+                            ...stat,
+                            playerInMatch: savedRelation,
+                        }
+                    }),
+                )
+            } catch (e) {
+                if (e.errno === 1062) {
+                    continue
+                }
+            }
 
             // update player`s shirt number and positions
             const playerPosition = this.facrPositionToPlayerPosition(player.matchInfo.position)

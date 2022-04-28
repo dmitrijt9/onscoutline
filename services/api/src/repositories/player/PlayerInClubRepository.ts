@@ -37,7 +37,6 @@ export class PlayerInClubRepository extends Repository<PlayerInClub> {
             .andWhere(':matchTime >= pic.playingFrom', {
                 matchTime,
             })
-            .orderBy('pIc.playingFrom', 'DESC')
             .getMany()
     }
 }
