@@ -1,14 +1,14 @@
 ################################
 # Load ARGS from build
 ################################
-ARG  NODE_IMAGE
+ARG NODE_IMAGE
 
 ################################
 # Base image
 ################################
 FROM $NODE_IMAGE as temp-base-image
 WORKDIR /app
-CMD ["yarn", "app:start:prod"]
+CMD ["yarn", "start"]
 
 
 ################################
@@ -17,7 +17,7 @@ CMD ["yarn", "app:start:prod"]
 FROM temp-base-image as temp-builder-image
 COPY . /app
 RUN yarn install
-RUN yarn build
+# RUN yarn build
 # # It is cache not remove?!
 # RUN yarn cache clean
 # RUN rm -rf \
@@ -34,4 +34,4 @@ RUN yarn build
 FROM temp-base-image
 COPY --from=temp-builder-image /app /app
 RUN apt-get update && \
-  apt-get install chromium 
+  apt-get -y install chromium 
