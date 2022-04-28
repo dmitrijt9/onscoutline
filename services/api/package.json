@@ -8,6 +8,7 @@
         "build": "yarn tsc --build ",
         "cli": "yarn ts-node ./cli",
         "start:dev": "yarn nodemon ./src/index.ts",
+        "start": "yarn ts-node ./src/index.ts",
         "start:prod": "yarn node ./dist/index.js",
         "test": "yarn test:db:init && yarn typeorm:test migration:run && yarn test:quick",
         "test:quick": "jest --colors --runInBand --coverage --forceExit",

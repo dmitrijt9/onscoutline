@@ -1,11 +1,4 @@
 {
     "extends": "./tsconfig.build.json",
-    "compilerOptions": {
-        "paths": {
-            "@root/*": ["./src/*"]
-        },
-        "rootDir": "./",
-        "baseUrl": "./"
-    },
-    "include": ["src/**/*.ts", ".eslintrc.js"]
+    "include": ["src/**/*.ts"]
 }
