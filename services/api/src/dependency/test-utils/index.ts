@@ -1,5 +1,3 @@
-import supertest from 'supertest'
-import { Repository } from 'typeorm'
 import { ClubRepository } from '../../repositories/club/ClubRepository'
 import { CompetitionHasSeasonRepository } from '../../repositories/competition/CompetitionHasSeasonRepository'
 import { CompetitionRepository } from '../../repositories/competition/CompetitionRepository'
@@ -12,6 +10,8 @@ import { PlayerGameStatisticRepository } from '../../repositories/statistic/Play
 import { ExpressApplication } from '../application/ExpressApplication'
 import { getAppConfig } from '../config/index'
 import { Container, createContainer } from '../container/index'
+import { Repository } from 'typeorm'
+import supertest from 'supertest'
 
 export type TestingClient = {
     application: ExpressApplication

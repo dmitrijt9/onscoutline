@@ -7,12 +7,24 @@ const scrape = async () => {
     yargs(process.argv).usage('Scrape FACR players')
 
     const { facrPlayersScraper, clubRepository, playerService } = await createContainer()
-    const clubToScrape = ['1060231', '1060221', '1060201', '1070041', '10A0091', '1070061'] // dukla + sparta + slavia - '1060231', '1060221', '1060201', '1070041', '10A0091', '1070061'
+    const clubToScrape = [
+        '1060231',
+        '1060221',
+        '1060201',
+        '1070041',
+        '10A0091',
+        '1070061',
+        '3230351',
+        '3230201',
+        '10A0011',
+        '5130201',
+    ] // dukla + sparta + slavia - '1060231', '1060221', '1060201', '1070041', '10A0091', '1070061'
     const allClubs = await clubRepository.find({
         where: {
             facrId: In(clubToScrape),
         },
     })
+    // const allClubs = await clubRepository.find()
     if (!allClubs.length) {
         throw new Error(
             'Players script: No clubs to scrape players from found. Scrape clubs first.',

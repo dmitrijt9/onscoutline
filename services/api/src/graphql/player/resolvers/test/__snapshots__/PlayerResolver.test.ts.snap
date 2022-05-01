@@ -1,0 +1,26 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`Player resolver should return players stats correctly 1`] = `
+Object {
+  "data": Object {
+    "player": Object {
+      "id": "6",
+      "playerInfo": Object {
+        "shirt": 10,
+      },
+      "stats": Object {
+        "cleanSheets": 0,
+        "goalsPerGameRatio": 1,
+        "hattricks": 0,
+        "ownGoals": 0,
+        "penaltyGoals": 0,
+        "playedMatches": 1,
+        "redCards": 0,
+        "scoredGoals": 1,
+        "startingEleven": 1,
+        "yellowCards": 0,
+      },
+    },
+  },
+}
+`;
