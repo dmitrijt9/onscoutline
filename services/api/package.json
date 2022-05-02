@@ -21,7 +21,8 @@
         "scraper:players": "node -r tsconfig-paths/register -r ts-node/register ./src/scripts/scraper/players.ts",
         "scraper:matchesUrls": "node -r tsconfig-paths/register -r ts-node/register ./src/scripts/scraper/matches-urls.ts",
         "scraper:matches": "node -r tsconfig-paths/register -r ts-node/register ./src/scripts/scraper/matches.ts",
-        "code:check": "yarn prettier -l ./**/*.ts && yarn tsc --noemit"
+        "code:check": "yarn prettier -l ./**/*.ts && yarn tsc --noemit",
+        "chrome:install": "apt-get update && apt-get -y install chromium"
     },
     "devDependencies": {
         "@faker-js/faker": "^6.1.2",
